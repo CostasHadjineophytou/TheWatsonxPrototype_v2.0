@@ -1,11 +1,9 @@
-import tkinter as tk
-from frontend.frontend import AIApp
+import sys
+import os
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
-def start_frontend():
-    root = tk.Tk()
-    app = AIApp(root)
-    root.mainloop()
+from frontend.app import WatsonApp
 
 if __name__ == "__main__":
-    # Start the frontend application
-    start_frontend()
+    app = WatsonApp()
+    app.mainloop()
