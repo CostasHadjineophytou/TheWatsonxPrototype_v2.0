@@ -3,26 +3,42 @@ from backend.services.project_service import ProjectService
 from logic.utils.file_manager import FileManager
 
 class ProjectManager:
-    """Handles business logic for project operations"""
+    """Business logic for project operations"""
     
-    def __init__(self):
-        self.project_service = ProjectService()
-        self.file_manager = FileManager()
+    def __init__(self, project_service: ProjectService, file_manager: FileManager = None):
+        self.project_service = project_service
+        self.file_manager = file_manager or FileManager()
 
     def get_projects(self):
-        """Get list of projects with simplified information"""
+        """Get list of projects with formatted information"""
         try:
             projects = self.project_service.list_projects()
             return [
                 {
-                    "id": project["metadata"]["guid"],
-                    "name": project["entity"]["name"]
+                    'name': project['entity']['name'],
+                    'id': project['metadata']['guid'],
+                    'description': project['entity'].get('description', '')
                 }
                 for project in projects
             ]
         except Exception as e:
-            logging.error(f"Error fetching projects: {e}")
-            return []
+            return {"error": str(e)}
+
+    def get_project_details(self, project_id: str):
+        """Get detailed information for a specific project"""
+        try:
+            projects = self.project_service.list_projects()
+            for project in projects:
+                if project['metadata']['guid'] == project_id:
+                    return {
+                        'name': project['entity']['name'],
+                        'id': project_id,
+                        'description': project['entity'].get('description', ''),
+                        'created_at': project['metadata']['created_at']
+                    }
+            return {"error": "Project not found"}
+        except Exception as e:
+            return {"error": str(e)}
 
     def select_project(self, project_id: str):
         """Select a project for use"""

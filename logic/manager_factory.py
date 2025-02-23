@@ -3,6 +3,7 @@ from backend.services.service_factory import ServiceFactory
 from logic.managers.model_manager import ModelManager
 from logic.managers.project_manager import ProjectManager
 from logic.managers.text_manager import TextManager
+from logic.utils.file_manager import FileManager
 
 class ManagerFactory:
     """Factory for creating manager instances"""
@@ -18,7 +19,9 @@ class ManagerFactory:
         return ModelManager(self.service_factory.create_model_service())
         
     def create_project_manager(self) -> ProjectManager:
-        return ProjectManager(self.service_factory.create_project_service())
+        project_service = self.service_factory.create_project_service()
+        file_manager = FileManager()
+        return ProjectManager(project_service, file_manager)
         
     def create_text_manager(self) -> TextManager:
         return TextManager(self.service_factory.create_text_service()) 
