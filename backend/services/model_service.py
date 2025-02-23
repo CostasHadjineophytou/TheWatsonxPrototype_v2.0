@@ -7,15 +7,13 @@ class ModelService:
         self.watson_client = watson_client
 
     def list_models(self):
-        """Get list of available foundation models"""
-        try:
-            return self.watson_client.client.foundation_models.get_model_specs()
-        except Exception as e:
-            raise RuntimeError(f"Failed to fetch models: {str(e)}")
+        """Get raw model list from Watson"""
+        return self.watson_client.client.foundation_models.get_model_specs()
 
     def get_model_specs(self, model_id: str):
-        """Get specifications for a specific model."""
-        try:
-            return self.watson_client.client.foundation_models.get_model_specs(model_id=model_id)
-        except Exception as e:
-            raise RuntimeError(f"Failed to get model specs: {str(e)}")
+        """Get detailed specs for a specific model"""
+        models = self.list_models()
+        for model in models.get('resources', []):
+            if model.get('model_id') == model_id:
+                return model
+        return None

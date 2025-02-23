@@ -9,17 +9,32 @@ class ModelFrame(ttk.LabelFrame):
         self.setup_ui()
         
     def setup_ui(self):
+        # Model selection frame
+        selection_frame = ttk.Frame(self)
+        selection_frame.pack(fill='x', padx=5, pady=5)
+        
+        ttk.Label(selection_frame, text="Select Model:").pack(side='left')
+        
         # Model dropdown
         self.model_var = tk.StringVar()
         self.models_combo = ttk.Combobox(
-            self, 
+            selection_frame, 
             textvariable=self.model_var,
-            state="readonly"
+            state="readonly",
+            width=40
         )
-        self.models_combo.pack(fill='x', padx=5, pady=5)
+        self.models_combo.pack(side='left', padx=5)
+        
+        # Details button
+        self.details_btn = ttk.Button(
+            selection_frame,
+            text="View Details",
+            command=self.show_details
+        )
+        self.details_btn.pack(side='left', padx=5)
         
         # Model info display
-        self.info_text = tk.Text(self, height=4, wrap='word')
+        self.info_text = tk.Text(self, height=6, wrap='word')
         self.info_text.pack(fill='x', padx=5, pady=5)
         
         self.load_models()
@@ -28,7 +43,7 @@ class ModelFrame(ttk.LabelFrame):
     def load_models(self):
         models = self.model_manager.get_available_models()
         self.model_list = models
-        names = [model.name for model in models if isinstance(model, ModelResponse)]
+        names = [f"{model.name} ({model.type})" for model in models]
         self.models_combo['values'] = names
         if names:
             self.models_combo.set(names[0])
@@ -37,7 +52,7 @@ class ModelFrame(ttk.LabelFrame):
     def on_model_selected(self, event):
         selected = self.model_var.get()
         for model in self.model_list:
-            if model.name == selected:
+            if f"{model.name} ({model.type})" == selected:
                 info = f"ID: {model.id}\nType: {model.type}"
                 if model.description:
                     info += f"\nDescription: {model.description}"
@@ -45,9 +60,47 @@ class ModelFrame(ttk.LabelFrame):
                 self.info_text.insert('1.0', info)
                 break
                 
+    def show_details(self):
+        selected = self.model_var.get()
+        for model in self.model_list:
+            if f"{model.name} ({model.type})" == selected:
+                details = self.model_manager.get_model_details(model.id)
+                if details:
+                    self.show_details_window(details)
+                break
+                
+    def show_details_window(self, details):
+        window = tk.Toplevel(self)
+        window.title(f"Model Details: {details['name']}")
+        window.geometry("600x400")
+        
+        text = tk.Text(window, wrap='word', padx=10, pady=10)
+        text.pack(fill='both', expand=True)
+        
+        # Format details
+        content = f"""Model: {details['name']}
+Provider: {details['provider']}
+Source: {details['source']}
+Parameters: {details['parameters']}
+
+Description:
+{details['description']}
+
+Detailed Description:
+{details['long_description']}
+
+Tasks: {', '.join(details['tasks'])}
+
+Limits:
+Max Sequence Length: {details['limits'].get('max_sequence_length', 'N/A')}
+Max Output Tokens: {details['limits'].get('max_output_tokens', 'N/A')}
+"""
+        text.insert('1.0', content)
+        text.config(state='disabled')
+        
     def get_selected_model(self):
         selected = self.model_var.get()
         for model in self.model_list:
-            if model.name == selected:
+            if f"{model.name} ({model.type})" == selected:
                 return model.id
         return None 

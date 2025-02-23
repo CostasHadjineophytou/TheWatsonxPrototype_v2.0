@@ -9,6 +9,8 @@ from backend.services.watson_client import WatsonClient
 def test_model_service():
     watson_client = WatsonClient()
     model_service = ModelService(watson_client)
+    all_models = model_service.list_models()
+    print(all_models)
     granite_info = model_service.get_model_specs("ibm/granite-20b-multilingual")
     print(granite_info)
 
