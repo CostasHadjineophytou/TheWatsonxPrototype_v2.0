@@ -1,0 +1,11 @@
+ibm_watsonx_ai
+requests
+pandas
+faiss-cpu
+numpy
+sentence-transformers
+ibm_watson
+ibm_cloud_sdk_core
+python-dotenv
+pydub
+pydub-1.1.0
