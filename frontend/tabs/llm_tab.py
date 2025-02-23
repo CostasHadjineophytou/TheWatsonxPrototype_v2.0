@@ -50,6 +50,9 @@ class LLMTab(ttk.Frame):
         # Bind keyboard shortcuts
         self.bind_shortcuts()
         
+        # Connect model selection to parameter updates
+        self.model_frame.models_combo.bind('<<ComboboxSelected>>', self.on_model_changed)
+        
     def bind_shortcuts(self):
         self.bind_all('<Control-Return>', lambda e: self.text_frame.on_generate())
         self.bind_all('<Control-r>', lambda e: self.refresh_all())
@@ -62,4 +65,11 @@ class LLMTab(ttk.Frame):
             self.status_var.set("Refreshed successfully")
         except Exception as e:
             messagebox.showerror("Refresh Error", str(e))
-            self.status_var.set("Refresh failed") 
+            self.status_var.set("Refresh failed")
+        
+    def on_model_changed(self, event):
+        """Update parameters when model changes"""
+        model_id = self.model_frame.get_selected_model()
+        if model_id:
+            details = self.model_manager.get_model_details(model_id)
+            self.param_frame.update_for_model(details) 

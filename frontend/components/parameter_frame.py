@@ -1,71 +1,199 @@
 import tkinter as tk
-from tkinter import ttk
+from tkinter import ttk, messagebox
 from backend.config.text_config import TextConfig
 
 class ParameterFrame(ttk.LabelFrame):
     def __init__(self, parent):
         super().__init__(parent, text="Model Parameters")
+        self.parent = parent
         self.setup_ui()
         
     def setup_ui(self):
+        # Create scrollable frame
+        canvas = tk.Canvas(self)
+        scrollbar = ttk.Scrollbar(self, orient="vertical", command=canvas.yview)
+        self.scrollable_frame = ttk.Frame(canvas)
+
+        canvas.configure(yscrollcommand=scrollbar.set)
+        
         # Temperature
-        ttk.Label(self, text="Temperature:").pack(anchor='w', padx=5)
-        self.temp_var = tk.DoubleVar(value=TextConfig.DEFAULT_PARAMS["temperature"])
-        self.temp_scale = ttk.Scale(
-            self, from_=0.0, to=1.0,
-            variable=self.temp_var,
-            orient='horizontal'
+        self.create_parameter_control(
+            "Temperature",
+            "temperature",
+            TextConfig.DEFAULT_PARAMS["temperature"],
+            widget_type="scale",
+            min_val=0.0,
+            max_val=1.0,
+            help_text="Controls randomness in the output (0.0 = deterministic, 1.0 = creative)"
         )
-        self.temp_scale.pack(fill='x', padx=5, pady=2)
         
         # Max tokens
-        ttk.Label(self, text="Max Tokens:").pack(anchor='w', padx=5)
-        self.max_tokens_var = tk.IntVar(value=TextConfig.DEFAULT_PARAMS["max_new_tokens"])
-        self.max_tokens_entry = ttk.Entry(self, textvariable=self.max_tokens_var)
-        self.max_tokens_entry.pack(fill='x', padx=5, pady=2)
+        self.create_parameter_control(
+            "Max Tokens",
+            "max_tokens",
+            TextConfig.DEFAULT_PARAMS["max_new_tokens"],
+            widget_type="entry",
+            help_text="Maximum number of tokens to generate"
+        )
+        
+        # Min tokens
+        self.create_parameter_control(
+            "Min Tokens",
+            "min_tokens",
+            TextConfig.DEFAULT_PARAMS["min_new_tokens"],
+            widget_type="entry",
+            help_text="Minimum number of tokens to generate"
+        )
         
         # Top P
-        ttk.Label(self, text="Top P:").pack(anchor='w', padx=5)
-        self.top_p_var = tk.DoubleVar(value=TextConfig.DEFAULT_PARAMS["top_p"])
-        self.top_p_scale = ttk.Scale(
-            self, from_=0.0, to=1.0,
-            variable=self.top_p_var,
-            orient='horizontal'
+        self.create_parameter_control(
+            "Top P",
+            "top_p",
+            TextConfig.DEFAULT_PARAMS["top_p"],
+            widget_type="scale",
+            min_val=0.0,
+            max_val=1.0,
+            help_text="Nucleus sampling: controls diversity via cumulative probability"
         )
-        self.top_p_scale.pack(fill='x', padx=5, pady=2)
         
         # Top K
-        ttk.Label(self, text="Top K:").pack(anchor='w', padx=5)
-        self.top_k_var = tk.IntVar(value=TextConfig.DEFAULT_PARAMS["top_k"])
-        self.top_k_entry = ttk.Entry(self, textvariable=self.top_k_var)
-        self.top_k_entry.pack(fill='x', padx=5, pady=2)
+        self.create_parameter_control(
+            "Top K",
+            "top_k",
+            TextConfig.DEFAULT_PARAMS["top_k"],
+            widget_type="entry",
+            help_text="Controls diversity by limiting to k most likely tokens"
+        )
         
-    def validate_parameters(self):
-        try:
-            max_tokens = self.max_tokens_var.get()
-            if max_tokens < 1 or max_tokens > 2048:
-                return "Max tokens must be between 1 and 2048"
-                
-            top_k = self.top_k_var.get()
-            if top_k < 1:
-                return "Top K must be positive"
-                
-            return None
-        except:
-            return "Invalid parameter values"
+        # Repetition Penalty
+        self.create_parameter_control(
+            "Repetition Penalty",
+            "repetition_penalty",
+            TextConfig.DEFAULT_PARAMS["repetition_penalty"],
+            widget_type="scale",
+            min_val=1.0,
+            max_val=2.0,
+            help_text="Penalizes repetition in generated text"
+        )
+        
+        # Random Seed
+        self.create_parameter_control(
+            "Random Seed",
+            "random_seed",
+            TextConfig.DEFAULT_PARAMS["random_seed"],
+            widget_type="entry",
+            help_text="Seed for reproducible generation"
+        )
+        
+        # Stop Sequences
+        self.create_parameter_control(
+            "Stop Sequences",
+            "stop_sequences",
+            TextConfig.DEFAULT_PARAMS["stop_sequences"],
+            widget_type="entry",
+            help_text="Sequences where generation should stop (comma-separated)"
+        )
+
+        # Pack the scrollable frame
+        canvas.create_window((0, 0), window=self.scrollable_frame, anchor="nw")
+        self.scrollable_frame.bind(
+            "<Configure>",
+            lambda e: canvas.configure(scrollregion=canvas.bbox("all"))
+        )
+        
+        canvas.pack(side="left", fill="both", expand=True)
+        scrollbar.pack(side="right", fill="y")
+
+    def create_parameter_control(self, label, param_name, default_value, 
+                               widget_type="entry", min_val=None, max_val=None,
+                               help_text=None):
+        """Create a parameter control with label and help tooltip"""
+        frame = ttk.Frame(self.scrollable_frame)
+        frame.pack(fill='x', padx=5, pady=2)
+        
+        # Label with help icon
+        label_frame = ttk.Frame(frame)
+        label_frame.pack(side='top', fill='x')
+        
+        ttk.Label(label_frame, text=label).pack(side='left')
+        if help_text:
+            help_btn = ttk.Label(label_frame, text=" (?)")
+            help_btn.pack(side='left')
+            self.create_tooltip(help_btn, help_text)
+        
+        # Control
+        if widget_type == "scale":
+            var = tk.DoubleVar(value=default_value)
+            control = ttk.Scale(
+                frame,
+                from_=min_val,
+                to=max_val,
+                variable=var,
+                orient='horizontal'
+            )
+        else:  # entry
+            var = tk.StringVar(value=str(default_value))
+            control = ttk.Entry(frame, textvariable=var)
             
+        control.pack(fill='x')
+        setattr(self, f"{param_name}_var", var)
+        setattr(self, f"{param_name}_control", control)
+
+    def create_tooltip(self, widget, text):
+        """Create a tooltip for a widget"""
+        def show_tooltip(event):
+            tooltip = tk.Toplevel()
+            tooltip.wm_overrideredirect(True)
+            tooltip.wm_geometry(f"+{event.x_root+10}+{event.y_root+10}")
+            
+            label = ttk.Label(tooltip, text=text, justify='left',
+                            background="#ffffe0", relief='solid', borderwidth=1)
+            label.pack()
+            
+            def hide_tooltip():
+                tooltip.destroy()
+            
+            tooltip.bind('<Leave>', lambda e: hide_tooltip())
+            widget.bind('<Leave>', lambda e: hide_tooltip())
+            
+        widget.bind('<Enter>', show_tooltip)
+
+    def update_for_model(self, model_details):
+        """Update parameter limits based on selected model"""
+        if not model_details:
+            return
+            
+        limits = model_details.get('limits', {})
+        
+        # Update max tokens limit
+        max_output = limits.get('max_output_tokens')
+        if max_output and hasattr(self, 'max_tokens_var'):
+            current = int(self.max_tokens_var.get())
+            if current > max_output:
+                self.max_tokens_var.set(max_output)
+
     def get_parameters(self):
-        error = self.validate_parameters()
-        if error:
-            raise ValueError(error)
+        """Get all parameter values with validation"""
+        try:
+            # Validate numeric inputs
+            max_tokens = int(self.max_tokens_var.get())
+            min_tokens = int(self.min_tokens_var.get())
+            top_k = int(self.top_k_var.get())
+            random_seed = int(self.random_seed_var.get())
             
-        return {
-            "temperature": self.temp_var.get(),
-            "max_tokens": self.max_tokens_var.get(),
-            "top_p": self.top_p_var.get(),
-            "top_k": self.top_k_var.get(),
-            "min_tokens": TextConfig.DEFAULT_PARAMS["min_new_tokens"],
-            "repetition_penalty": TextConfig.DEFAULT_PARAMS["repetition_penalty"],
-            "random_seed": TextConfig.DEFAULT_PARAMS["random_seed"],
-            "stop_sequences": TextConfig.DEFAULT_PARAMS["stop_sequences"]
-        } 
+            # Get stop sequences as list
+            stop_seqs = self.stop_sequences_var.get().split(',')
+            stop_seqs = [seq.strip() for seq in stop_seqs if seq.strip()]
+            
+            return {
+                "temperature": self.temperature_var.get(),
+                "max_tokens": max_tokens,
+                "min_tokens": min_tokens,
+                "top_p": self.top_p_var.get(),
+                "top_k": top_k,
+                "repetition_penalty": self.repetition_penalty_var.get(),
+                "random_seed": random_seed,
+                "stop_sequences": stop_seqs or TextConfig.DEFAULT_PARAMS["stop_sequences"]
+            }
+        except ValueError as e:
+            raise ValueError("Invalid parameter value. Please check all inputs are correct.") 
