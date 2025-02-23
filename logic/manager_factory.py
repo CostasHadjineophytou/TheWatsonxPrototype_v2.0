@@ -1,5 +1,5 @@
 from typing import Optional
-from backend.services.service_factory import ServiceFactory
+from backend.service_factory import ServiceFactory
 from logic.managers.model_manager import ModelManager
 from logic.managers.project_manager import ProjectManager
 from logic.managers.text_manager import TextManager

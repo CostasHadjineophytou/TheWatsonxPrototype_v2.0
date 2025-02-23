@@ -3,7 +3,7 @@ import os
 # Go up two levels: unitScripts -> tests -> backend -> root
 sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 
-from backend.services.service_factory import ServiceFactory
+from backend.service_factory import ServiceFactory
 import json
 from backend.config.text_config import TextConfig
 
