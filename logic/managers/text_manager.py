@@ -14,6 +14,11 @@ class TextRequest:
     project_id: str
     temperature: float = TextConfig.DEFAULT_PARAMS["temperature"]
     max_tokens: int = TextConfig.DEFAULT_PARAMS["max_new_tokens"]
+    min_tokens: int = TextConfig.DEFAULT_PARAMS["min_new_tokens"]
+    top_k: int = TextConfig.DEFAULT_PARAMS["top_k"]
+    top_p: float = TextConfig.DEFAULT_PARAMS["top_p"]
+    repetition_penalty: float = TextConfig.DEFAULT_PARAMS["repetition_penalty"]
+    random_seed: int = TextConfig.DEFAULT_PARAMS["random_seed"]
     stop_sequences: list = None
     system_prompt: str = TextConfig.SYSTEM_PROMPT
 
@@ -54,6 +59,11 @@ class TextManager:
             GenParams.DECODING_METHOD: DecodingMethods.SAMPLE,
             GenParams.TEMPERATURE: request.temperature,
             GenParams.MAX_NEW_TOKENS: request.max_tokens,
+            GenParams.MIN_NEW_TOKENS: request.min_tokens,
+            GenParams.TOP_K: request.top_k,
+            GenParams.TOP_P: request.top_p,
+            GenParams.REPETITION_PENALTY: request.repetition_penalty,
+            GenParams.RANDOM_SEED: request.random_seed,
             GenParams.STOP_SEQUENCES: request.stop_sequences or TextConfig.DEFAULT_PARAMS["stop_sequences"]
         }
 

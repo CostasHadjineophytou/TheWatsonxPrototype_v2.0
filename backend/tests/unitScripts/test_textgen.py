@@ -15,7 +15,12 @@ def test_text_service():
     prompt += "\n\nUser: What is the capital of France?"
     print(prompt)
     params = text_config.DEFAULT_PARAMS
-    response = text_service.process_prompt("ibm/granite-20b-multilingual", "b7031d21-6edc-492e-8cb5-cd303aa967c7", prompt, params)
+    response = text_service.process_prompt(
+        "ibm/granite-20b-multilingual", 
+        "project-id", 
+        prompt, 
+        params
+    )
     print(f"\nResponse: {response}")
 
 test_text_service()

@@ -12,7 +12,7 @@ class TextConfig:
         "temperature": 0.7,
         "top_p": 1.0,
         "top_k": 50,
-        "max_new_tokens": 1000,
+        "max_new_tokens": 100,
         "min_new_tokens": 1,
         "repetition_penalty": 1.0,
         "random_seed": 42,
