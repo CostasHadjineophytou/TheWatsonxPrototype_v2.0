@@ -1,6 +1,7 @@
 import sys
 import os
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+# Go up three levels: unitScripts -> tests -> backend -> root
+sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))))
 
 from backend.services.model_service import ModelService
 from backend.services.watson_client import WatsonClient
