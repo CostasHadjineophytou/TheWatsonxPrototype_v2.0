@@ -10,16 +10,13 @@ class NLUFrame(ttk.Frame):
         self._init_ui()
 
     def _init_ui(self):
-        # Input section
-        input_frame = ttk.LabelFrame(self, text="Input Text")
-        input_frame.pack(fill=tk.X, padx=5, pady=5)
-        
-        self.text_input = tk.Text(input_frame, height=5, width=50, wrap=tk.WORD)
-        self.text_input.pack(padx=5, pady=5, fill=tk.BOTH, expand=True)
+        # Left side - Analysis options and controls
+        left_frame = ttk.Frame(self)
+        left_frame.pack(side='left', fill='y', padx=5, pady=5)
 
         # Analysis options
-        options_frame = ttk.LabelFrame(self, text="Analysis Features")
-        options_frame.pack(fill=tk.X, padx=5, pady=5)
+        options_frame = ttk.LabelFrame(left_frame, text="Analysis Features")
+        options_frame.pack(fill='x', pady=5)
         
         self.selected_features = []
         self.checkboxes = {}
@@ -43,12 +40,12 @@ class NLUFrame(ttk.Frame):
                 variable=var,
                 command=lambda f=feature, v=var: self._update_features(f, v)
             )
-            cb.pack(anchor=tk.W, padx=5)
+            cb.pack(anchor=tk.W, padx=5, pady=2)
             self.checkboxes[feature] = var
 
-        # Control frame
-        control_frame = ttk.Frame(self)
-        control_frame.pack(fill=tk.X, padx=5, pady=5)
+        # Control frame with analyze button and progress
+        control_frame = ttk.Frame(left_frame)
+        control_frame.pack(fill='x', pady=5)
         
         self.analyze_btn = ttk.Button(
             control_frame, 
@@ -64,9 +61,37 @@ class NLUFrame(ttk.Frame):
         )
         self.progress.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=5)
 
+        # Status frame
+        status_frame = ttk.LabelFrame(left_frame, text="Status")
+        status_frame.pack(fill='x', pady=5)
+        
+        self.status_var = tk.StringVar()
+        self.status_bar = ttk.Label(
+            status_frame,
+            textvariable=self.status_var,
+            padding=5
+        )
+        self.status_bar.pack(fill='x')
+
+        # Right side - Text input and results
+        right_frame = ttk.Frame(self)
+        right_frame.pack(side='right', fill='both', expand=True, padx=5, pady=5)
+
+        # Input section
+        input_frame = ttk.LabelFrame(right_frame, text="Input Text")
+        input_frame.pack(fill='both', expand=True)
+        
+        self.text_input = tk.Text(
+            input_frame, 
+            height=10, 
+            width=50, 
+            wrap=tk.WORD
+        )
+        self.text_input.pack(padx=5, pady=5, fill='both', expand=True)
+
         # Results section
-        results_frame = ttk.LabelFrame(self, text="Analysis Results")
-        results_frame.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
+        results_frame = ttk.LabelFrame(right_frame, text="Analysis Results")
+        results_frame.pack(fill='both', expand=True)
         
         self.results_text = tk.Text(
             results_frame, 
@@ -75,7 +100,7 @@ class NLUFrame(ttk.Frame):
             wrap=tk.WORD,
             state=tk.DISABLED
         )
-        self.results_text.pack(padx=5, pady=5, fill=tk.BOTH, expand=True)
+        self.results_text.pack(padx=5, pady=5, fill='both', expand=True)
 
     def _update_features(self, feature: str, var: tk.BooleanVar):
         if var.get():
@@ -90,10 +115,14 @@ class NLUFrame(ttk.Frame):
         
         try:
             self._start_analysis()
+            self.status_var.set("Analyzing text...")
+            
             result = self.nlu_manager.analyze_text(text, self.selected_features)
             self._format_and_display_results(result)
+            self.status_var.set("Analysis complete")
             
         except Exception as e:
+            self.status_var.set("Analysis failed")
             messagebox.showerror("Analysis Error", str(e))
             
         finally:
@@ -139,7 +168,32 @@ class NLUFrame(ttk.Frame):
             )
             output.append(f"Entities:\n• {entity_text}")
             
-        # ... similar formatting for other features
+        # Format keywords
+        if 'keywords' in results:
+            keywords = results['keywords']
+            keyword_text = "\n• ".join(
+                f"{k['text']} (relevance: {k['relevance']:.2f})"
+                for k in keywords
+            )
+            output.append(f"Keywords:\n• {keyword_text}")
+            
+        # Format categories
+        if 'categories' in results:
+            categories = results['categories']
+            category_text = "\n• ".join(
+                f"{c['label']} (score: {c['score']:.2f})"
+                for c in categories
+            )
+            output.append(f"Categories:\n• {category_text}")
+            
+        # Format concepts
+        if 'concepts' in results:
+            concepts = results['concepts']
+            concept_text = "\n• ".join(
+                f"{c['text']} (relevance: {c['relevance']:.2f})"
+                for c in concepts
+            )
+            output.append(f"Concepts:\n• {concept_text}")
 
         self._show_result("\n\n".join(output))
 
