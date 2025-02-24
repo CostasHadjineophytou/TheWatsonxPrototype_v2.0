@@ -1,6 +1,5 @@
 import tkinter as tk
 from tkinter import ttk
-from logic.models.responses import ModelResponse
 
 class ModelFrame(ttk.LabelFrame):
     def __init__(self, parent, model_manager):
@@ -43,7 +42,7 @@ class ModelFrame(ttk.LabelFrame):
     def load_models(self):
         models = self.model_manager.get_available_models()
         self.model_list = models
-        names = [f"{model.name} ({model.type})" for model in models]
+        names = [self.model_manager.format_model_display(model) for model in models]
         self.models_combo['values'] = names
         if names:
             self.models_combo.set(names[0])
@@ -52,18 +51,19 @@ class ModelFrame(ttk.LabelFrame):
     def on_model_selected(self, event):
         selected = self.model_var.get()
         for model in self.model_list:
-            if f"{model.name} ({model.type})" == selected:
-                info = f"ID: {model.id}\nType: {model.type}"
-                if model.description:
-                    info += f"\nDescription: {model.description}"
+            if self.model_manager.format_model_display(model) == selected:
+                # Update info text
                 self.info_text.delete('1.0', tk.END)
-                self.info_text.insert('1.0', info)
+                self.info_text.insert('1.0', self.model_manager.format_model_info(model))
+                
+                # Always generate event (even on initial load)
+                self.event_generate('<<ModelChanged>>')
                 break
                 
     def show_details(self):
         selected = self.model_var.get()
         for model in self.model_list:
-            if f"{model.name} ({model.type})" == selected:
+            if self.model_manager.format_model_display(model) == selected:
                 details = self.model_manager.get_model_details(model.id)
                 if details:
                     self.show_details_window(details)
@@ -74,33 +74,41 @@ class ModelFrame(ttk.LabelFrame):
         window.title(f"Model Details: {details['name']}")
         window.geometry("600x400")
         
-        text = tk.Text(window, wrap='word', padx=10, pady=10)
-        text.pack(fill='both', expand=True)
+        # Create a frame with scrollbar
+        frame = ttk.Frame(window)
+        frame.pack(fill='both', expand=True, padx=10, pady=10)
         
-        # Format details
-        content = f"""Model: {details['name']}
-Provider: {details['provider']}
-Source: {details['source']}
-Parameters: {details['parameters']}
-
-Description:
-{details['description']}
-
-Detailed Description:
-{details['long_description']}
-
-Tasks: {', '.join(details['tasks'])}
-
-Limits:
-Max Sequence Length: {details['limits'].get('max_sequence_length', 'N/A')}
-Max Output Tokens: {details['limits'].get('max_output_tokens', 'N/A')}
-"""
+        # Add scrollbar
+        scrollbar = ttk.Scrollbar(frame)
+        scrollbar.pack(side='right', fill='y')
+        
+        # Use Text widget in read-only mode for scrolling capability
+        # (ttk.Label doesn't support scrolling)
+        text = tk.Text(frame, 
+                       wrap='word',
+                       yscrollcommand=scrollbar.set,
+                       borderwidth=0,  # Remove border
+                       highlightthickness=0,  # Remove highlight border
+                       cursor="arrow")  # Use normal cursor instead of text cursor
+        text.pack(side='left', fill='both', expand=True)
+        
+        # Configure scrollbar
+        scrollbar.config(command=text.yview)
+        
+        # Get formatted details from manager
+        content = self.model_manager.format_model_details(details)
         text.insert('1.0', content)
+        
+        # Make it read-only
         text.config(state='disabled')
+        
+        # Add close button at bottom
+        close_btn = ttk.Button(window, text="Close", command=window.destroy)
+        close_btn.pack(pady=5)
         
     def get_selected_model(self):
         selected = self.model_var.get()
         for model in self.model_list:
-            if f"{model.name} ({model.type})" == selected:
+            if self.model_manager.format_model_display(model) == selected:
                 return model.id
         return None 

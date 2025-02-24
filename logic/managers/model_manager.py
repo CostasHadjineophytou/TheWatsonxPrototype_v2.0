@@ -40,15 +40,106 @@ class ModelManager:
             'long_description': specs.get('long_description'),
             'parameters': specs.get('number_params'),
             'tasks': [task.get('id') for task in specs.get('tasks', [])],
-            'limits': specs.get('model_limits', {})
+            'limits': specs.get('model_limits', {}),
+            'display_name': f"{specs.get('label', 'Unnamed')} ({specs.get('provider', 'Unknown')})"
         }
 
-    def _format_models(self, models):
-        """Format model list for frontend use"""
-        # Format logic here
-        pass
+    def format_model_display(self, model: ModelResponse) -> str:
+        """Format model for display in UI"""
+        return f"{model.name} ({model.type})"
 
-    def _format_model_specs(self, specs):
-        """Format model specifications for frontend use"""
-        # Format logic here
-        pass 
+    def format_model_info(self, model: ModelResponse) -> str:
+        """Format model info for display"""
+        info = [
+            f"ID: {model.id}",
+            f"Type: {model.type}"
+        ]
+        if model.description:
+            info.append(f"Description: {model.description}")
+        return "\n".join(info)
+
+    def _format_models(self, models: list) -> dict:
+        """Format model list for advanced use cases"""
+        formatted = {
+            'by_provider': {},  # Group models by provider
+            'by_size': {},      # Group by parameter size
+            'by_task': {},      # Group by task type
+            'stats': {          # Basic statistics
+                'total_count': len(models),
+                'providers': set(),
+                'tasks': set()
+            }
+        }
+        
+        for model in models:
+            # Group by provider
+            if model.type not in formatted['by_provider']:
+                formatted['by_provider'][model.type] = []
+            formatted['by_provider'][model.type].append(model)
+            
+            # Track statistics
+            formatted['stats']['providers'].add(model.type)
+            
+            # Get full details for additional grouping
+            details = self.get_model_details(model.id)
+            if details:
+                # Group by size
+                size = details['parameters']
+                if size not in formatted['by_size']:
+                    formatted['by_size'][size] = []
+                formatted['by_size'][size].append(model)
+                
+                # Group by task
+                for task in details['tasks']:
+                    if task not in formatted['by_task']:
+                        formatted['by_task'][task] = []
+                    formatted['by_task'][task].append(model)
+                    formatted['stats']['tasks'].add(task)
+        
+        return formatted
+
+    def _format_model_specs(self, specs: dict) -> dict:
+        """Format model specifications with additional metadata"""
+        return {
+            'basic_info': {
+                'name': specs.get('label'),
+                'provider': specs.get('provider'),
+                'size': specs.get('number_params')
+            },
+            'capabilities': {
+                'tasks': [task.get('id') for task in specs.get('tasks', [])],
+                'functions': [fn.get('id') for fn in specs.get('functions', [])]
+            },
+            'performance': {
+                'max_sequence_length': specs.get('model_limits', {}).get('max_sequence_length'),
+                'max_output_tokens': specs.get('model_limits', {}).get('max_output_tokens')
+            },
+            'lifecycle': {
+                'status': specs.get('lifecycle', [{}])[0].get('id'),
+                'start_date': specs.get('lifecycle', [{}])[0].get('start_date')
+            },
+            'quotas': {
+                'lite': specs.get('limits', {}).get('lite', {}),
+                'professional': specs.get('limits', {}).get('v2-professional', {}),
+                'standard': specs.get('limits', {}).get('v2-standard', {})
+            }
+        }
+
+    def format_model_details(self, details: dict) -> str:
+        """Format complete model details for display"""
+        return f"""Model: {details['name']}
+Provider: {details['provider']}
+Source: {details['source']}
+Parameters: {details['parameters']}
+
+Description:
+{details['description']}
+
+Detailed Description:
+{details['long_description']}
+
+Tasks: {', '.join(details['tasks'])}
+
+Limits:
+Max Sequence Length: {details['limits'].get('max_sequence_length', 'N/A')}
+Max Output Tokens: {details['limits'].get('max_output_tokens', 'N/A')}""" 

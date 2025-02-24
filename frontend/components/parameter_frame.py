@@ -10,7 +10,7 @@ class ParameterFrame(ttk.LabelFrame):
         
     def setup_ui(self):
         # Create scrollable frame
-        canvas = tk.Canvas(self)
+        canvas = tk.Canvas(self, height=400)
         scrollbar = ttk.Scrollbar(self, orient="vertical", command=canvas.yview)
         self.scrollable_frame = ttk.Frame(canvas)
 
@@ -163,14 +163,33 @@ class ParameterFrame(ttk.LabelFrame):
         if not model_details:
             return
             
+        print(f"Updating parameters for model: {model_details['name']}")
+        
+        # Reset all parameters to defaults
+        self.temperature_var.set(TextConfig.DEFAULT_PARAMS["temperature"])
+        self.max_tokens_var.set(TextConfig.DEFAULT_PARAMS["max_new_tokens"])
+        self.min_tokens_var.set(TextConfig.DEFAULT_PARAMS["min_new_tokens"])
+        self.top_p_var.set(TextConfig.DEFAULT_PARAMS["top_p"])
+        self.top_k_var.set(TextConfig.DEFAULT_PARAMS["top_k"])
+        self.repetition_penalty_var.set(TextConfig.DEFAULT_PARAMS["repetition_penalty"])
+        self.random_seed_var.set(TextConfig.DEFAULT_PARAMS["random_seed"])
+        self.stop_sequences_var.set(",".join(TextConfig.DEFAULT_PARAMS["stop_sequences"]))
+        
+        # Then apply model-specific limits
         limits = model_details.get('limits', {})
         
-        # Update max tokens limit
+        # Update max tokens limit if specified by model
         max_output = limits.get('max_output_tokens')
         if max_output and hasattr(self, 'max_tokens_var'):
             current = int(self.max_tokens_var.get())
             if current > max_output:
+                print(f"Adjusting max tokens from {current} to {max_output}")
                 self.max_tokens_var.set(max_output)
+        
+        # Force UI update
+        self.update()
+        for widget in self.scrollable_frame.winfo_children():
+            widget.update()
 
     def get_parameters(self):
         """Get all parameter values with validation"""

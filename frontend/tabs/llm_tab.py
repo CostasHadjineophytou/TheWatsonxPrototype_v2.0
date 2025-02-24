@@ -34,14 +34,18 @@ class LLMTab(ttk.Frame):
         self.param_frame = ParameterFrame(left_frame)
         self.param_frame.pack(fill='x', pady=5)
         
-        # Status bar
+        # Status frame
+        status_frame = ttk.LabelFrame(left_frame, text="Status")
+        status_frame.pack(fill='x', pady=5)
+        
         self.status_var = tk.StringVar()
         self.status_bar = ttk.Label(
-            left_frame, 
+            status_frame, 
             textvariable=self.status_var,
-            foreground=Colors.ACCENT
+            foreground=Colors.ACCENT,
+            padding=5
         )
-        self.status_bar.pack(fill='x', pady=5)
+        self.status_bar.pack(fill='x')
         
         # Right side - Text input/output
         self.text_frame = TextFrame(self, self.text_manager)
@@ -51,7 +55,7 @@ class LLMTab(ttk.Frame):
         self.bind_shortcuts()
         
         # Connect model selection to parameter updates
-        self.model_frame.models_combo.bind('<<ComboboxSelected>>', self.on_model_changed)
+        self.model_frame.bind('<<ModelChanged>>', self.on_model_changed)
         
     def bind_shortcuts(self):
         self.bind_all('<Control-Return>', lambda e: self.text_frame.on_generate())

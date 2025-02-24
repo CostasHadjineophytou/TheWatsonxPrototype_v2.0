@@ -1,12 +1,11 @@
 import tkinter as tk
 from tkinter import ttk
 from tkinter import messagebox
-from logic.managers.project_manager import ProjectManager
 
 class ProjectFrame(ttk.LabelFrame):
     def __init__(self, parent, project_manager):
         super().__init__(parent, text="Project Selection")
-        self.project_manager = project_manager
+        self.project_manager = project_manager  # Already passed from LLMTab
         self.setup_ui()
         
     def setup_ui(self):
