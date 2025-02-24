@@ -32,9 +32,9 @@ class ModelFrame(ttk.LabelFrame):
         )
         self.details_btn.pack(side='left', padx=5)
         
-        # Model info display
-        self.info_text = tk.Text(self, height=6, wrap='word')
-        self.info_text.pack(fill='x', padx=5, pady=5)
+        # Model info display - replace Text with Label
+        self.info_label = ttk.Label(self, wraplength=300)  # Adjust wraplength as needed
+        self.info_label.pack(fill='x', padx=5, pady=5)
         
         self.load_models()
         self.models_combo.bind('<<ComboboxSelected>>', self.on_model_selected)
@@ -52,9 +52,8 @@ class ModelFrame(ttk.LabelFrame):
         selected = self.model_var.get()
         for model in self.model_list:
             if self.model_manager.format_model_display(model) == selected:
-                # Update info text
-                self.info_text.delete('1.0', tk.END)
-                self.info_text.insert('1.0', self.model_manager.format_model_info(model))
+                # Update info label
+                self.info_label.config(text=self.model_manager.format_model_info(model))
                 
                 # Always generate event (even on initial load)
                 self.event_generate('<<ModelChanged>>')
@@ -74,35 +73,60 @@ class ModelFrame(ttk.LabelFrame):
         window.title(f"Model Details: {details['name']}")
         window.geometry("600x400")
         
-        # Create a frame with scrollbar
-        frame = ttk.Frame(window)
-        frame.pack(fill='both', expand=True, padx=10, pady=10)
+        # Create scrollable frame
+        container = ttk.Frame(window)
+        container.pack(fill='both', expand=True, padx=10, pady=10)
         
-        # Add scrollbar
-        scrollbar = ttk.Scrollbar(frame)
+        canvas = tk.Canvas(container)
+        scrollbar = ttk.Scrollbar(container, orient="vertical", command=canvas.yview)
+        scrollable_frame = ttk.Frame(canvas)
+        
+        canvas.configure(yscrollcommand=scrollbar.set)
+        
+        # Add content using ttk.Labels
+        sections = [
+            ("Basic Information", [
+                f"Model: {details['name']}",
+                f"Provider: {details['provider']}",
+                f"Source: {details['source']}",
+                f"Parameters: {details['parameters']}"
+            ]),
+            ("Description", [details['description']]),
+            ("Detailed Description", [details['long_description']]),
+            ("Tasks", [', '.join(details['tasks'])]),
+            ("Limits", [
+                f"Max Sequence Length: {details['limits'].get('max_sequence_length', 'N/A')}",
+                f"Max Output Tokens: {details['limits'].get('max_output_tokens', 'N/A')}"
+            ])
+        ]
+        
+        # Create labels for each section
+        for section_title, section_items in sections:
+            # Section header
+            header = ttk.Label(scrollable_frame, 
+                              text=section_title,
+                              style='Header.TLabel',
+                              font=('Segoe UI', 10, 'bold'))
+            header.pack(anchor='w', pady=(10, 5))
+            
+            # Section content
+            for item in section_items:
+                content = ttk.Label(scrollable_frame,
+                                  text=item,
+                                  wraplength=550,
+                                  justify='left')
+                content.pack(anchor='w', padx=10)
+        
+        # Configure scrolling
+        canvas.create_window((0, 0), window=scrollable_frame, anchor='nw', width=550)
+        scrollable_frame.bind("<Configure>", 
+                             lambda e: canvas.configure(scrollregion=canvas.bbox("all")))
+        
+        # Pack scrollbar and canvas
         scrollbar.pack(side='right', fill='y')
+        canvas.pack(side='left', fill='both', expand=True)
         
-        # Use Text widget in read-only mode for scrolling capability
-        # (ttk.Label doesn't support scrolling)
-        text = tk.Text(frame, 
-                       wrap='word',
-                       yscrollcommand=scrollbar.set,
-                       borderwidth=0,  # Remove border
-                       highlightthickness=0,  # Remove highlight border
-                       cursor="arrow")  # Use normal cursor instead of text cursor
-        text.pack(side='left', fill='both', expand=True)
-        
-        # Configure scrollbar
-        scrollbar.config(command=text.yview)
-        
-        # Get formatted details from manager
-        content = self.model_manager.format_model_details(details)
-        text.insert('1.0', content)
-        
-        # Make it read-only
-        text.config(state='disabled')
-        
-        # Add close button at bottom
+        # Add close button
         close_btn = ttk.Button(window, text="Close", command=window.destroy)
         close_btn.pack(pady=5)
         
