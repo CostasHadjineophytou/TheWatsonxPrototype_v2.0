@@ -41,7 +41,7 @@ class WatsonApp(tk.Tk):
         self.notebook.add(self.nlu_tab, text="Text Analysis")
         
         # Placeholder tabs for future services
-        for future_tab in ["NLU", "Speech-to-Text", "Text-to-Speech", "Dataset Management"]:
+        for future_tab in ["Speech-to-Text", "Text-to-Speech", "Dataset Management"]:
             frame = ttk.Frame(self.notebook)
             self.notebook.add(frame, text=future_tab)
             ttk.Label(frame, text=f"{future_tab} - Coming Soon").pack(pady=20)
