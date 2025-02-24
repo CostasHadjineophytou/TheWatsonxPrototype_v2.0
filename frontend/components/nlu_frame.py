@@ -1,9 +1,8 @@
 import tkinter as tk
 from tkinter import ttk, messagebox
-from logic.models.errors import LogicError
 
 class NLUFrame(ttk.Frame):
-    """Frame for NLU analysis controls"""
+    """UI frame for NLU analysis"""
     
     def __init__(self, parent, nlu_manager):
         super().__init__(parent)
@@ -86,20 +85,19 @@ class NLUFrame(ttk.Frame):
                 self.selected_features.remove(feature)
 
     def _analyze_text(self):
+        """Handle analysis request"""
         text = self.text_input.get("1.0", tk.END).strip()
         
         try:
             self._start_analysis()
             result = self.nlu_manager.analyze_text(text, self.selected_features)
-            self._display_results(result)
-            self._end_analysis(success=True)
+            self._format_and_display_results(result)
             
-        except LogicError as e:
-            self._end_analysis(success=False)
-            messagebox.showwarning("Analysis Warning", e.message)
         except Exception as e:
-            self._end_analysis(success=False)
             messagebox.showerror("Analysis Error", str(e))
+            
+        finally:
+            self._end_analysis()
 
     def _start_analysis(self):
         """Show analysis in progress"""
@@ -107,30 +105,41 @@ class NLUFrame(ttk.Frame):
         self.analyze_btn.config(text="Analyzing...")
         self.progress.start(10)
         
-    def _end_analysis(self, success: bool):
+    def _end_analysis(self):
         """End analysis state"""
         self.analyze_btn.config(state=tk.NORMAL)
         self.analyze_btn.config(text="Analyze Text")
         self.progress.stop()
 
-    def _display_results(self, results: dict):
-        """Display formatted results"""
+    def _format_and_display_results(self, results: dict):
+        """Format results for display"""
         if not results:
             self._show_result("No analysis results available")
             return
 
         output = []
-        for feature, value in results.items():
-            if value:  # Only show features with results
-                feature_name = feature.replace('_', ' ').title()
-                if isinstance(value, dict):  # For emotion
-                    formatted = ", ".join(f"{k}: {v:.2f}" for k, v in value.items())
-                    output.append(f"{feature_name}:\n{formatted}")
-                elif isinstance(value, list):  # For entities, keywords, etc.
-                    formatted = "\n• " + "\n• ".join(value)
-                    output.append(f"{feature_name}:\n{formatted}")
-                else:
-                    output.append(f"{feature_name}: {value}")
+        
+        # Format sentiment
+        if 'sentiment' in results:
+            sentiment = results['sentiment']
+            output.append(f"Sentiment: {sentiment['label']} ({sentiment['score']:.2f})")
+            
+        # Format emotion
+        if 'emotion' in results:
+            emotions = results['emotion']
+            emotion_text = ", ".join(f"{k}: {v:.2f}" for k, v in emotions.items())
+            output.append(f"Emotions:\n{emotion_text}")
+            
+        # Format entities
+        if 'entities' in results:
+            entities = results['entities']
+            entity_text = "\n• ".join(
+                f"{e['text']} ({e['type']}) - {e['confidence']:.2f}"
+                for e in entities
+            )
+            output.append(f"Entities:\n• {entity_text}")
+            
+        # ... similar formatting for other features
 
         self._show_result("\n\n".join(output))
 

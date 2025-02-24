@@ -4,7 +4,7 @@ from .base_service import BaseService
 from ..utils.errors import ServiceError, AuthenticationError
 
 class NLUService(BaseService):
-    """Handles Natural Language Understanding operations"""
+    """Handles raw NLU API interactions"""
     
     def __init__(self, credentials_manager):
         super().__init__()
@@ -28,31 +28,16 @@ class NLUService(BaseService):
                 details={"error": str(e)}
             )
 
-    def analyze_text(self, text: str, features: list) -> dict:
-        """Analyze text with specified features"""
+    def analyze_text(self, text: str, features: dict) -> dict:
+        """Raw API call to analyze text"""
         try:
             if not self._nlu:
                 self.initialize()
 
-            features_dict = {feature: {} for feature in features}
-            if 'all' in features:
-                features_dict = {
-                    'sentiment': {},
-                    'emotion': {},
-                    'entities': {},
-                    'keywords': {},
-                    'categories': {},
-                    'concepts': {},
-                    'relations': {},
-                    'semantic_roles': {}
-                }
-
-            response = self._nlu.analyze(
+            return self._nlu.analyze(
                 text=text,
-                features=features_dict
+                features=features
             ).get_result()
-            
-            return response
         except Exception as e:
             raise ServiceError(
                 message="NLU analysis failed",
