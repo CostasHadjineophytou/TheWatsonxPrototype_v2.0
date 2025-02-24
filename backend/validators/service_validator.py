@@ -53,19 +53,28 @@ class ServiceValidator:
 
     def validate_nlu_request(self, text: str, features: dict) -> None:
         """Validate NLU service request"""
+        # Check text type
         if not isinstance(text, str):
             raise ValidationError(
                 message="Text must be a string",
                 code="INVALID_TEXT_TYPE"
             )
 
+        # Check empty text
+        if not text or not text.strip():
+            raise ValidationError(
+                message="Text cannot be empty",
+                code="EMPTY_TEXT"
+            )
+
+        # Check features type
         if not isinstance(features, dict):
             raise ValidationError(
                 message="Features must be a dictionary",
                 code="INVALID_FEATURES_TYPE"
             )
 
-        # Check for required feature parameters
+        # Check feature parameters
         for feature, params in features.items():
             if not isinstance(params, dict):
                 raise ValidationError(
