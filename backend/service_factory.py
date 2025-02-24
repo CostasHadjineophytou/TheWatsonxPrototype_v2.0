@@ -5,11 +5,13 @@ from backend.services.project_service import ProjectService
 from backend.services.text_service import TextService
 from backend.services.credentials_manager import CredentialsManager
 from backend.services.nlu_service import NLUService
+from .validators.config_validator import ConfigValidator
 
 class ServiceFactory:
     """Factory for creating service instances"""
     
     def __init__(self):
+        ConfigValidator.validate_config()
         self.watson_client = WatsonClient()
         self.iam_service = IAMTokenService()
         
