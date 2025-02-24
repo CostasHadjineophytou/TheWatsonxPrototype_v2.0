@@ -33,7 +33,12 @@ class ModelManager(BaseManager):
                 code="MODEL_FETCH_ERROR",
                 details={"error": str(e)}
             ))
-            return []
+            return [ModelResponse(
+                id="ERROR",
+                name="",
+                type="",
+                error=f"Failed to fetch models: {str(e)}"
+            )]
 
     def get_model_details(self, model_id: str):
         """Get detailed model information"""

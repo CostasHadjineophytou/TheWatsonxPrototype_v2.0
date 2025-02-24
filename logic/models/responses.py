@@ -9,6 +9,7 @@ class ModelResponse:
     type: str
     description: Optional[str] = None
     parameters: Optional[Dict] = None
+    error: Optional[str] = None
 
 @dataclass
 class TextResponse:
@@ -16,7 +17,8 @@ class TextResponse:
     text: str
     model_id: str
     prompt: str
-    parameters_used: Dict 
+    parameters_used: Dict
+    error: Optional[str] = None
 
 @dataclass
 class ProjectResponse:

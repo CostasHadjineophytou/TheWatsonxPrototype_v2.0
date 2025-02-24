@@ -32,7 +32,7 @@ class ProjectManager(BaseManager):
                 code="PROJECT_FETCH_ERROR",
                 details={"error": str(e)}
             ))
-            return []
+            return [{"error": f"Failed to fetch projects: {str(e)}"}]
 
     def get_project_details(self, project_id: str):
         """Get detailed information for a specific project"""
