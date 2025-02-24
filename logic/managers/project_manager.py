@@ -54,4 +54,16 @@ class ProjectManager:
             projects = self.project_service.list_projects()
             self.file_manager.save_json("user_projects.json", projects)
         except Exception as e:
-            logging.error(f"Error saving projects: {e}") 
+            logging.error(f"Error saving projects: {e}")
+
+    def format_project_display(self, project: dict) -> str:
+        """Format project name for display"""
+        return project.get('name', 'Unnamed')
+
+    def get_project_by_name(self, name: str) -> dict:
+        """Get project details by name"""
+        projects = self.get_projects()
+        for project in projects:
+            if project.get('name') == name:
+                return project
+        return None 

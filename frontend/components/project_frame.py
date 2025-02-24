@@ -22,7 +22,7 @@ class ProjectFrame(ttk.LabelFrame):
         try:
             projects = self.project_manager.get_projects()
             self.project_list = projects
-            names = [p.get('name', 'Unnamed') for p in projects]
+            names = [self.project_manager.format_project_display(p) for p in projects]
             self.projects_combo['values'] = names
             if names:
                 self.projects_combo.set(names[0])
@@ -32,7 +32,5 @@ class ProjectFrame(ttk.LabelFrame):
     def get_selected_project(self):
         """Get the ID of the selected project"""
         selected = self.project_var.get()
-        for project in self.project_list:
-            if project.get('name') == selected:
-                return project.get('id')
-        return None 
+        project = self.project_manager.get_project_by_name(selected)
+        return project.get('id') if project else None 
