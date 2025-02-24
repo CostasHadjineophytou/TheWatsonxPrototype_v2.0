@@ -1,9 +1,12 @@
-from backend.services.watson_client import WatsonClient
+from .base_service import BaseService
+from .watson_client import WatsonClient
+from ..utils.errors import APIError, ServiceError
 
-class ModelService:
+class ModelService(BaseService):
     """Handles model listing and metadata operations"""
     
     def __init__(self, watson_client: WatsonClient):
+        super().__init__()
         self.watson_client = watson_client
 
     def list_models(self):

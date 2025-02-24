@@ -1,6 +1,7 @@
 import logging
 from backend.config.config import Config
 from backend.utils.base_client import BaseClient
+from backend.utils.errors import AuthenticationError
 
 class IAMTokenService(BaseClient):
     """Handles IBM Cloud IAM token operations"""
@@ -33,11 +34,18 @@ class IAMTokenService(BaseClient):
             
             token = response.get('access_token')
             if not token:
-                raise ValueError("No access token in response")
+                raise AuthenticationError(
+                    message="No access token in response",
+                    code="NO_TOKEN",
+                    details={"response": response}
+                )
                 
             logging.info("Successfully retrieved IAM token")
             return token
             
         except Exception as e:
             logging.error(f"Failed to get IAM token: {str(e)}")
-            raise RuntimeError(f"Failed to get IAM token: {str(e)}") 
+            raise AuthenticationError(
+                message=f"Failed to get IAM token: {str(e)}",
+                code="TOKEN_ERROR"
+            ) 

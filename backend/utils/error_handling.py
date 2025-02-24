@@ -1,23 +1,34 @@
-class IBMCloudError(Exception):
-    """Base exception for IBM Cloud related errors"""
-    pass
+from .errors import (
+    BackendError, APIError, AuthenticationError, 
+    ServiceError, ValidationError, ConfigurationError
+)
 
-class AuthenticationError(IBMCloudError):
-    """Raised when authentication fails"""
-    pass
-
-class ServiceError(IBMCloudError):
-    """Raised when a service operation fails"""
-    pass
-
-class ConfigurationError(IBMCloudError):
-    """Raised when configuration is invalid"""
-    pass
-
-def handle_api_error(error: Exception) -> IBMCloudError:
+def handle_api_error(error: Exception) -> BackendError:
     """Convert API exceptions to our custom exceptions"""
-    if "authentication" in str(error).lower():
-        return AuthenticationError(str(error))
-    if "configuration" in str(error).lower():
-        return ConfigurationError(str(error))
-    return ServiceError(str(error))
+    error_str = str(error).lower()
+    
+    if "authentication" in error_str:
+        return AuthenticationError(
+            message=str(error),
+            code="AUTH_ERROR"
+        )
+    if "configuration" in error_str:
+        return ConfigurationError(
+            message=str(error),
+            code="CONFIG_ERROR"
+        )
+    if "not found" in error_str:
+        return APIError(
+            message=str(error),
+            code="NOT_FOUND"
+        )
+    if "rate limit" in error_str:
+        return ServiceError(
+            message=str(error),
+            code="RATE_LIMIT"
+        )
+        
+    return APIError(
+        message=str(error),
+        code="API_ERROR"
+    )
