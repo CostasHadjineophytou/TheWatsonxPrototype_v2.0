@@ -1,9 +1,9 @@
 from dataclasses import dataclass
-from typing import Optional
+from typing import Optional, Dict
 
 @dataclass
 class LogicError:
-    """Standard error format for logic layer"""
+    """Base error class for logic layer"""
     message: str
     code: str
-    details: Optional[dict] = None 
+    details: Optional[Dict] = None

@@ -17,3 +17,12 @@ class TextResponse:
     model_id: str
     prompt: str
     parameters_used: Dict 
+
+@dataclass
+class ProjectResponse:
+    """Formatted project information"""
+    id: str
+    name: str
+    description: Optional[str] = None
+    created_at: Optional[str] = None
+    error: Optional[str] = None 
