@@ -1,6 +1,8 @@
 import logging
 from backend.utils.base_client import BaseClient
 from backend.services.iam_token import IAMTokenService
+from backend.utils.error_handling import handle_api_error
+from backend.validators.service_validator import ServiceValidator
 import requests
 
 class CredentialsManager(BaseClient):
@@ -10,10 +12,16 @@ class CredentialsManager(BaseClient):
         super().__init__()
         self.iam_service = IAMTokenService()
         self.resource_url = "https://resource-controller.cloud.ibm.com/v2/resource_instances"
+        self.validator = ServiceValidator()
 
     def get_service_credentials(self, service_name: str):
         """Get credentials for a specific service"""
         try:
+            # Example: validate that we have an API key/ creds
+            self.validator.validate_credentials({
+                "api_key": self.api_key  # or any needed info
+            })
+
             token = self.iam_service.get_iam_token()
             headers = {
                 'Authorization': f'Bearer {token}',
@@ -35,7 +43,7 @@ class CredentialsManager(BaseClient):
             
         except Exception as e:
             logging.error(f"Failed to get service credentials: {str(e)}")
-            raise RuntimeError(f"Failed to get service credentials: {str(e)}")
+            raise handle_api_error(e)
 
     def _get_or_create_credentials(self, instance_id: str, headers: dict):
         """Get existing credentials or create new ones"""

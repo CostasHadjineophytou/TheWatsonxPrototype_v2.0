@@ -5,6 +5,8 @@ from .iam_token import IAMTokenService
 from backend.config.config import Config
 from ..utils.errors import ServiceError
 from backend.utils.base_client import BaseClient
+from ..validators.service_validator import ServiceValidator
+from ..utils.error_handling import handle_api_error
 
 class ProjectService(BaseClient):
     """Handles IBM Cloud project-related API calls"""
@@ -13,6 +15,7 @@ class ProjectService(BaseClient):
         super().__init__()
         self.watson_client = watson_client
         self.iam_service = iam_service or IAMTokenService()
+        self.validator = ServiceValidator()
         self.projects_url = Config.IBM_CLOUD_PROJECTS_URL
 
     def list_projects(self):
@@ -30,7 +33,7 @@ class ProjectService(BaseClient):
             
         except Exception as e:
             logging.error(f"Failed to list projects: {str(e)}")
-            raise RuntimeError(f"Failed to list projects: {str(e)}")
+            raise handle_api_error(e)
 
     def get_project_details(self, project_id: str) -> dict:
         """Get detailed project information"""
@@ -51,4 +54,4 @@ class ProjectService(BaseClient):
                 details={"project_id": project_id}
             )
         except Exception as e:
-            raise self.handle_error(e, "getting project details") 
+            raise handle_api_error(e) 

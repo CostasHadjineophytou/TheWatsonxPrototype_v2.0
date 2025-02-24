@@ -1,6 +1,7 @@
 from typing import Dict, Any, Tuple
 from ..utils.errors import ValidationError, AuthenticationError
 from ..config.nlu_config import NLUConfig
+from ..config.text_config import TextConfig
 
 class ServiceValidator:
     """Validates raw service inputs before API calls"""
@@ -51,6 +52,70 @@ class ServiceValidator:
                 code="INVALID_MODEL_ID",
                 details={"model_id": model_id}
             )
+
+    @staticmethod
+    def validate_text_params(params: Dict[str, Any]) -> None:
+        """Validate text generation parameters."""
+        required_params = TextConfig.DEFAULT_PARAMS.keys()
+        missing = [param for param in required_params if param not in params]
+        invalid = [param for param in params if param not in required_params]
+        
+        if missing or invalid:
+            raise ValidationError(
+                message="Invalid text generation parameters",
+                code="INVALID_TEXT_PARAMS",
+                details={
+                    "missing_params": missing,
+                    "invalid_params": invalid
+                }
+            )
+
+    @staticmethod
+    def validate_nlu_features(features: Dict[str, Any]) -> None:
+        """Validate NLU features configuration."""
+        valid_features = NLUConfig.FEATURES.keys()
+        invalid = [feat for feat in features if feat not in valid_features]
+        
+        if invalid:
+            raise ValidationError(
+                message="Invalid NLU features",
+                code="INVALID_NLU_FEATURES",
+                details={
+                    "invalid_features": invalid,
+                    "valid_features": list(valid_features)
+                }
+            )
+
+        # Validate feature parameters
+        for feature, params in features.items():
+            default_params = NLUConfig.get_feature_params(feature)
+            invalid_params = [p for p in params if p not in default_params]
+            if invalid_params:
+                raise ValidationError(
+                    message=f"Invalid parameters for feature: {feature}",
+                    code="INVALID_FEATURE_PARAMS",
+                    details={
+                        "feature": feature,
+                        "invalid_params": invalid_params,
+                        "valid_params": list(default_params.keys())
+                    }
+                )
+
+    @staticmethod
+    def validate_nlu_request(text: str, features: Dict[str, Any]) -> None:
+        """Example combined NLU request validation."""
+        if not isinstance(text, str) or not text.strip():
+            raise ValidationError(
+                message="Text must be a non-empty string",
+                code="INVALID_TEXT"
+            )
+        if not isinstance(features, dict):
+            raise ValidationError(
+                message="Features must be a dictionary",
+                code="INVALID_FEATURES"
+            )
+        # Then validate the set of features
+        ServiceValidator.validate_nlu_features(features)
 
     def validate_nlu_request(self, text: str, features: dict) -> None:
         """Validate NLU service request"""

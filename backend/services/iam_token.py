@@ -2,6 +2,8 @@ import logging
 from backend.config.config import Config
 from backend.utils.base_client import BaseClient
 from backend.utils.errors import AuthenticationError
+from backend.utils.error_handling import handle_api_error
+from backend.validators.service_validator import ServiceValidator
 
 class IAMTokenService(BaseClient):
     """Handles IBM Cloud IAM token operations"""
@@ -9,10 +11,14 @@ class IAMTokenService(BaseClient):
     def __init__(self):
         super().__init__()
         self.token_url = Config.IAM_TOKEN_URL
+        self.validator = ServiceValidator()
 
     def get_iam_token(self):
         """Retrieve IAM token using API key"""
         try:
+            # Example if you want credentials validation
+            self.validator.validate_credentials({"api_key": self.api_key})
+            
             headers = {
                 'Content-Type': 'application/x-www-form-urlencoded',
                 'Accept': 'application/json',
@@ -45,7 +51,4 @@ class IAMTokenService(BaseClient):
             
         except Exception as e:
             logging.error(f"Failed to get IAM token: {str(e)}")
-            raise AuthenticationError(
-                message=f"Failed to get IAM token: {str(e)}",
-                code="TOKEN_ERROR"
-            ) 
+            raise handle_api_error(e) 

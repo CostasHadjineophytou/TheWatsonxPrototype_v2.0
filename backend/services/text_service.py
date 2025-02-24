@@ -1,7 +1,8 @@
 from ibm_watsonx_ai.foundation_models import ModelInference
 from backend.services.watson_client import WatsonClient
-from backend.utils.errors import BackendError, AuthenticationError, ServiceError, APIError
+from backend.utils.errors import BackendError, AuthenticationError, ServiceError, APIError, ValidationError
 from backend.validators.service_validator import ServiceValidator
+from backend.utils.error_handling import handle_api_error
 
 class TextService:
     """Handles text generation operations"""
@@ -16,7 +17,7 @@ class TextService:
             # Validate inputs
             self.validator.validate_model_id(model_id)
             self.validator.validate_project_id(project_id)
-            self.validator.validate_model_params(params)
+            self.validator.validate_text_params(params)
             self.validator.validate_credentials(self.watson_client.credentials)
 
             # Create model instance
@@ -29,19 +30,9 @@ class TextService:
             # Generate text
             return model.generate_text(prompt=prompt, params=params)
 
+        except ValidationError as e:
+            # Re-raise validation errors or handle them
+            raise e
         except Exception as e:
-            # Convert any IBM Cloud errors to our error types
-            if "authentication" in str(e).lower():
-                raise AuthenticationError(
-                    message=f"Authentication failed: {str(e)}",
-                    code="AUTH_FAILED"
-                )
-            if "rate limit" in str(e).lower():
-                raise ServiceError(
-                    message=f"Rate limit exceeded: {str(e)}",
-                    code="RATE_LIMIT"
-                )
-            raise APIError(
-                message=f"API error: {str(e)}",
-                code="API_ERROR"
-            ) 
+            # Optionally unify to custom errors:
+            raise handle_api_error(e) 
