@@ -1,15 +1,14 @@
 from ibm_watsonx_ai.foundation_models import ModelInference
-from backend.services.watson_client import WatsonClient
-from backend.utils.errors import BackendError, AuthenticationError, ServiceError, APIError, ValidationError
-from backend.validators.service_validator import ServiceValidator
-from backend.utils.error_handling import handle_api_error
+from .watson_client import WatsonClient
+from .base_service import BaseService
+from ..utils.errors import ValidationError
 
-class TextService:
+class TextService(BaseService):
     """Handles text generation operations"""
     
     def __init__(self, watson_client: WatsonClient):
+        super().__init__()
         self.watson_client = watson_client
-        self.validator = ServiceValidator()
 
     def process_prompt(self, model_id: str, project_id: str, prompt: str, params: dict):
         """Process a prompt using a specific model"""
@@ -31,9 +30,7 @@ class TextService:
             return model.generate_text(prompt=prompt, params=params)
 
         except ValidationError as e:
-            # Re-raise validation errors or handle them
-            print(f"Validation error: {e}")
+            # Re-raise validation errors
             raise e
         except Exception as e:
-            # Optionally unify to custom errors:
-            raise handle_api_error(e) 
+            raise self.handle_error(e, "Failed to process text prompt") 

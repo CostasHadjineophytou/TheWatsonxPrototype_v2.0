@@ -1,8 +1,6 @@
 import logging
 from backend.config.config import Config
-from backend.utils.base_client import BaseClient
-from backend.validators.service_validator import ServiceValidator
-from backend.utils.error_handling import handle_api_error
+from backend.services.base_client import BaseClient
 from backend.utils.errors import AuthenticationError
 
 class IAMTokenService(BaseClient):
@@ -12,12 +10,11 @@ class IAMTokenService(BaseClient):
         # BaseClient checks for API key and may raise ConfigurationError if missing
         super().__init__()
         self.token_url = Config.IAM_TOKEN_URL
-        self.validator = ServiceValidator()
 
     def get_iam_token(self):
         """Retrieve IAM token using the configured API key."""
         try:
-            # Optionally validate the credentials locally (beyond just having an API key)
+            # Validate credentials
             self.validator.validate_credentials({"api_key": self.api_key})
 
             headers = {
@@ -59,5 +56,4 @@ class IAMTokenService(BaseClient):
 
         except Exception as e:
             # Convert any other unknown exception to our custom error types
-            logging.error(f"Failed to get IAM token: {str(e)}")
-            raise handle_api_error(e) 
+            raise self.handle_error(e, "Failed to get IAM token") 

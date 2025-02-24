@@ -1,9 +1,7 @@
 from ibm_watson import NaturalLanguageUnderstandingV1
 from ibm_cloud_sdk_core.authenticators import IAMAuthenticator
 from .base_service import BaseService
-from ..utils.errors import ServiceError, AuthenticationError, ValidationError
-from ..validators.service_validator import ServiceValidator
-from ..utils.error_handling import handle_api_error
+from ..utils.errors import AuthenticationError, ValidationError
 
 class NLUService(BaseService):
     """Handles raw NLU API interactions"""
@@ -11,7 +9,6 @@ class NLUService(BaseService):
     def __init__(self, credentials_manager):
         super().__init__()
         self.credentials_manager = credentials_manager
-        self.validator = ServiceValidator()
         self._nlu = None
 
     def initialize(self):
@@ -46,4 +43,4 @@ class NLUService(BaseService):
         except ValidationError:
             raise  # Let validation issues bubble up
         except Exception as e:
-            raise handle_api_error(e) 
+            raise self.handle_error(e, "Failed to analyze text") 

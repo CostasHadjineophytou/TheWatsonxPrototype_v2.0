@@ -2,13 +2,15 @@ import requests
 import logging
 from backend.config.config import Config
 from backend.utils.errors import ConfigurationError
-from backend.utils.error_handling import handle_api_error
+from ..utils.base_handler import BaseHandler
 
-class BaseClient:
+class BaseClient(BaseHandler):
     """Base client for making HTTP requests to IBM Cloud services"""
     
     def __init__(self):
+        super().__init__()
         self.api_key = Config.IBM_CLOUD_API_KEY
+        
         if not self.api_key:
             raise ConfigurationError(
                 message="API key is missing or not configured",
@@ -41,5 +43,4 @@ class BaseClient:
             response.raise_for_status()
             return response.json()
         except requests.exceptions.RequestException as e:
-            logging.error(f"API request failed: {str(e)}")
-            raise handle_api_error(e) 
+            raise self.handle_error(e, f"Request failed: {method} {url}") 

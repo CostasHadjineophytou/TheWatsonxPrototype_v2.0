@@ -1,19 +1,15 @@
 import logging
-from backend.utils.base_client import BaseClient
-from backend.services.iam_token import IAMTokenService
-from backend.validators.service_validator import ServiceValidator
-from backend.utils.error_handling import handle_api_error
-from backend.utils.errors import AuthenticationError
+from backend.services.base_client import BaseClient
+from .iam_token import IAMTokenService
+from ..utils.errors import AuthenticationError
 
 class CredentialsManager(BaseClient):
     """Manages service credentials for IBM Cloud services."""
     
     def __init__(self):
-        # BaseClient checks for API key and may raise ConfigurationError if missing
         super().__init__()
         self.iam_service = IAMTokenService()
         self.resource_url = "https://resource-controller.cloud.ibm.com/v2/resource_instances"
-        self.validator = ServiceValidator()
 
     def get_service_credentials(self, service_name: str):
         """Get credentials for a specific service by name."""
@@ -48,15 +44,11 @@ class CredentialsManager(BaseClient):
                 details={"service_name": service_name}
             )
 
-        except (AuthenticationError) as auth_err:
-            # Already a known authentication problem
+        except AuthenticationError as auth_err:
             logging.error(f"Service credentials error: {auth_err}")
             raise auth_err
-
         except Exception as e:
-            # Convert other unknown exceptions to custom error types
-            logging.error(f"Failed to get service credentials: {str(e)}")
-            raise handle_api_error(e)
+            raise self.handle_error(e, "Failed to get service credentials")
 
     def _get_or_create_credentials(self, instance_id: str, headers: dict):
         """Get existing credentials or create new ones if none exist."""
@@ -71,7 +63,6 @@ class CredentialsManager(BaseClient):
             )
             keys = key_response.get('resources', [])
             if keys:
-                # Return first credentials
                 return keys[0].get('credentials')
 
             # 2. Create new credentials if none exist
@@ -89,5 +80,4 @@ class CredentialsManager(BaseClient):
             return create_response.get('credentials')
 
         except Exception as e:
-            logging.error(f"Failed to retrieve or create resource keys: {str(e)}")
-            raise handle_api_error(e) 
+            raise self.handle_error(e, "Failed to retrieve or create resource keys") 
