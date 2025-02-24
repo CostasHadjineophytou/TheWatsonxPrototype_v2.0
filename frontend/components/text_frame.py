@@ -59,26 +59,16 @@ class TextFrame(ttk.Frame):
         self.master.status_var.set("Generation complete" if success else "Generation failed")
         
     def on_generate(self):
-        if not self.input_text.get('1.0', 'end-1c').strip():
-            messagebox.showwarning("Input Required", "Please enter some text to generate")
-            return
-            
-        # Get project ID
-        project_id = self.master.project_frame.get_selected_project()
-        if not project_id:
-            messagebox.showerror("Error", "Please select a project")
-            return
-            
-        self.start_generation()
-        
         try:
-            # Get model ID and parameters
+            text = self.input_text.get('1.0', 'end-1c')
             model_id = self.master.model_frame.get_selected_model()
+            project_id = self.master.project_frame.get_selected_project()
             params = self.master.param_frame.get_parameters()
             
-            # Create and process request
+            self.start_generation()
+            
             request = TextRequest(
-                text=self.input_text.get('1.0', 'end-1c'),
+                text=text,
                 model_id=model_id,
                 project_id=project_id,
                 **params
@@ -86,19 +76,19 @@ class TextFrame(ttk.Frame):
             
             result = self.text_manager.process_text(request)
             
-            # Update output
-            self.output_text.config(state='normal')
-            self.output_text.delete('1.0', tk.END)
-            self.output_text.insert('1.0', result.get('result', 'Error generating text'))
-            self.output_text.config(state='disabled')
-            
-            if 'error' in result:
-                raise Exception(result['error'])
+            if hasattr(result, 'error') and result.error:
+                raise Exception(result.error)
                 
+            self.update_output(result.text)
             self.end_generation(success=True)
             
         except Exception as e:
             self.end_generation(success=False)
             messagebox.showerror("Error", str(e))
-        finally:
-            self.end_generation() 
+
+    def update_output(self, text: str):
+        """Update output text area"""
+        self.output_text.config(state='normal')
+        self.output_text.delete('1.0', tk.END)
+        self.output_text.insert('1.0', text)
+        self.output_text.config(state='disabled') 

@@ -5,6 +5,8 @@ from ibm_watsonx_ai.metanames import GenTextParamsMetaNames as GenParams
 from backend.services.text_service import TextService
 from backend.config.text_config import TextConfig
 from logic.models.text_request import TextRequest
+from logic.models.errors import LogicError
+from logic.models.responses import TextResponse
 
 @dataclass
 class TextRequest:
@@ -28,9 +30,34 @@ class TextManager:
     def __init__(self, text_service: TextService):
         self.text_service = text_service
 
-    def process_text(self, request: TextRequest):
+    def validate_request(self, text: str, model_id: str, project_id: str) -> tuple[bool, str]:
+        """Validate text generation request"""
+        if not text.strip():
+            return False, "Please enter some text to generate"
+        if not model_id:
+            return False, "Please select a model"
+        if not project_id:
+            return False, "Please select a project"
+        return True, ""
+
+    def process_text(self, request: TextRequest) -> TextResponse:
         """Process text generation request"""
         try:
+            # Validate request
+            is_valid, error = self.validate_request(
+                request.text, 
+                request.model_id, 
+                request.project_id
+            )
+            if not is_valid:
+                return TextResponse(
+                    text="",
+                    model_id=request.model_id,
+                    prompt=request.text,
+                    parameters_used={},
+                    error=error
+                )
+
             full_prompt = self._build_prompt(request)
             params = self._prepare_params(request)
             
@@ -41,9 +68,21 @@ class TextManager:
                 params=params
             )
             
-            return {"result": self._clean_response(result)}
+            cleaned_result = self._clean_response(result)
+            return TextResponse(
+                text=cleaned_result,
+                model_id=request.model_id,
+                prompt=full_prompt,
+                parameters_used=params
+            )
         except Exception as e:
-            return {"error": str(e)}
+            return TextResponse(
+                text="",
+                model_id=request.model_id,
+                prompt=request.text,
+                parameters_used={},
+                error=str(e)
+            )
 
     def _build_prompt(self, request: TextRequest) -> str:
         """Build the complete prompt with system prompt"""
