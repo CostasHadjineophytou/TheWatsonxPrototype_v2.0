@@ -111,31 +111,51 @@ class ParameterFrame(ttk.LabelFrame):
         frame = ttk.Frame(self.scrollable_frame)
         frame.pack(fill='x', padx=5, pady=2)
         
-        # Label with help icon
-        label_frame = ttk.Frame(frame)
-        label_frame.pack(side='top', fill='x')
+        # Left side - Label and control
+        control_frame = ttk.Frame(frame)
+        control_frame.pack(side='left', fill='x', expand=True)
         
+        # Label row
+        label_frame = ttk.Frame(control_frame)
+        label_frame.pack(fill='x')
         ttk.Label(label_frame, text=label).pack(side='left')
-        if help_text:
-            help_btn = ttk.Label(label_frame, text=" (?)")
-            help_btn.pack(side='left')
-            self.create_tooltip(help_btn, help_text)
         
-        # Control
+        # Control row with value display
+        input_frame = ttk.Frame(control_frame)
+        input_frame.pack(fill='x', pady=(2,0))
+        
         if widget_type == "scale":
             var = tk.DoubleVar(value=default_value)
+            # Scale
             control = ttk.Scale(
-                frame,
+                input_frame,
                 from_=min_val,
                 to=max_val,
                 variable=var,
                 orient='horizontal'
             )
+            control.pack(side='left', fill='x', expand=True)
+            
+            # Value display
+            value_label = ttk.Label(input_frame, width=5)
+            value_label.pack(side='left', padx=(5,0))
+            
+            # Update value label when scale moves
+            def on_scale_change(*args):
+                value_label.config(text=f"{var.get():.2f}")
+            var.trace('w', on_scale_change)
+            on_scale_change()  # Initial value
         else:  # entry
             var = tk.StringVar(value=str(default_value))
-            control = ttk.Entry(frame, textvariable=var)
-            
-        control.pack(fill='x')
+            control = ttk.Entry(input_frame, textvariable=var)
+            control.pack(side='left', fill='x', expand=True)
+        
+        # Right side - Help icon
+        if help_text:
+            help_btn = ttk.Label(frame, text=" (?)", cursor="question_arrow")
+            help_btn.pack(side='right', padx=(5,0))
+            self.create_tooltip(help_btn, help_text)
+        
         setattr(self, f"{param_name}_var", var)
         setattr(self, f"{param_name}_control", control)
 
