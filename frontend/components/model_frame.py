@@ -5,9 +5,9 @@ class ModelFrame(ttk.LabelFrame):
     def __init__(self, parent, model_manager):
         super().__init__(parent, text="Model Selection")
         self.model_manager = model_manager
-        self.setup_ui()
+        self._init_ui()
         
-    def setup_ui(self):
+    def _init_ui(self):
         # Model selection frame
         selection_frame = ttk.Frame(self)
         selection_frame.pack(fill='x', padx=5, pady=5)

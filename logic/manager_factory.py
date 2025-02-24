@@ -5,6 +5,7 @@ from logic.managers.project_manager import ProjectManager
 from logic.managers.text_manager import TextManager
 from logic.utils.file_manager import FileManager
 from logic.validators import ModelValidator, ProjectValidator, TextValidator
+from logic.managers.nlu_manager import NLUManager
 
 class ManagerFactory:
     """Factory for creating manager instances"""
@@ -30,4 +31,8 @@ class ManagerFactory:
         
     def create_text_manager(self) -> TextManager:
         service = self.service_factory.create_text_service()
-        return TextManager(service, self.text_validator) 
+        return TextManager(service, self.text_validator)
+
+    def create_nlu_manager(self) -> NLUManager:
+        nlu_service = self.service_factory.create_nlu_service()
+        return NLUManager(nlu_service) 

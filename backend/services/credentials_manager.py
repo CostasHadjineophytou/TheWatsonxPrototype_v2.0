@@ -1,6 +1,7 @@
 import logging
 from backend.utils.base_client import BaseClient
 from backend.services.iam_token import IAMTokenService
+import requests
 
 class CredentialsManager(BaseClient):
     """Manages service credentials for IBM Cloud services"""
@@ -8,8 +9,9 @@ class CredentialsManager(BaseClient):
     def __init__(self):
         super().__init__()
         self.iam_service = IAMTokenService()
+        self.resource_url = "https://resource-controller.cloud.ibm.com/v2/resource_instances"
 
-    def get_service_credentials(self, service_name):
+    def get_service_credentials(self, service_name: str):
         """Get credentials for a specific service"""
         try:
             token = self.iam_service.get_iam_token()
@@ -19,36 +21,41 @@ class CredentialsManager(BaseClient):
             }
             
             # First get the service instance
-            resource_url = "https://resource-controller.cloud.ibm.com/v2/resource_instances"
-            instances = self._make_request('GET', resource_url, headers=headers)
-            
-            for instance in instances.get('resources', []):
-                if service_name.lower() in instance['name'].lower():
-                    instance_id = instance['guid']
-                    
-                    # Get or create credentials for the instance
+            response = requests.get(self.resource_url, headers=headers)
+            if response.status_code != 200:
+                raise Exception(f"Failed to get instances: {response.text}")
+
+            resources = response.json()['resources']
+            for resource in resources:
+                if service_name.lower() in resource['name'].lower():
+                    instance_id = resource['guid']
                     return self._get_or_create_credentials(instance_id, headers)
                     
-            raise ValueError(f"No instance found for service: {service_name}")
+            raise Exception(f"No instance found for service: {service_name}")
             
         except Exception as e:
             logging.error(f"Failed to get service credentials: {str(e)}")
             raise RuntimeError(f"Failed to get service credentials: {str(e)}")
 
-    def _get_or_create_credentials(self, instance_id, headers):
+    def _get_or_create_credentials(self, instance_id: str, headers: dict):
         """Get existing credentials or create new ones"""
-        keys_url = f"https://resource-controller.cloud.ibm.com/v2/resource_instances/{instance_id}/resource_keys"
+        keys_url = f"{self.resource_url}/{instance_id}/resource_keys"
         
         # Try to get existing credentials
-        existing_keys = self._make_request('GET', keys_url, headers=headers)
-        if existing_keys.get('resources'):
-            return existing_keys['resources'][0]['credentials']
-            
+        key_response = requests.get(keys_url, headers=headers)
+        if key_response.status_code == 200:
+            keys = key_response.json()['resources']
+            if keys:
+                return keys[0]['credentials']
+        
         # Create new credentials if none exist
         data = {
-            'name': f'auto-generated-credentials',
+            'name': 'auto-generated-credentials',
             'source': instance_id,
             'role': 'Writer'
         }
-        new_key = self._make_request('POST', keys_url, headers=headers, data=data)
-        return new_key['credentials'] 
+        create_response = requests.post(keys_url, headers=headers, json=data)
+        if create_response.status_code == 201:
+            return create_response.json()['credentials']
+            
+        raise Exception(f"Failed to create credentials: {create_response.text}") 

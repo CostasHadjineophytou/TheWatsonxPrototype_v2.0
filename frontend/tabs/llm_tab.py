@@ -4,20 +4,20 @@ from frontend.components.model_frame import ModelFrame
 from frontend.components.parameter_frame import ParameterFrame
 from frontend.components.project_frame import ProjectFrame
 from frontend.components.text_frame import TextFrame
-from logic.manager_factory import ManagerFactory
 from frontend.styles.colors import Colors
 
 class LLMTab(ttk.Frame):
-    def __init__(self, parent):
+    def __init__(self, parent, text_manager, model_manager, project_manager):
         super().__init__(parent)
-        self.factory = ManagerFactory()
-        self.model_manager = self.factory.create_model_manager()
-        self.project_manager = self.factory.create_project_manager()
-        self.text_manager = self.factory.create_text_manager()
         
-        self.setup_ui()
+        # Receive managers from parent
+        self.text_manager = text_manager
+        self.model_manager = model_manager
+        self.project_manager = project_manager
         
-    def setup_ui(self):
+        self._init_ui()
+    
+    def _init_ui(self):
         # Left side - Model selection and parameters
         left_frame = ttk.Frame(self)
         left_frame.pack(side='left', fill='y', padx=5, pady=5)
@@ -31,8 +31,8 @@ class LLMTab(ttk.Frame):
         self.model_frame.pack(fill='x', pady=5)
         
         # Parameter controls
-        self.param_frame = ParameterFrame(left_frame)
-        self.param_frame.pack(fill='x', pady=5)
+        self.parameter_frame = ParameterFrame(left_frame)
+        self.parameter_frame.pack(fill='x', pady=5)
         
         # Status frame
         status_frame = ttk.LabelFrame(left_frame, text="Status")
@@ -48,7 +48,13 @@ class LLMTab(ttk.Frame):
         self.status_bar.pack(fill='x')
         
         # Right side - Text input/output
-        self.text_frame = TextFrame(self, self.text_manager)
+        self.text_frame = TextFrame(
+            self, 
+            self.text_manager,
+            self.model_frame,
+            self.project_frame,
+            self.parameter_frame
+        )
         self.text_frame.pack(side='right', fill='both', expand=True, padx=5, pady=5)
         
         # Bind keyboard shortcuts
@@ -76,4 +82,4 @@ class LLMTab(ttk.Frame):
         model_id = self.model_frame.get_selected_model()
         if model_id:
             details = self.model_manager.get_model_details(model_id)
-            self.param_frame.update_for_model(details) 
+            self.parameter_frame.update_for_model(details) 

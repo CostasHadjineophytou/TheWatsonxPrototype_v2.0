@@ -4,6 +4,7 @@ from backend.services.model_service import ModelService
 from backend.services.project_service import ProjectService
 from backend.services.text_service import TextService
 from backend.services.credentials_manager import CredentialsManager
+from backend.services.nlu_service import NLUService
 
 class ServiceFactory:
     """Factory for creating service instances"""
@@ -22,4 +23,8 @@ class ServiceFactory:
         return TextService(self.watson_client)
         
     def create_credentials_manager(self) -> CredentialsManager:
-        return CredentialsManager() 
+        return CredentialsManager()
+
+    def create_nlu_service(self) -> NLUService:
+        credentials_manager = self.create_credentials_manager()
+        return NLUService(credentials_manager) 

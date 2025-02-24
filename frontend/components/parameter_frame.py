@@ -4,11 +4,11 @@ from backend.config.text_config import TextConfig
 
 class ParameterFrame(ttk.LabelFrame):
     def __init__(self, parent):
-        super().__init__(parent, text="Model Parameters")
+        super().__init__(parent, text="Generation Parameters")
         self.parent = parent
-        self.setup_ui()
+        self._init_ui()
         
-    def setup_ui(self):
+    def _init_ui(self):
         # Create scrollable frame
         canvas = tk.Canvas(self, height=400)
         scrollbar = ttk.Scrollbar(self, orient="vertical", command=canvas.yview)

@@ -3,12 +3,15 @@ from tkinter import ttk, messagebox
 from logic.models.text_request import TextRequest
 
 class TextFrame(ttk.Frame):
-    def __init__(self, parent, text_manager):
+    def __init__(self, parent, text_manager, model_frame, project_frame, parameter_frame):
         super().__init__(parent)
         self.text_manager = text_manager
-        self.setup_ui()
+        self.model_frame = model_frame
+        self.project_frame = project_frame
+        self.parameter_frame = parameter_frame
+        self._init_ui()
         
-    def setup_ui(self):
+    def _init_ui(self):
         # Input area
         input_frame = ttk.LabelFrame(self, text="Input")
         input_frame.pack(fill='both', expand=True, padx=5, pady=5)
@@ -61,9 +64,9 @@ class TextFrame(ttk.Frame):
     def on_generate(self):
         try:
             text = self.input_text.get('1.0', 'end-1c')
-            model_id = self.master.model_frame.get_selected_model()
-            project_id = self.master.project_frame.get_selected_project()
-            params = self.master.param_frame.get_parameters()
+            model_id = self.model_frame.get_selected_model()
+            project_id = self.project_frame.get_selected_project()
+            params = self.parameter_frame.get_parameters()
             
             self.start_generation()
             

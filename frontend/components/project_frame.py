@@ -5,10 +5,10 @@ from tkinter import messagebox
 class ProjectFrame(ttk.LabelFrame):
     def __init__(self, parent, project_manager):
         super().__init__(parent, text="Project Selection")
-        self.project_manager = project_manager  # Already passed from LLMTab
-        self.setup_ui()
+        self.project_manager = project_manager  # Injected
+        self._init_ui()
         
-    def setup_ui(self):
+    def _init_ui(self):
         self.project_var = tk.StringVar()
         self.projects_combo = ttk.Combobox(
             self, 
