@@ -1,5 +1,7 @@
 import tkinter as tk
 from tkinter import ttk, messagebox
+from backend.config.nlu_config import NLUConfig
+from .tooltip import ToolTip
 
 class NLUFrame(ttk.Frame):
     """UI frame for NLU analysis"""
@@ -21,27 +23,21 @@ class NLUFrame(ttk.Frame):
         self.selected_features = []
         self.checkboxes = {}
         
-        features = [
-            ("Sentiment", "sentiment"),
-            ("Emotion", "emotion"),
-            ("Entities", "entities"),
-            ("Keywords", "keywords"),
-            ("Categories", "categories"),
-            ("Concepts", "concepts"),
-            ("Relations", "relations"),
-            ("Semantic Roles", "semantic_roles")
-        ]
-        
-        for label, feature in features:
+        # Get features from config
+        for display_name, feature_id in NLUConfig.get_ui_features():
             var = tk.BooleanVar()
             cb = ttk.Checkbutton(
                 options_frame, 
-                text=label,
+                text=display_name,
                 variable=var,
-                command=lambda f=feature, v=var: self._update_features(f, v)
+                command=lambda f=feature_id, v=var: self._update_features(f, v)
             )
+            # Add tooltip with description
+            tooltip = NLUConfig.get_feature_description(feature_id)
+            ToolTip(cb, tooltip)
+            
             cb.pack(anchor=tk.W, padx=5, pady=2)
-            self.checkboxes[feature] = var
+            self.checkboxes[feature_id] = var
 
         # Control frame with analyze button and progress
         control_frame = ttk.Frame(left_frame)
@@ -150,50 +146,113 @@ class NLUFrame(ttk.Frame):
         
         # Format sentiment
         if 'sentiment' in results:
-            sentiment = results['sentiment']
-            output.append(f"Sentiment: {sentiment['label']} ({sentiment['score']:.2f})")
+            if 'error' in results['sentiment']:
+                output.append(f"Sentiment: {results['sentiment']['error']}")
+            else:
+                sentiment = results['sentiment']
+                output.append(f"Sentiment: {sentiment['label']} ({sentiment['score']:.2f})")
             
         # Format emotion
         if 'emotion' in results:
-            emotions = results['emotion']
-            emotion_text = ", ".join(f"{k}: {v:.2f}" for k, v in emotions.items())
-            output.append(f"Emotions:\n{emotion_text}")
+            if 'error' in results['emotion']:
+                output.append(f"Emotions: {results['emotion']['error']}")
+            else:
+                emotion_text = ", ".join(f"{k}: {v:.2f}" for k, v in results['emotion'].items())
+                output.append(f"Emotions:\n{emotion_text}")
             
         # Format entities
         if 'entities' in results:
-            entities = results['entities']
-            entity_text = "\n• ".join(
-                f"{e['text']} ({e['type']}) - {e['confidence']:.2f}"
-                for e in entities
-            )
-            output.append(f"Entities:\n• {entity_text}")
+            if isinstance(results['entities'], dict) and 'error' in results['entities']:
+                output.append(f"Entities: {results['entities']['error']}")
+            else:
+                entities = results['entities']
+                if entities:
+                    entity_text = "\n• ".join(
+                        f"{e['text']} ({e['type']}) - {e['confidence']:.2f}"
+                        for e in entities
+                    )
+                    output.append(f"Entities:\n• {entity_text}")
+                else:
+                    output.append("Entities: None found")
             
         # Format keywords
         if 'keywords' in results:
-            keywords = results['keywords']
-            keyword_text = "\n• ".join(
-                f"{k['text']} (relevance: {k['relevance']:.2f})"
-                for k in keywords
-            )
-            output.append(f"Keywords:\n• {keyword_text}")
+            if isinstance(results['keywords'], dict) and 'error' in results['keywords']:
+                output.append(f"Keywords: {results['keywords']['error']}")
+            else:
+                keywords = results['keywords']
+                if keywords:
+                    keyword_text = "\n• ".join(
+                        f"{k['text']} (relevance: {k['relevance']:.2f})"
+                        for k in keywords
+                    )
+                    output.append(f"Keywords:\n• {keyword_text}")
+                else:
+                    output.append("Keywords: None found")
             
         # Format categories
         if 'categories' in results:
-            categories = results['categories']
-            category_text = "\n• ".join(
-                f"{c['label']} (score: {c['score']:.2f})"
-                for c in categories
-            )
-            output.append(f"Categories:\n• {category_text}")
+            if isinstance(results['categories'], dict) and 'error' in results['categories']:
+                output.append(f"Categories: {results['categories']['error']}")
+            else:
+                categories = results['categories']
+                if categories:
+                    category_text = "\n• ".join(
+                        f"{c['label']} (score: {c['score']:.2f})"
+                        for c in categories
+                    )
+                    output.append(f"Categories:\n• {category_text}")
+                else:
+                    output.append("Categories: None found")
             
         # Format concepts
         if 'concepts' in results:
-            concepts = results['concepts']
-            concept_text = "\n• ".join(
-                f"{c['text']} (relevance: {c['relevance']:.2f})"
-                for c in concepts
-            )
-            output.append(f"Concepts:\n• {concept_text}")
+            if isinstance(results['concepts'], dict) and 'error' in results['concepts']:
+                output.append(f"Concepts: {results['concepts']['error']}")
+            else:
+                concepts = results['concepts']
+                if concepts:
+                    concept_text = "\n• ".join(
+                        f"{c['text']} (relevance: {c['relevance']:.2f})"
+                        for c in concepts
+                    )
+                    output.append(f"Concepts:\n• {concept_text}")
+                else:
+                    output.append("Concepts: None found")
+
+        # Format relations
+        if 'relations' in results:
+            if isinstance(results['relations'], dict) and 'error' in results['relations']:
+                output.append(f"Relations: {results['relations']['error']}")
+            else:
+                relations = results['relations']
+                if relations:
+                    relation_text = "\n• ".join(
+                        f"{r['type']}: {r['sentence']}"
+                        for r in relations
+                    )
+                    output.append(f"Relations:\n• {relation_text}")
+                else:
+                    output.append("Relations: None found")
+
+        # Format semantic roles
+        if 'semantic_roles' in results:
+            if isinstance(results['semantic_roles'], dict) and 'error' in results['semantic_roles']:
+                output.append(f"Semantic Roles: {results['semantic_roles']['error']}")
+            else:
+                roles = results['semantic_roles']
+                if roles:
+                    role_text = "\n• ".join(
+                        f"{r['subject']} {r['action']} {r['object']}"
+                        for r in roles
+                    )
+                    output.append(f"Semantic Roles:\n• {role_text}")
+                else:
+                    output.append("Semantic Roles: None found")
+
+        # If no results were processed
+        if not output:
+            output.append("No analysis results available")
 
         self._show_result("\n\n".join(output))
 

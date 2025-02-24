@@ -1,5 +1,6 @@
 from typing import Dict, Any, Tuple
 from ..utils.errors import ValidationError, AuthenticationError
+from ..config.nlu_config import NLUConfig
 
 class ServiceValidator:
     """Validates raw service inputs before API calls"""
@@ -74,10 +75,10 @@ class ServiceValidator:
                 code="INVALID_FEATURES_TYPE"
             )
 
-        # Check feature parameters
-        for feature, params in features.items():
-            if not isinstance(params, dict):
-                raise ValidationError(
-                    message=f"Parameters for feature '{feature}' must be a dictionary",
-                    code="INVALID_FEATURE_PARAMS"
-                ) 
+        # Validate feature IDs
+        invalid_features = set(features.keys()) - set(NLUConfig.get_feature_ids())
+        if invalid_features:
+            raise ValidationError(
+                message=f"Invalid features: {', '.join(invalid_features)}",
+                code="INVALID_FEATURES"
+            ) 

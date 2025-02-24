@@ -6,6 +6,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(
 from backend.services.nlu_service import NLUService
 from backend.services.credentials_manager import CredentialsManager
 from backend.utils.errors import ServiceError, ValidationError
+from backend.config.nlu_config import NLUConfig
 
 def test_nlu_service():
     """Test NLU service functionality"""
@@ -64,23 +65,13 @@ def test_nlu_service():
     print("\nTest 5: Complex analysis with all features")
     try:
         text = """IBM's Watson AI technology has revolutionized how businesses 
-                 approach artificial intelligence. Companies are excited about 
-                 the new possibilities for innovation and growth."""
-        features = {
-            "sentiment": {},
-            "emotion": {},
-            "entities": {},
-            "keywords": {},
-            "categories": {},
-            "concepts": {},
-            "relations": {},
-            "semantic_roles": {}
-        }
+                 approach artificial intelligence."""
+        features = NLUConfig.get_all_features()
         result = nlu_service.analyze_text(text, features)
         print("✓ Successfully performed complex analysis")
         print("Found features:")
-        for feature, data in result.items():
-            print(f"- {feature}: {'✓' if data else '✗'}")
+        for feature in NLUConfig.get_feature_ids():
+            print(f"- {feature}: {'✓' if feature in result else '✗'}")
     except Exception as e:
         print(f"✗ Failed complex analysis: {str(e)}")
 
