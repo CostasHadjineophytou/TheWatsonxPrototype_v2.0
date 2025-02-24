@@ -1,22 +1,22 @@
 from ..models.errors import LogicError
 from .base_manager import BaseManager
 from backend.services.nlu_service import NLUService
+from ..validators.nlu_validator import NLUValidator
 
 class NLUManager(BaseManager):
     """Business logic for NLU operations"""
     
-    def __init__(self, nlu_service: NLUService):
+    def __init__(self, nlu_service: NLUService, validator: NLUValidator):
         super().__init__()
         self.nlu_service = nlu_service
+        self.validator = validator
 
     def analyze_text(self, text: str, features: list) -> dict:
         """Process NLU analysis request"""
         try:
-            # Validate input
-            if not text.strip():
-                raise LogicError("Please enter text to analyze")
-            if not features:
-                raise LogicError("Please select analysis features")
+            # Validate inputs
+            self.validator.validate_text(text)
+            self.validator.validate_features(features)
 
             # Convert feature list to API format
             features_dict = self._prepare_features(features)

@@ -2,6 +2,7 @@ from ibm_watson import NaturalLanguageUnderstandingV1
 from ibm_cloud_sdk_core.authenticators import IAMAuthenticator
 from .base_service import BaseService
 from ..utils.errors import ServiceError, AuthenticationError
+from ..validators.service_validator import ServiceValidator
 
 class NLUService(BaseService):
     """Handles raw NLU API interactions"""
@@ -9,6 +10,7 @@ class NLUService(BaseService):
     def __init__(self, credentials_manager):
         super().__init__()
         self.credentials_manager = credentials_manager
+        self.validator = ServiceValidator()
         self._nlu = None
 
     def initialize(self):
@@ -31,6 +33,8 @@ class NLUService(BaseService):
     def analyze_text(self, text: str, features: dict) -> dict:
         """Raw API call to analyze text"""
         try:
+            self.validator.validate_nlu_request(text, features)
+
             if not self._nlu:
                 self.initialize()
 

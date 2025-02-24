@@ -1,9 +1,20 @@
 from dataclasses import dataclass
 from typing import Optional, Dict
 
-@dataclass
-class LogicError:
-    """Base error class for logic layer"""
-    message: str
-    code: str
-    details: Optional[Dict] = None
+class LogicError(Exception):
+    """Base error for logic layer"""
+    def __init__(self, message: str, code: str = None, details: dict = None):
+        self.message = message
+        self.code = code
+        self.details = details or {}
+        super().__init__(message)
+
+class ValidationError(LogicError):
+    """Raised when business validation fails"""
+    def __init__(self, message: str, code: str = None, details: dict = None):
+        super().__init__(message, code=code, details=details)
+
+class BusinessError(LogicError):
+    """Raised when business rules are violated"""
+    def __init__(self, message: str, code: str = None, details: dict = None):
+        super().__init__(message, code=code, details=details)

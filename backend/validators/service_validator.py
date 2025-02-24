@@ -49,4 +49,26 @@ class ServiceValidator:
                 message="Invalid model ID format",
                 code="INVALID_MODEL_ID",
                 details={"model_id": model_id}
-            ) 
+            )
+
+    def validate_nlu_request(self, text: str, features: dict) -> None:
+        """Validate NLU service request"""
+        if not isinstance(text, str):
+            raise ValidationError(
+                message="Text must be a string",
+                code="INVALID_TEXT_TYPE"
+            )
+
+        if not isinstance(features, dict):
+            raise ValidationError(
+                message="Features must be a dictionary",
+                code="INVALID_FEATURES_TYPE"
+            )
+
+        # Check for required feature parameters
+        for feature, params in features.items():
+            if not isinstance(params, dict):
+                raise ValidationError(
+                    message=f"Parameters for feature '{feature}' must be a dictionary",
+                    code="INVALID_FEATURE_PARAMS"
+                ) 
