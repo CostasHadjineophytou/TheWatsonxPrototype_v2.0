@@ -32,9 +32,18 @@ class ModelFrame(ttk.LabelFrame):
         )
         self.details_btn.pack(side='left', padx=5)
         
-        # Model info display - replace Text with Label
-        self.info_label = ttk.Label(self, wraplength=300)  # Adjust wraplength as needed
-        self.info_label.pack(fill='x', padx=5, pady=5)
+        # Model info display - make it fill width
+        info_frame = ttk.Frame(self)
+        info_frame.pack(fill='x', padx=5, pady=5)
+        info_frame.grid_columnconfigure(0, weight=1)  # Make column expandable
+        
+        self.info_label = ttk.Label(
+            info_frame,
+            wraplength=400,  # Allow text to wrap
+            justify='left',  # Left-align text
+            anchor='w'       # Align to west/left
+        )
+        self.info_label.grid(row=0, column=0, sticky='ew')  # Expand east-west
         
         self.load_models()
         self.models_combo.bind('<<ComboboxSelected>>', self.on_model_selected)

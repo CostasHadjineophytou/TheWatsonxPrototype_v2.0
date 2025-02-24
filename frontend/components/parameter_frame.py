@@ -111,49 +111,57 @@ class ParameterFrame(ttk.LabelFrame):
         frame = ttk.Frame(self.scrollable_frame)
         frame.pack(fill='x', padx=5, pady=2)
         
-        # Left side - Label and control
+        # Create grid layout
+        frame.grid_columnconfigure(1, weight=1)  # Control column expands
+        frame.grid_columnconfigure(2, minsize=40)  # Fixed minimum width for help column
+        
+        # Label
+        ttk.Label(frame, text=label).grid(row=0, column=0, sticky='w', padx=(0,10))
+        
+        # Control container
         control_frame = ttk.Frame(frame)
-        control_frame.pack(side='left', fill='x', expand=True)
-        
-        # Label row
-        label_frame = ttk.Frame(control_frame)
-        label_frame.pack(fill='x')
-        ttk.Label(label_frame, text=label).pack(side='left')
-        
-        # Control row with value display
-        input_frame = ttk.Frame(control_frame)
-        input_frame.pack(fill='x', pady=(2,0))
+        control_frame.grid(row=0, column=1, sticky='ew')
         
         if widget_type == "scale":
             var = tk.DoubleVar(value=default_value)
-            # Scale
+            
+            # Scale with native look
+            style = ttk.Style()
+            style.configure('Param.Horizontal.TScale', sliderlength=15)  # Smaller slider
+            
             control = ttk.Scale(
-                input_frame,
+                control_frame,
                 from_=min_val,
                 to=max_val,
                 variable=var,
-                orient='horizontal'
+                orient='horizontal',
+                style='Param.Horizontal.TScale'
             )
             control.pack(side='left', fill='x', expand=True)
             
             # Value display
-            value_label = ttk.Label(input_frame, width=5)
+            value_label = ttk.Label(control_frame, width=5)
             value_label.pack(side='left', padx=(5,0))
             
-            # Update value label when scale moves
             def on_scale_change(*args):
                 value_label.config(text=f"{var.get():.2f}")
             var.trace('w', on_scale_change)
-            on_scale_change()  # Initial value
-        else:  # entry
+            on_scale_change()
+        else:
             var = tk.StringVar(value=str(default_value))
-            control = ttk.Entry(input_frame, textvariable=var)
+            control = ttk.Entry(control_frame, textvariable=var)
             control.pack(side='left', fill='x', expand=True)
         
-        # Right side - Help icon
+        # Help icon - aligned right
         if help_text:
-            help_btn = ttk.Label(frame, text=" (?)", cursor="question_arrow")
-            help_btn.pack(side='right', padx=(5,0))
+            help_btn = ttk.Label(
+                frame, 
+                text="?", 
+                cursor="question_arrow",
+                font=('Segoe UI', 12, 'bold'),
+                foreground='gray'
+            )
+            help_btn.grid(row=0, column=2, sticky='e', padx=(5,0))
             self.create_tooltip(help_btn, help_text)
         
         setattr(self, f"{param_name}_var", var)
@@ -193,7 +201,7 @@ class ParameterFrame(ttk.LabelFrame):
         self.top_k_var.set(TextConfig.DEFAULT_PARAMS["top_k"])
         self.repetition_penalty_var.set(TextConfig.DEFAULT_PARAMS["repetition_penalty"])
         self.random_seed_var.set(TextConfig.DEFAULT_PARAMS["random_seed"])
-        self.stop_sequences_var.set(",".join(TextConfig.DEFAULT_PARAMS["stop_sequences"]))
+        self.stop_sequences_var.set(str(TextConfig.DEFAULT_PARAMS["stop_sequences"]))
         
         # Then apply model-specific limits
         limits = model_details.get('limits', {})
