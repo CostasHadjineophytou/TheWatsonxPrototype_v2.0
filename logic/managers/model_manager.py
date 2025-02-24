@@ -142,4 +142,17 @@ Tasks: {', '.join(details['tasks'])}
 
 Limits:
 Max Sequence Length: {details['limits'].get('max_sequence_length', 'N/A')}
-Max Output Tokens: {details['limits'].get('max_output_tokens', 'N/A')}""" 
+Max Output Tokens: {details['limits'].get('max_output_tokens', 'N/A')}"""
+
+    def get_model_by_display_name(self, display_name: str) -> ModelResponse:
+        """Get model by its display name"""
+        models = self.get_available_models()
+        for model in models:
+            if self.format_model_display(model) == display_name:
+                return model
+        return None
+
+    def get_model_id_by_display_name(self, display_name: str) -> str:
+        """Get model ID from display name"""
+        model = self.get_model_by_display_name(display_name)
+        return model.id if model else None 

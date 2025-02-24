@@ -59,15 +59,11 @@ class ModelFrame(ttk.LabelFrame):
             
     def on_model_selected(self, event):
         selected = self.model_var.get()
-        for model in self.model_list:
-            if self.model_manager.format_model_display(model) == selected:
-                # Update info label
-                self.info_label.config(text=self.model_manager.format_model_info(model))
-                
-                # Always generate event (even on initial load)
-                self.event_generate('<<ModelChanged>>')
-                break
-                
+        model = self.model_manager.get_model_by_display_name(selected)
+        if model:
+            self.info_label.config(text=self.model_manager.format_model_info(model))
+            self.event_generate('<<ModelChanged>>')
+
     def show_details(self):
         selected = self.model_var.get()
         for model in self.model_list:
@@ -141,7 +137,4 @@ class ModelFrame(ttk.LabelFrame):
         
     def get_selected_model(self):
         selected = self.model_var.get()
-        for model in self.model_list:
-            if self.model_manager.format_model_display(model) == selected:
-                return model.id
-        return None 
+        return self.model_manager.get_model_id_by_display_name(selected) 
