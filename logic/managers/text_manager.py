@@ -4,7 +4,7 @@ from ibm_watsonx_ai.metanames import GenTextParamsMetaNames as GenParams
 from backend.services.text_service import TextService
 from backend.config.text_config import TextConfig
 from ..models.text_request import TextRequest  # Import from models
-from ..models.errors import LogicError
+from ..models.errors import ValidationError
 from ..models.responses import TextResponse
 from .base_manager import BaseManager
 from ..validators.text_validator import TextValidator
@@ -20,10 +20,13 @@ class TextManager(BaseManager):
     def process_text(self, request: TextRequest) -> TextResponse:
         """Process text generation request"""
         try:
-            # Use validator
+            # Validation
             is_valid, error = self.validator.validate(request)
             if not is_valid:
-                raise error
+                raise self.handle_validation_error(
+                    message=error.message,
+                    details={"request": str(request)}
+                )
 
             full_prompt = self._build_prompt(request)
             params = self._prepare_params(request)
@@ -36,7 +39,7 @@ class TextManager(BaseManager):
                     params=params
                 )
             except Exception as e:
-                raise LogicError(
+                raise self.handle_business_error(
                     message="Text generation failed",
                     code="GENERATION_ERROR",
                     details={"error": str(e)}
@@ -50,7 +53,7 @@ class TextManager(BaseManager):
                 parameters_used=params
             )
             
-        except LogicError as e:
+        except ValidationError as e:
             self.log_error(e)
             return TextResponse(
                 text="",
@@ -58,6 +61,15 @@ class TextManager(BaseManager):
                 prompt=request.text,
                 parameters_used={},
                 error=e.message
+            )
+        except Exception as e:
+            error = self.handle_unknown_error(e, "Failed to process text")
+            return TextResponse(
+                text="",
+                model_id=request.model_id,
+                prompt=request.text,
+                parameters_used={},
+                error=error.message
             )
 
     def _build_prompt(self, request: TextRequest) -> str:

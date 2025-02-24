@@ -1,7 +1,7 @@
 from backend.services.model_service import ModelService
 from logic.models.responses import ModelResponse
-from logic.models.errors import LogicError
 from logic.validators.model_validator import ModelValidator
+from logic.models.errors import ValidationError
 from .base_manager import BaseManager
 
 class ModelManager(BaseManager):
@@ -28,16 +28,16 @@ class ModelManager(BaseManager):
                 for model in models_list
             ]
         except Exception as e:
-            self.log_error(LogicError(
+            error = self.handle_business_error(
                 message="Failed to fetch models",
                 code="MODEL_FETCH_ERROR",
                 details={"error": str(e)}
-            ))
+            )
             return [ModelResponse(
                 id="ERROR",
                 name="",
                 type="",
-                error=f"Failed to fetch models: {str(e)}"
+                error=error.message
             )]
 
     def get_model_details(self, model_id: str):
@@ -45,13 +45,17 @@ class ModelManager(BaseManager):
         try:
             is_valid, error = self.validator.validate(model_id)
             if not is_valid:
-                raise error
+                raise self.handle_validation_error(
+                    message=error.message,
+                    details={"model_id": model_id}
+                )
                 
             specs = self.model_service.get_model_specs(model_id)
             if not specs:
-                raise LogicError(
+                raise self.handle_business_error(
                     message=f"Model {model_id} not found",
-                    code="MODEL_NOT_FOUND"
+                    code="MODEL_NOT_FOUND",
+                    details={"model_id": model_id}
                 )
                 
             return {
@@ -66,15 +70,11 @@ class ModelManager(BaseManager):
                 'limits': specs.get('model_limits', {}),
                 'display_name': f"{specs.get('label', 'Unnamed')} ({specs.get('provider', 'Unknown')})"
             }
-        except LogicError as e:
+        except ValidationError as e:
             self.log_error(e)
             return None
         except Exception as e:
-            self.log_error(LogicError(
-                message="Failed to get model details",
-                code="MODEL_DETAILS_ERROR",
-                details={"model_id": model_id, "error": str(e)}
-            ))
+            error = self.handle_unknown_error(e, "Failed to get model details")
             return None
 
     def format_model_display(self, model: ModelResponse) -> str:

@@ -10,7 +10,7 @@ class LogicError(Exception):
         super().__init__(message)
 
 class ValidationError(LogicError):
-    """Raised when business validation fails"""
+    """Raised when input validation fails"""
     def __init__(self, message: str, code: str = None, details: dict = None):
         super().__init__(message, code=code, details=details)
 
@@ -18,3 +18,7 @@ class BusinessError(LogicError):
     """Raised when business rules are violated"""
     def __init__(self, message: str, code: str = None, details: dict = None):
         super().__init__(message, code=code, details=details)
+
+class DataError(LogicError):
+    """Raised when data operations fail"""
+    pass
