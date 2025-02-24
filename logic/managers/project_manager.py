@@ -1,13 +1,18 @@
 import logging
 from backend.services.project_service import ProjectService
 from logic.utils.file_manager import FileManager
+from logic.models.errors import LogicError
+from logic.validators.project_validator import ProjectValidator
+from .base_manager import BaseManager
 
-class ProjectManager:
+class ProjectManager(BaseManager):
     """Business logic for project operations"""
     
-    def __init__(self, project_service: ProjectService, file_manager: FileManager = None):
+    def __init__(self, project_service: ProjectService, validator: ProjectValidator):
+        super().__init__()
         self.project_service = project_service
-        self.file_manager = file_manager or FileManager()
+        self.validator = validator
+        self.file_manager = FileManager()
 
     def get_projects(self):
         """Get list of projects with formatted information"""
@@ -22,11 +27,20 @@ class ProjectManager:
                 for project in projects
             ]
         except Exception as e:
-            return {"error": str(e)}
+            self.log_error(LogicError(
+                message="Failed to fetch projects",
+                code="PROJECT_FETCH_ERROR",
+                details={"error": str(e)}
+            ))
+            return []
 
     def get_project_details(self, project_id: str):
         """Get detailed information for a specific project"""
         try:
+            is_valid, error = self.validator.validate(project_id)
+            if not is_valid:
+                raise error
+
             projects = self.project_service.list_projects()
             for project in projects:
                 if project['metadata']['guid'] == project_id:
@@ -36,9 +50,21 @@ class ProjectManager:
                         'description': project['entity'].get('description', ''),
                         'created_at': project['metadata']['created_at']
                     }
-            return {"error": "Project not found"}
+            
+            raise LogicError(
+                message=f"Project {project_id} not found",
+                code="PROJECT_NOT_FOUND"
+            )
+        except LogicError as e:
+            self.log_error(e)
+            return None
         except Exception as e:
-            return {"error": str(e)}
+            self.log_error(LogicError(
+                message="Failed to get project details",
+                code="PROJECT_DETAILS_ERROR",
+                details={"project_id": project_id, "error": str(e)}
+            ))
+            return None
 
     def select_project(self, project_id: str):
         """Select a project for use"""

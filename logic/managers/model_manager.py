@@ -1,11 +1,16 @@
 from backend.services.model_service import ModelService
 from logic.models.responses import ModelResponse
+from logic.models.errors import LogicError
+from logic.validators.model_validator import ModelValidator
+from .base_manager import BaseManager
 
-class ModelManager:
+class ModelManager(BaseManager):
     """Business logic for model operations"""
     
-    def __init__(self, model_service: ModelService):
+    def __init__(self, model_service: ModelService, validator: ModelValidator):
+        super().__init__()
         self.model_service = model_service
+        self.validator = validator
 
     def get_available_models(self):
         """Get formatted list of available models"""
@@ -23,26 +28,49 @@ class ModelManager:
                 for model in models_list
             ]
         except Exception as e:
+            self.log_error(LogicError(
+                message="Failed to fetch models",
+                code="MODEL_FETCH_ERROR",
+                details={"error": str(e)}
+            ))
             return []
 
     def get_model_details(self, model_id: str):
         """Get detailed model information"""
-        specs = self.model_service.get_model_specs(model_id)
-        if not specs:
+        try:
+            is_valid, error = self.validator.validate(model_id)
+            if not is_valid:
+                raise error
+                
+            specs = self.model_service.get_model_specs(model_id)
+            if not specs:
+                raise LogicError(
+                    message=f"Model {model_id} not found",
+                    code="MODEL_NOT_FOUND"
+                )
+                
+            return {
+                'id': specs.get('model_id'),
+                'name': specs.get('label'),
+                'provider': specs.get('provider'),
+                'source': specs.get('source'),
+                'description': specs.get('short_description'),
+                'long_description': specs.get('long_description'),
+                'parameters': specs.get('number_params'),
+                'tasks': [task.get('id') for task in specs.get('tasks', [])],
+                'limits': specs.get('model_limits', {}),
+                'display_name': f"{specs.get('label', 'Unnamed')} ({specs.get('provider', 'Unknown')})"
+            }
+        except LogicError as e:
+            self.log_error(e)
             return None
-            
-        return {
-            'id': specs.get('model_id'),
-            'name': specs.get('label'),
-            'provider': specs.get('provider'),
-            'source': specs.get('source'),
-            'description': specs.get('short_description'),
-            'long_description': specs.get('long_description'),
-            'parameters': specs.get('number_params'),
-            'tasks': [task.get('id') for task in specs.get('tasks', [])],
-            'limits': specs.get('model_limits', {}),
-            'display_name': f"{specs.get('label', 'Unnamed')} ({specs.get('provider', 'Unknown')})"
-        }
+        except Exception as e:
+            self.log_error(LogicError(
+                message="Failed to get model details",
+                code="MODEL_DETAILS_ERROR",
+                details={"model_id": model_id, "error": str(e)}
+            ))
+            return None
 
     def format_model_display(self, model: ModelResponse) -> str:
         """Format model for display in UI"""

@@ -7,6 +7,8 @@ from backend.config.text_config import TextConfig
 from logic.models.text_request import TextRequest
 from logic.models.errors import LogicError
 from logic.models.responses import TextResponse
+from .base_manager import BaseManager
+from logic.validators.text_validator import TextValidator
 
 @dataclass
 class TextRequest:
@@ -24,49 +26,38 @@ class TextRequest:
     stop_sequences: list = None
     system_prompt: str = TextConfig.SYSTEM_PROMPT
 
-class TextManager:
+class TextManager(BaseManager):
     """Business logic for text processing"""
     
-    def __init__(self, text_service: TextService):
+    def __init__(self, text_service: TextService, validator: TextValidator):
+        super().__init__()
         self.text_service = text_service
-
-    def validate_request(self, text: str, model_id: str, project_id: str) -> tuple[bool, str]:
-        """Validate text generation request"""
-        if not text.strip():
-            return False, "Please enter some text to generate"
-        if not model_id:
-            return False, "Please select a model"
-        if not project_id:
-            return False, "Please select a project"
-        return True, ""
+        self.validator = validator
 
     def process_text(self, request: TextRequest) -> TextResponse:
         """Process text generation request"""
         try:
-            # Validate request
-            is_valid, error = self.validate_request(
-                request.text, 
-                request.model_id, 
-                request.project_id
-            )
+            # Use validator
+            is_valid, error = self.validator.validate(request)
             if not is_valid:
-                return TextResponse(
-                    text="",
-                    model_id=request.model_id,
-                    prompt=request.text,
-                    parameters_used={},
-                    error=error
-                )
+                raise error
 
             full_prompt = self._build_prompt(request)
             params = self._prepare_params(request)
             
-            result = self.text_service.process_prompt(
-                model_id=request.model_id,
-                project_id=request.project_id,
-                prompt=full_prompt,
-                params=params
-            )
+            try:
+                result = self.text_service.process_prompt(
+                    model_id=request.model_id,
+                    project_id=request.project_id,
+                    prompt=full_prompt,
+                    params=params
+                )
+            except Exception as e:
+                raise LogicError(
+                    message="Text generation failed",
+                    code="GENERATION_ERROR",
+                    details={"error": str(e)}
+                )
             
             cleaned_result = self._clean_response(result)
             return TextResponse(
@@ -75,13 +66,15 @@ class TextManager:
                 prompt=full_prompt,
                 parameters_used=params
             )
-        except Exception as e:
+            
+        except LogicError as e:
+            self.log_error(e)
             return TextResponse(
                 text="",
                 model_id=request.model_id,
                 prompt=request.text,
                 parameters_used={},
-                error=str(e)
+                error=e.message
             )
 
     def _build_prompt(self, request: TextRequest) -> str:

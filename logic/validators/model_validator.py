@@ -1,9 +1,10 @@
-from typing import Tuple
+from typing import Tuple, Optional
 from logic.models.text_request import TextRequest
 from logic.models.errors import LogicError
+from .base_validator import BaseValidator
 
-class ModelValidator:
-    """Validates model-related requests"""
+class ModelValidator(BaseValidator):
+    """Validates model operations"""
     
     @staticmethod
     def validate_text_request(request: TextRequest) -> Tuple[bool, LogicError]:
@@ -36,7 +37,7 @@ class ModelValidator:
         return True, None
 
     @staticmethod
-    def validate_model_request(model_id: str) -> Tuple[bool, LogicError]:
+    def validate(model_id: str) -> Tuple[bool, Optional[LogicError]]:
         """Validate model operations"""
         if not model_id:
             return False, LogicError(
