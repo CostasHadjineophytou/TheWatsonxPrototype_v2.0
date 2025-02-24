@@ -3,7 +3,6 @@ from backend.service_factory import ServiceFactory
 from logic.managers.model_manager import ModelManager
 from logic.managers.project_manager import ProjectManager
 from logic.managers.text_manager import TextManager
-from logic.utils.file_manager import FileManager
 from logic.validators import ModelValidator, ProjectValidator, TextValidator
 from logic.managers.nlu_manager import NLUManager
 from .validators.nlu_validator import NLUValidator

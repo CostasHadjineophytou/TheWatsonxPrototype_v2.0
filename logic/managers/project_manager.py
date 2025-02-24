@@ -1,6 +1,5 @@
 import logging
 from backend.services.project_service import ProjectService
-from logic.utils.file_manager import FileManager
 from logic.models.errors import LogicError
 from logic.validators.project_validator import ProjectValidator
 from .base_manager import BaseManager
@@ -12,7 +11,6 @@ class ProjectManager(BaseManager):
         super().__init__()
         self.project_service = project_service
         self.validator = validator
-        self.file_manager = FileManager()
 
     def get_projects(self):
         """Get list of projects with formatted information"""
@@ -73,14 +71,6 @@ class ProjectManager(BaseManager):
         except Exception as e:
             logging.error(f"Error selecting project: {e}")
             return {"status": "Error", "message": str(e)}
-
-    def fetch_and_save_projects(self):
-        """Fetch projects and save to file"""
-        try:
-            projects = self.project_service.list_projects()
-            self.file_manager.save_json("user_projects.json", projects)
-        except Exception as e:
-            logging.error(f"Error saving projects: {e}")
 
     def format_project_display(self, project: dict) -> str:
         """Format project name for display"""

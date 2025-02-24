@@ -1,17 +1,27 @@
 from .base_service import BaseService
 from .watson_client import WatsonClient
+from ..utils.file_manager import FileManager
 
 class ModelService(BaseService):
-    """Handles model listing and metadata operations"""
+    """Handles model-related API calls"""
     
     def __init__(self, watson_client: WatsonClient):
         super().__init__()
         self.watson_client = watson_client
+        self.file_manager = FileManager()
 
     def list_models(self):
-        """Get raw model list from Watson"""
+        """Get list of all available models"""
         try:
-            return self.watson_client.client.foundation_models.get_model_specs()
+            # Get models from API
+            response = self.watson_client.client.foundation_models.get_model_specs()
+            models = response.get('resources', [])
+            
+            # Save raw model data
+            self.file_manager.save_json("data/cloud/models.json", models)
+            
+            return response
+            
         except Exception as e:
             raise self.handle_error(e, "Failed to list models")
 
