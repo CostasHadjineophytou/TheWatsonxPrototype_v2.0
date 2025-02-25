@@ -19,5 +19,47 @@ class TextConfig:
         "stop_sequences": ["Human:", "AI:"]
     }
 
-    # TODO:
-    # Add rules for min and max and then extract them to the validators.
+    # Parameter validation rules
+    PARAM_RULES = {
+        "temperature": {
+            "min": 0.0,
+            "max": 2.0,
+            "description": "Controls randomness in the output (0.0 = deterministic, 2.0 = very creative)"
+        },
+        "top_p": {
+            "min": 0.0,
+            "max": 1.0,
+            "description": "Nucleus sampling: controls diversity via cumulative probability"
+        },
+        "top_k": {
+            "min": 1,
+            "max": 100,
+            "description": "Controls diversity by limiting to k most likely tokens"
+        },
+        "max_new_tokens": {
+            "min": 1,
+            "max": 2048,
+            "description": "Maximum number of tokens to generate"
+        },
+        "min_new_tokens": {
+            "min": 0,
+            "max": 2048,
+            "description": "Minimum number of tokens to generate"
+        },
+        "repetition_penalty": {
+            "min": 1.0,
+            "max": 2.0,
+            "description": "Penalizes repetition in generated text"
+        }
+    }
+
+    @classmethod
+    def get_param_rule(cls, param_name: str) -> dict:
+        """Get validation rules for a parameter"""
+        return cls.PARAM_RULES.get(param_name, {})
+
+    @classmethod
+    def get_param_description(cls, param_name: str) -> str:
+        """Get parameter description for tooltips/help"""
+        rule = cls.get_param_rule(param_name)
+        return rule.get('description', '')
