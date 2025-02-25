@@ -3,17 +3,17 @@ from datetime import datetime
 from backend.utils.audio_player import AudioPlayer
 
 class AudioManager:
-    """Manages audio playback and history"""
+    """Business logic for audio playback and history"""
     
     def __init__(self, max_history: int = 5):
         self.player = AudioPlayer()
-        self.max_history = max_history
         self.audio_history: List[Dict] = []
+        self.max_history = max_history
         
     def play_audio(self, audio_path: str, metadata: dict = None):
         """Play audio and optionally add to history"""
         self.player.play(audio_path)
-        if metadata:  # Only add to history if metadata is provided (new synthesis)
+        if metadata:  # Only add new syntheses to history
             self._add_to_history(audio_path, metadata)
             
     def _add_to_history(self, audio_path: str, metadata: dict):

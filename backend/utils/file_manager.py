@@ -1,9 +1,9 @@
 import os
 import json
 import logging
-import stat
 from pathlib import Path
 from .errors import ConfigurationError
+import glob
 
 class FileManager:
     """Handles file operations and directory management"""
@@ -89,4 +89,25 @@ class FileManager:
                 f"Error loading {filename}",
                 extra={"error": str(e)}
             )
-            return {} 
+            return {}
+
+    @staticmethod
+    def cleanup_audio_files(max_files: int = 5):
+        """Clean up old audio files keeping only the most recent ones"""
+        try:
+            audio_dir = "data/audio"
+            audio_files = glob.glob(f"{audio_dir}/*.wav")
+            
+            # Keep only the N most recent files
+            if len(audio_files) > max_files:
+                # Sort files by modification time (newest first)
+                audio_files.sort(key=lambda x: os.path.getmtime(x), reverse=True)
+                
+                # Remove older files
+                for file in audio_files[max_files:]:
+                    try:
+                        os.remove(file)
+                    except:
+                        pass  # Ignore if file is in use
+        except Exception as e:
+            print(f"Warning: Could not clean up audio files: {e}") 

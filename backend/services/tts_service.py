@@ -7,6 +7,7 @@ import stat
 from pathlib import Path
 import time
 import glob
+from ..utils.file_manager import FileManager
 
 class TTSService(BaseService):
     """Handles Text-to-Speech API interactions"""
@@ -66,50 +67,22 @@ class TTSService(BaseService):
             )
 
     def synthesize_text(self, text: str, voice: str, params: dict) -> str:
-        """Synthesize text to speech"""
+        """Raw TTS API call"""
         try:
             self.validator.validate_tts_request(text, voice, params)
-
             if not self._tts:
                 self.initialize()
-
+            
             ssml_text = self._build_ssml(text, params)
             response = self._tts.synthesize(
                 text=ssml_text,
                 voice=voice,
                 accept=params.get('accept', 'audio/wav')
             ).get_result().content
-
-            # Generate unique filename using timestamp
-            timestamp = int(time.time() * 1000)
-            final_path = f"data/audio/output_{timestamp}.wav"
             
-            try:
-                # Write directly to new unique file
-                with open(final_path, "wb") as audio_file:
-                    audio_file.write(response)
-                
-                # Set permissions
-                os.chmod(final_path, 0o666)
-                
-                # Clean up old files in background
-                self._cleanup_old_files()
-                
-                return final_path
-
-            except Exception as e:
-                # Clean up failed file if it exists
-                if os.path.exists(final_path):
-                    try:
-                        os.remove(final_path)
-                    except:
-                        pass
-                raise e
-
-        except ValidationError:
-            raise
+            return self._save_audio_file(response)
         except Exception as e:
-            raise self.handle_error(e, "Failed to synthesize speech")
+            raise self.handle_error(e, "TTS synthesis failed")
 
     def list_voices(self) -> list:
         """Get available voices"""
@@ -131,4 +104,20 @@ class TTSService(BaseService):
         pitch = pitch.replace('%%', '%')
         speed = speed.replace('%%', '%')
         
-        return f"<prosody pitch='{pitch}' rate='{speed}'>{text}</prosody>" 
+        return f"<prosody pitch='{pitch}' rate='{speed}'>{text}</prosody>"
+
+    def _save_audio_file(self, audio_content: bytes) -> str:
+        """Save audio content to file"""
+        timestamp = int(time.time() * 1000)
+        final_path = f"data/audio/output_{timestamp}.wav"
+        
+        try:
+            with open(final_path, "wb") as audio_file:
+                audio_file.write(audio_content)
+            
+            # Clean up old files after successful save
+            FileManager.cleanup_audio_files()
+            
+            return final_path
+        except Exception as e:
+            raise self.handle_error(e, "Failed to save audio file") 

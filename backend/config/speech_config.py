@@ -1,7 +1,11 @@
 class SpeechConfig:
-    """Configuration for speech services"""
-    
-    SUPPORTED_AUDIO_FORMATS = ['.wav', '.mp3', '.flac', '.ogg', '.m4a', '.wma']
+    """Configuration constants for speech services"""
+    MAX_TEXT_LENGTH = 5000
+    MAX_AUDIO_SIZE = 100 * 1024 * 1024  # 100MB
+    SUPPORTED_AUDIO_FORMATS = ['audio/wav', 'audio/mp3', 'audio/ogg']
+    DEFAULT_VOICE = 'en-US_MichaelV3Voice'
+    PITCH_RANGE = (-100, 100)
+    SPEED_RANGE = (-100, 100)
     
     TTS_PARAMS = {
         "pitch": {
@@ -18,12 +22,10 @@ class SpeechConfig:
         },
         "accept": {
             "default": "audio/wav",
-            "options": ["audio/wav", "audio/mp3", "audio/ogg"],
+            "options": SUPPORTED_AUDIO_FORMATS,
             "description": "Audio format of the synthesized speech"
         }
     }
-    
-    DEFAULT_VOICE = "en-US_AllisonV3Voice"
     
     MAX_TEXT_LENGTH = 5000  # Maximum characters for synthesis
     MAX_AUDIO_SIZE = 100 * 1024 * 1024  # 100MB max file size 

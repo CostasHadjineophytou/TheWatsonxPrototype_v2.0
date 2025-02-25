@@ -31,11 +31,8 @@ class ProjectResponse:
 
 @dataclass
 class TTSResponse:
-    """Text-to-Speech response"""
+    """Data model for TTS responses"""
     audio_path: str
-    text: str
-    voice: str
-    parameters_used: Dict
     error: Optional[str] = None
 
 @dataclass

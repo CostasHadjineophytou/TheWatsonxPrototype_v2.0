@@ -2,9 +2,6 @@ import tkinter as tk
 from tkinter import ttk, messagebox
 from ..styles.colors import Colors
 from logic.models.speech_request import TTSRequest
-import os
-import subprocess
-import platform
 
 class TTSFrame(ttk.Frame):
     """UI frame for Text-to-Speech"""
@@ -177,40 +174,25 @@ class TTSFrame(ttk.Frame):
         self.after(1000, self._update_history)
         
     def _synthesize_text(self):
-        """Handle synthesis request"""
-        text = self.text_input.get("1.0", tk.END).strip()
-        if not text:
-            messagebox.showwarning("No Text", "Please enter some text to synthesize.")
-            return
-            
+        """Handle UI synthesis request"""
         try:
-            self._start_synthesis()
-            
             request = TTSRequest(
-                text=text,
+                text=self.text_input.get("1.0", tk.END).strip(),
                 voice=self.voice_var.get(),
                 pitch=int(self.pitch_var.get()),
                 speed=int(self.speed_var.get()),
                 accept=self.format_var.get()
             )
-            
             response = self.tts_manager.synthesize_speech(request)
-            
             if response.error:
                 raise Exception(response.error)
             
-            # Play audio and add to history
             self.audio_manager.play_audio(
                 response.audio_path,
-                metadata={'text': text}
+                metadata={'text': request.text}
             )
-            self.status_var.set("Synthesis complete")
-            
         except Exception as e:
             messagebox.showerror("Synthesis Error", str(e))
-            self.status_var.set("Synthesis failed")
-        finally:
-            self._end_synthesis()
 
     def _start_synthesis(self):
         """Show synthesis in progress"""

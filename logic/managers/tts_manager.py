@@ -10,63 +10,30 @@ class TTSManager(BaseManager):
     
     def __init__(self, tts_service: TTSService, validator: SpeechValidator):
         super().__init__()
-        self.tts_service = tts_service
+        self.service = tts_service
         self.validator = validator
 
     def synthesize_speech(self, request: TTSRequest) -> TTSResponse:
-        """Process text-to-speech request"""
+        """Handle TTS request and response"""
         try:
-            # Validation
-            is_valid, error = self.validator.validate(request)
-            if not is_valid:
-                raise self.handle_validation_error(
-                    message=error.message,
-                    details=error.details
-                )
-
-            # Process request
-            try:
-                audio_path = self.tts_service.synthesize_text(
-                    text=request.text,
-                    voice=request.voice,
-                    params={
-                        'pitch': request.pitch,
-                        'speed': request.speed,
-                        'accept': request.accept
-                    }
-                )
-            except Exception as e:
-                raise self.handle_business_error(
-                    message="Speech synthesis failed",
-                    code="SYNTHESIS_ERROR",
-                    details={"error": str(e)}
-                )
-
-            return TTSResponse(
-                audio_path=audio_path,
-                text=request.text,
-                voice=request.voice,
-                parameters_used={
+            self.validator.validate_tts_request(request)
+            audio_path = self.service.synthesize_text(
+                request.text,
+                request.voice,
+                {
                     'pitch': request.pitch,
                     'speed': request.speed,
                     'accept': request.accept
                 }
             )
-
+            return TTSResponse(audio_path=audio_path)
         except Exception as e:
-            error = self.handle_unknown_error(e, "Failed to synthesize speech")
-            return TTSResponse(
-                audio_path="",
-                text=request.text,
-                voice=request.voice,
-                parameters_used={},
-                error=error.message
-            )
+            return TTSResponse(audio_path="", error=str(e))
 
     def get_available_voices(self) -> List[Dict]:
         """Get list of available voices"""
         try:
-            return self.tts_service.list_voices()
+            return self.service.list_voices()
         except Exception as e:
             error = self.handle_unknown_error(e, "Failed to get voices")
             return [] 

@@ -4,7 +4,7 @@ from backend.config.speech_config import SpeechConfig
 
 @dataclass
 class TTSRequest:
-    """Text-to-Speech request parameters"""
+    """Data model for TTS requests"""
     text: str
     voice: str = SpeechConfig.DEFAULT_VOICE
     pitch: int = SpeechConfig.TTS_PARAMS["pitch"]["default"]
