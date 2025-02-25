@@ -1,23 +1,18 @@
-from dataclasses import dataclass
-from typing import Optional, Dict
-
 class LogicError(Exception):
-    """Base error for logic layer"""
+    """Base error for all logic layer errors"""
     def __init__(self, message: str, code: str = None, details: dict = None):
         self.message = message
-        self.code = code
+        self.code = code or "LOGIC_ERROR"
         self.details = details or {}
         super().__init__(message)
 
 class ValidationError(LogicError):
-    """Raised when input validation fails"""
-    def __init__(self, message: str, code: str = None, details: dict = None):
-        super().__init__(message, code=code, details=details)
+    """For input validation failures"""
+    pass
 
 class BusinessError(LogicError):
-    """Raised when business rules are violated"""
-    def __init__(self, message: str, code: str = None, details: dict = None):
-        super().__init__(message, code=code, details=details)
+    """For business rule violations"""
+    pass
 
 class DataError(LogicError):
     """Raised when data operations fail"""

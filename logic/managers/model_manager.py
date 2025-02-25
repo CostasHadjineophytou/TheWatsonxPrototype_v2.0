@@ -1,7 +1,7 @@
+from typing import List
 from backend.services.model_service import ModelService
 from logic.models.responses import ModelResponse
 from logic.validators.model_validator import ModelValidator
-from logic.models.errors import ValidationError
 from .base_manager import BaseManager
 
 class ModelManager(BaseManager):
@@ -12,7 +12,7 @@ class ModelManager(BaseManager):
         self.model_service = model_service
         self.validator = validator
 
-    def get_available_models(self):
+    def get_available_models(self) -> List[ModelResponse]:
         """Get formatted list of available models"""
         try:
             raw_models = self.model_service.list_models()
@@ -35,21 +35,23 @@ class ModelManager(BaseManager):
             )
             return [ModelResponse(
                 id="ERROR",
-                name="",
-                type="",
+                name="Error",
+                type="Unknown",
                 error=error.message
             )]
 
-    def get_model_details(self, model_id: str):
+    def get_model_details(self, model_id: str) -> ModelResponse:
         """Get detailed model information"""
         try:
+            # Validation
             is_valid, error = self.validator.validate(model_id)
             if not is_valid:
                 raise self.handle_validation_error(
                     message=error.message,
                     details=error.details
                 )
-                
+            
+            # Business logic
             specs = self.model_service.get_model_specs(model_id)
             if not specs:
                 raise self.handle_business_error(
@@ -57,25 +59,22 @@ class ModelManager(BaseManager):
                     code="MODEL_NOT_FOUND",
                     details={"model_id": model_id}
                 )
-                
-            return {
-                'id': specs.get('model_id'),
-                'name': specs.get('label'),
-                'provider': specs.get('provider'),
-                'source': specs.get('source'),
-                'description': specs.get('short_description'),
-                'long_description': specs.get('long_description'),
-                'parameters': specs.get('number_params'),
-                'tasks': [task.get('id') for task in specs.get('tasks', [])],
-                'limits': specs.get('model_limits', {}),
-                'display_name': f"{specs.get('label', 'Unnamed')} ({specs.get('provider', 'Unknown')})"
-            }
-        except ValidationError as e:
-            self.log_error(e)
-            return None
+            
+            return ModelResponse(
+                id=specs.get('model_id'),
+                name=specs.get('label'),
+                type=specs.get('provider'),
+                description=specs.get('short_description')
+            )
+            
         except Exception as e:
             error = self.handle_unknown_error(e, "Failed to get model details")
-            return None
+            return ModelResponse(
+                id="ERROR",
+                name="Error",
+                type="Unknown",
+                error=error.message
+            )
 
     def format_model_display(self, model: ModelResponse) -> str:
         """Format model for display in UI"""

@@ -1,6 +1,6 @@
 import logging
+from typing import List
 from backend.services.project_service import ProjectService
-from ..models.errors import ValidationError
 from ..models.responses import ProjectResponse
 from ..validators.project_validator import ProjectValidator
 from .base_manager import BaseManager
@@ -13,7 +13,7 @@ class ProjectManager(BaseManager):
         self.project_service = project_service
         self.validator = validator
 
-    def get_projects(self):
+    def get_projects(self) -> List[ProjectResponse]:
         """Get list of projects with formatted information"""
         try:
             raw_projects = self.project_service.list_projects()
@@ -34,7 +34,7 @@ class ProjectManager(BaseManager):
             )
             return [ProjectResponse(
                 id="ERROR",
-                name="",
+                name="Error",
                 error=error.message
             )]
 
@@ -63,12 +63,13 @@ class ProjectManager(BaseManager):
                 code="PROJECT_NOT_FOUND",
                 details={"project_id": project_id}
             )
-        except ValidationError as e:
-            self.log_error(e)
-            return ProjectResponse(id="", name="", error=e.message)
         except Exception as e:
             error = self.handle_unknown_error(e, "Failed to get project details")
-            return ProjectResponse(id="", name="", error=error.message)
+            return ProjectResponse(
+                id="ERROR",
+                name="Error",
+                error=error.message
+            )
 
     def select_project(self, project_id: str) -> dict:
         """Select a project for use"""
@@ -99,4 +100,8 @@ class ProjectManager(BaseManager):
             )
         except Exception as e:
             error = self.handle_unknown_error(e, "Failed to get project by name")
-            return ProjectResponse(id="", name="", error=error.message) 
+            return ProjectResponse(
+                id="ERROR",
+                name="Error",
+                error=error.message
+            ) 

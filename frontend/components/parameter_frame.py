@@ -191,7 +191,7 @@ class ParameterFrame(ttk.LabelFrame):
         if not model_details:
             return
             
-        print(f"Updating parameters for model: {model_details['name']}")
+        print(f"Updating parameters for model: {model_details.name}")
         
         # Reset all parameters to defaults
         self.temperature_var.set(TextConfig.DEFAULT_PARAMS["temperature"])
@@ -203,16 +203,7 @@ class ParameterFrame(ttk.LabelFrame):
         self.random_seed_var.set(TextConfig.DEFAULT_PARAMS["random_seed"])
         self.stop_sequences_var.set(str(TextConfig.DEFAULT_PARAMS["stop_sequences"]))
         
-        # Then apply model-specific limits
-        limits = model_details.get('limits', {})
-        
-        # Update max tokens limit if specified by model
-        max_output = limits.get('max_output_tokens')
-        if max_output and hasattr(self, 'max_tokens_var'):
-            current = int(self.max_tokens_var.get())
-            if current > max_output:
-                print(f"Adjusting max tokens from {current} to {max_output}")
-                self.max_tokens_var.set(max_output)
+        # No need to check for limits since we're using defaults
         
         # Force UI update
         self.update()

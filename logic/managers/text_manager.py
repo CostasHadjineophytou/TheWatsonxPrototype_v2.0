@@ -1,10 +1,10 @@
 import logging
+from typing import Dict
 from ibm_watsonx_ai.foundation_models.utils.enums import DecodingMethods
 from ibm_watsonx_ai.metanames import GenTextParamsMetaNames as GenParams
 from backend.services.text_service import TextService
 from backend.config.text_config import TextConfig
 from ..models.text_request import TextRequest  # Import from models
-from ..models.errors import ValidationError
 from ..models.responses import TextResponse
 from .base_manager import BaseManager
 from ..validators.text_validator import TextValidator
@@ -28,6 +28,7 @@ class TextManager(BaseManager):
                     details=error.details
                 )
 
+            # Prepare request
             full_prompt = self._build_prompt(request)
             params = self._prepare_params(request)
             
@@ -53,15 +54,6 @@ class TextManager(BaseManager):
                 parameters_used=params
             )
             
-        except ValidationError as e:
-            self.log_error(e)
-            return TextResponse(
-                text="",
-                model_id=request.model_id,
-                prompt=request.text,
-                parameters_used={},
-                error=e.message
-            )
         except Exception as e:
             error = self.handle_unknown_error(e, "Failed to process text")
             return TextResponse(
@@ -80,7 +72,7 @@ class TextManager(BaseManager):
         prompt_parts.append(f"Human: {request.text}\n\nAI:")
         return "\n\n".join(prompt_parts)
 
-    def _prepare_params(self, request: TextRequest) -> dict:
+    def _prepare_params(self, request: TextRequest) -> Dict:
         """Prepare model parameters"""
         return {
             GenParams.DECODING_METHOD: DecodingMethods.SAMPLE,

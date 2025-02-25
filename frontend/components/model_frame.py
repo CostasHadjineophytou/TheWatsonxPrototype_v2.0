@@ -75,7 +75,7 @@ class ModelFrame(ttk.LabelFrame):
                 
     def show_details_window(self, details):
         window = tk.Toplevel(self)
-        window.title(f"Model Details: {details['name']}")
+        window.title(f"Model Details: {details.name}")
         window.geometry("600x400")
         
         # Create scrollable frame
@@ -88,20 +88,20 @@ class ModelFrame(ttk.LabelFrame):
         
         canvas.configure(yscrollcommand=scrollbar.set)
         
-        # Add content using ttk.Labels
+        # Add content using ttk.Labels - using dot notation
         sections = [
             ("Basic Information", [
-                f"Model: {details['name']}",
-                f"Provider: {details['provider']}",
-                f"Source: {details['source']}",
-                f"Parameters: {details['parameters']}"
+                f"Model: {details.name}",
+                f"Provider: {details.type}",
+                f"Source: {details.source if hasattr(details, 'source') else 'N/A'}",
+                f"Parameters: {details.parameters if hasattr(details, 'parameters') else 'N/A'}"
             ]),
-            ("Description", [details['description']]),
-            ("Detailed Description", [details['long_description']]),
-            ("Tasks", [', '.join(details['tasks'])]),
+            ("Description", [details.description or 'N/A']),
+            ("Detailed Description", [details.long_description if hasattr(details, 'long_description') else 'N/A']),
+            ("Tasks", [', '.join(details.tasks) if hasattr(details, 'tasks') else 'N/A']),
             ("Limits", [
-                f"Max Sequence Length: {details['limits'].get('max_sequence_length', 'N/A')}",
-                f"Max Output Tokens: {details['limits'].get('max_output_tokens', 'N/A')}"
+                f"Max Sequence Length: {details.limits.get('max_sequence_length', 'N/A') if hasattr(details, 'limits') else 'N/A'}",
+                f"Max Output Tokens: {details.limits.get('max_output_tokens', 'N/A') if hasattr(details, 'limits') else 'N/A'}"
             ])
         ]
         
