@@ -2,6 +2,8 @@ from typing import Dict, Any, Tuple
 from ..utils.errors import ValidationError, AuthenticationError
 from ..config.nlu_config import NLUConfig
 from ..config.text_config import TextConfig
+from ..config.speech_config import SpeechConfig
+import os
 
 class ServiceValidator:
     """Validates raw service inputs before API calls"""
@@ -19,6 +21,107 @@ class ServiceValidator:
             raise AuthenticationError(
                 message="API key is required",
                 code="NO_API_KEY"
+            )
+
+    def validate_tts_request(self, text: str, voice: str, params: dict) -> None:
+        """Validate TTS request parameters"""
+        # Validate text
+        if not text or not isinstance(text, str):
+            raise ValidationError(
+                message="Text is required and must be a string",
+                code="INVALID_TEXT"
+            )
+            
+        if len(text) > SpeechConfig.MAX_TEXT_LENGTH:
+            raise ValidationError(
+                message=f"Text exceeds maximum length of {SpeechConfig.MAX_TEXT_LENGTH} characters",
+                code="TEXT_TOO_LONG",
+                details={"length": len(text)}
+            )
+
+        # Validate voice
+        if not voice or not isinstance(voice, str):
+            raise ValidationError(
+                message="Voice ID is required",
+                code="INVALID_VOICE"
+            )
+
+        # Validate pitch
+        pitch = params.get('pitch', 0)
+        if not isinstance(pitch, (int, float)) or not (
+            SpeechConfig.TTS_PARAMS["pitch"]["min"] <= pitch <= SpeechConfig.TTS_PARAMS["pitch"]["max"]
+        ):
+            raise ValidationError(
+                message="Invalid pitch value",
+                code="INVALID_PITCH",
+                details={
+                    "value": pitch,
+                    "allowed_range": f"{SpeechConfig.TTS_PARAMS['pitch']['min']} to {SpeechConfig.TTS_PARAMS['pitch']['max']}"
+                }
+            )
+
+        # Validate speed
+        speed = params.get('speed', 0)
+        if not isinstance(speed, (int, float)) or not (
+            SpeechConfig.TTS_PARAMS["speed"]["min"] <= speed <= SpeechConfig.TTS_PARAMS["speed"]["max"]
+        ):
+            raise ValidationError(
+                message="Invalid speed value",
+                code="INVALID_SPEED",
+                details={
+                    "value": speed,
+                    "allowed_range": f"{SpeechConfig.TTS_PARAMS['speed']['min']} to {SpeechConfig.TTS_PARAMS['speed']['max']}"
+                }
+            )
+
+        # Validate accept format
+        accept = params.get('accept', SpeechConfig.TTS_PARAMS["accept"]["default"])
+        if accept not in SpeechConfig.TTS_PARAMS["accept"]["options"]:
+            raise ValidationError(
+                message="Invalid audio format",
+                code="INVALID_FORMAT",
+                details={
+                    "format": accept,
+                    "allowed_formats": SpeechConfig.TTS_PARAMS["accept"]["options"]
+                }
+            )
+
+    def validate_audio_file(self, file_path: str) -> None:
+        """Validate audio file for STT"""
+        # Check if file path is provided
+        if not file_path:
+            raise ValidationError(
+                message="Audio file path is required",
+                code="NO_AUDIO_PATH"
+            )
+
+        # Check if file exists
+        if not os.path.exists(file_path):
+            raise ValidationError(
+                message="Audio file not found",
+                code="FILE_NOT_FOUND",
+                details={"path": file_path}
+            )
+
+        # Check file extension
+        file_extension = os.path.splitext(file_path)[1].lower()
+        if file_extension not in SpeechConfig.SUPPORTED_AUDIO_FORMATS:
+            raise ValidationError(
+                message="Unsupported audio format",
+                code="UNSUPPORTED_FORMAT",
+                details={
+                    "format": file_extension,
+                    "supported_formats": SpeechConfig.SUPPORTED_AUDIO_FORMATS
+                }
+            )
+
+        # Check file size
+        file_size = os.path.getsize(file_path)
+        if file_size > SpeechConfig.MAX_AUDIO_SIZE:
+            raise ValidationError(
+                message=f"Audio file exceeds maximum size of {SpeechConfig.MAX_AUDIO_SIZE/1024/1024}MB",
+                code="FILE_TOO_LARGE",
+                details={"size": file_size}
             )
 
     @staticmethod

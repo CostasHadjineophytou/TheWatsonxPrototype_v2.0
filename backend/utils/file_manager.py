@@ -1,14 +1,43 @@
+import os
 import json
 import logging
 from pathlib import Path
 from .errors import ConfigurationError
 
 class FileManager:
-    """Handles file operations for the application"""
+    """Handles file operations and directory management"""
     
     def __init__(self):
         self.logger = logging.getLogger(self.__class__.__name__)
         
+    @staticmethod
+    def ensure_directories():
+        """Ensure all required directories exist"""
+        directories = [
+            "data/audio",
+            "data/cloud",
+            "data/temp",
+            "data/datasets"
+        ]
+        
+        for directory in directories:
+            Path(directory).mkdir(parents=True, exist_ok=True)
+    
+    @staticmethod
+    def save_json(filepath: str, data: dict):
+        """Save data as JSON file"""
+        os.makedirs(os.path.dirname(filepath), exist_ok=True)
+        with open(filepath, 'w') as f:
+            json.dump(data, f, indent=2)
+    
+    @staticmethod
+    def load_json(filepath: str) -> dict:
+        """Load data from JSON file"""
+        if not os.path.exists(filepath):
+            return {}
+        with open(filepath, 'r') as f:
+            return json.load(f)
+
     def save_json(self, filename: str, data: dict):
         """Save data to a JSON file"""
         try:

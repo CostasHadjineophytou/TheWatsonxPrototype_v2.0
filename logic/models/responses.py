@@ -27,4 +27,20 @@ class ProjectResponse:
     name: str
     description: Optional[str] = None
     created_at: Optional[str] = None
+    error: Optional[str] = None
+
+@dataclass
+class TTSResponse:
+    """Text-to-Speech response"""
+    audio_path: str
+    text: str
+    voice: str
+    parameters_used: Dict
+    error: Optional[str] = None
+
+@dataclass
+class STTResponse:
+    """Speech-to-Text response"""
+    text: str
+    audio_path: str
     error: Optional[str] = None 
