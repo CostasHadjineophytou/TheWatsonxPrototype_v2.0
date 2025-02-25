@@ -6,9 +6,9 @@ from ..components.stt_frame import STTFrame
 class TTSTab(ttk.Frame):
     """Tab for Text-to-Speech functionality"""
     
-    def __init__(self, parent, tts_manager):
+    def __init__(self, parent, tts_manager, audio_manager):
         super().__init__(parent)
-        self.tts_frame = TTSFrame(self, tts_manager)
+        self.tts_frame = TTSFrame(self, tts_manager, audio_manager)
         self.tts_frame.pack(fill='both', expand=True, padx=5, pady=5)
 
 class STTTab(ttk.Frame):

@@ -13,6 +13,8 @@ from logic.validators import (
     SpeechValidator,
     NLUValidator
 )
+from backend.utils.audio_player import AudioPlayer
+from logic.managers.audio_manager import AudioManager
 
 class ManagerFactory:
     """Factory for creating manager instances"""
@@ -52,4 +54,7 @@ class ManagerFactory:
 
     def create_stt_manager(self) -> STTManager:
         stt_service = self.service_factory.create_stt_service()
-        return STTManager(stt_service, self.speech_validator) 
+        return STTManager(stt_service, self.speech_validator)
+
+    def create_audio_manager(self) -> AudioManager:
+        return AudioManager() 

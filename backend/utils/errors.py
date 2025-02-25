@@ -24,4 +24,12 @@ class ValidationError(BackendError):
 
 class ConfigurationError(BackendError):
     """Configuration/setup errors"""
-    pass 
+    pass
+
+class AudioError(Exception):
+    """Audio playback related errors"""
+    def __init__(self, message: str, code: str, details: dict = None):
+        self.message = message
+        self.code = code
+        self.details = details or {}
+        super().__init__(self.message) 

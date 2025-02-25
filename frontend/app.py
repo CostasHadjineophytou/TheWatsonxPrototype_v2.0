@@ -20,6 +20,7 @@ class WatsonApp(tk.Tk):
         self.nlu_manager = self.manager_factory.create_nlu_manager()
         self.tts_manager = self.manager_factory.create_tts_manager()
         self.stt_manager = self.manager_factory.create_stt_manager()
+        self.audio_manager = self.manager_factory.create_audio_manager()
         
         self._init_ui()
         
@@ -47,7 +48,8 @@ class WatsonApp(tk.Tk):
         # Text-to-Speech tab
         self.tts_tab = TTSTab(
             self.notebook,
-            self.tts_manager
+            self.tts_manager,
+            self.audio_manager
         )
         self.notebook.add(self.tts_tab, text="Text to Speech")
         
