@@ -2,6 +2,9 @@ import tkinter as tk
 from tkinter import ttk, messagebox
 from ..styles.colors import Colors
 from logic.models.speech_request import TTSRequest
+import os
+import subprocess
+import platform
 
 class TTSFrame(ttk.Frame):
     """UI frame for Text-to-Speech"""
@@ -109,6 +112,31 @@ class TTSFrame(ttk.Frame):
         except Exception as e:
             messagebox.showerror("Error", f"Failed to load voices: {str(e)}")
 
+    def _play_audio(self, audio_path: str):
+        """Play audio file using the appropriate method for the OS"""
+        if platform.system() == 'Windows':
+            try:
+                # Use the default system association to play the file
+                os.startfile(os.path.abspath(audio_path))
+            except Exception as e:
+                try:
+                    # Fallback to winsound
+                    import winsound
+                    winsound.PlaySound(audio_path, winsound.SND_FILENAME | winsound.SND_ASYNC)
+                except Exception as e:
+                    # Last resort
+                    subprocess.run(['start', audio_path], shell=True)
+        else:
+            # For Unix-like systems
+            try:
+                if platform.system() == 'Darwin':  # macOS
+                    subprocess.run(['afplay', audio_path])
+                else:  # Linux
+                    subprocess.run(['aplay', audio_path])
+            except:
+                # Fallback for other systems
+                subprocess.run(['xdg-open', audio_path])
+
     def _synthesize_text(self):
         """Handle synthesis request"""
         text = self.text_input.get("1.0", tk.END).strip()
@@ -122,8 +150,8 @@ class TTSFrame(ttk.Frame):
             request = TTSRequest(
                 text=text,
                 voice=self.voice_var.get(),
-                pitch=self.pitch_var.get(),
-                speed=self.speed_var.get(),
+                pitch=int(self.pitch_var.get()),
+                speed=int(self.speed_var.get()),
                 accept=self.format_var.get()
             )
             
@@ -131,11 +159,12 @@ class TTSFrame(ttk.Frame):
             
             if response.error:
                 raise Exception(response.error)
-                
-            # Play the audio
-            import os
-            os.system(f"start {response.audio_path}")
-            self.status_var.set("Synthesis complete")
+            
+            if os.path.exists(response.audio_path):
+                self._play_audio(response.audio_path)
+                self.status_var.set("Synthesis complete")
+            else:
+                raise Exception("Audio file not found")
             
         except Exception as e:
             messagebox.showerror("Synthesis Error", str(e))

@@ -1,6 +1,7 @@
 import os
 import json
 import logging
+import stat
 from pathlib import Path
 from .errors import ConfigurationError
 
@@ -12,7 +13,7 @@ class FileManager:
         
     @staticmethod
     def ensure_directories():
-        """Ensure all required directories exist"""
+        """Ensure all required directories exist with proper permissions"""
         directories = [
             "data/audio",
             "data/cloud",
@@ -21,7 +22,19 @@ class FileManager:
         ]
         
         for directory in directories:
-            Path(directory).mkdir(parents=True, exist_ok=True)
+            path = Path(directory)
+            path.mkdir(parents=True, exist_ok=True)
+            
+            try:
+                # Set directory permissions
+                path.chmod(0o777)
+                
+                # Set permissions for any existing files
+                for file in path.glob('*'):
+                    if file.is_file():
+                        file.chmod(0o666)
+            except Exception as e:
+                print(f"Warning: Could not set permissions for {directory}: {e}")
     
     @staticmethod
     def save_json(filepath: str, data: dict):
