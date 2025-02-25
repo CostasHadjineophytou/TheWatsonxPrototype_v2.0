@@ -1,9 +1,8 @@
 from ibm_watson import TextToSpeechV1
 from ibm_cloud_sdk_core.authenticators import IAMAuthenticator
 from .base_service import BaseService
-from ..utils.errors import AuthenticationError, ValidationError
+from ..utils.errors import AuthenticationError
 import os
-import stat
 from pathlib import Path
 import time
 import glob

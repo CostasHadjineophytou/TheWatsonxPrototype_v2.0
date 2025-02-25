@@ -1,5 +1,4 @@
 import requests
-import logging
 from backend.config.config import Config
 from backend.utils.errors import ConfigurationError
 from ..utils.base_handler import BaseHandler
