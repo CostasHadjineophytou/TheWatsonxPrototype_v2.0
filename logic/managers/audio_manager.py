@@ -11,14 +11,17 @@ class AudioManager:
         self.audio_history: List[Dict] = []
         
     def play_audio(self, audio_path: str, metadata: dict = None):
-        """Play audio and add to history"""
+        """Play audio and optionally add to history"""
         self.player.play(audio_path)
-        
-        # Add to history
+        if metadata:  # Only add to history if metadata is provided (new synthesis)
+            self._add_to_history(audio_path, metadata)
+            
+    def _add_to_history(self, audio_path: str, metadata: dict):
+        """Add audio to history"""
         audio_info = {
             'path': audio_path,
             'timestamp': datetime.now(),
-            'metadata': metadata or {}
+            'metadata': metadata
         }
         self.audio_history.insert(0, audio_info)
         

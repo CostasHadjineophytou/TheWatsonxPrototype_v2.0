@@ -127,31 +127,6 @@ class TTSFrame(ttk.Frame):
         except Exception as e:
             messagebox.showerror("Error", f"Failed to load voices: {str(e)}")
 
-    def _play_audio(self, audio_path: str):
-        """Play audio file using the appropriate method for the OS"""
-        if platform.system() == 'Windows':
-            try:
-                # Use the default system association to play the file
-                os.startfile(os.path.abspath(audio_path))
-            except Exception as e:
-                try:
-                    # Fallback to winsound
-                    import winsound
-                    winsound.PlaySound(audio_path, winsound.SND_FILENAME | winsound.SND_ASYNC)
-                except Exception as e:
-                    # Last resort
-                    subprocess.run(['start', audio_path], shell=True)
-        else:
-            # For Unix-like systems
-            try:
-                if platform.system() == 'Darwin':  # macOS
-                    subprocess.run(['afplay', audio_path])
-                else:  # Linux
-                    subprocess.run(['aplay', audio_path])
-            except:
-                # Fallback for other systems
-                subprocess.run(['xdg-open', audio_path])
-
     def _init_audio_history(self, parent):
         """Initialize audio history panel"""
         # Header
@@ -185,7 +160,7 @@ class TTSFrame(ttk.Frame):
                 item_frame,
                 text="▶",
                 width=3,
-                command=lambda p=audio_info['path']: self._play_audio(p)
+                command=lambda p=audio_info['path']: self.audio_manager.play_audio(p)
             )
             play_btn.pack(side=tk.LEFT, padx=(0, 5))
             
