@@ -17,4 +17,7 @@ class TextConfig:
         "repetition_penalty": 1.0,
         "random_seed": 42,
         "stop_sequences": ["Human:", "AI:"]
-    } 
+    }
+
+    # TODO:
+    # Add rules for min and max and then extract them to the validators.
