@@ -142,4 +142,19 @@ class FileManager:
                         logging.warning(f"Could not remove file {file}: {e}")
                         
         except Exception as e:
-            logging.error(f"Audio cleanup failed: {e}") 
+            logging.error(f"Audio cleanup failed: {e}")
+
+    @staticmethod
+    def ensure_audio_directory():
+        """Ensure audio directory exists with correct permissions"""
+        try:
+            audio_dir = Path("data/audio")
+            audio_dir.mkdir(parents=True, exist_ok=True)
+            audio_dir.chmod(0o777)
+            FileManager.cleanup_audio_files()
+        except Exception as e:
+            raise FileError(
+                message="Failed to setup audio directory",
+                code="DIRECTORY_SETUP_ERROR",
+                details={"error": str(e)}
+            ) 
