@@ -94,11 +94,18 @@ class FileManager:
             return {}
 
     @staticmethod
-    def save_audio_file(audio_content: bytes) -> str:
-        """Save audio content with timestamp and proper permissions"""
+    def save_audio_file(audio_content: bytes, audio_format: str = "audio/wav") -> str:
+        """
+        Save audio content with timestamp and proper permissions
+        
+        Args:
+            audio_content: Raw audio bytes
+            audio_format: MIME type (e.g. 'audio/wav', 'audio/mp3', 'audio/ogg')
+        """
         try:
             timestamp = int(time.time() * 1000)
-            final_path = f"data/audio/output_{timestamp}.wav"
+            extension = audio_format.split('/')[-1]  # Extract 'wav' from 'audio/wav'
+            final_path = f"data/audio/output_{timestamp}.{extension}"
             
             # Ensure directory exists
             os.makedirs(os.path.dirname(final_path), exist_ok=True)
@@ -127,7 +134,10 @@ class FileManager:
         """Clean up old audio files keeping only the most recent ones"""
         try:
             audio_dir = "data/audio"
-            audio_files = glob.glob(f"{audio_dir}/*.wav")
+            # Update to match all supported formats
+            audio_files = []
+            for ext in ['wav', 'mp3', 'ogg']:
+                audio_files.extend(glob.glob(f"{audio_dir}/*.{ext}"))
             
             if len(audio_files) > max_files:
                 # Sort by modification time (newest first)

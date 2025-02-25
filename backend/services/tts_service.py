@@ -34,6 +34,7 @@ class TTSService(BaseService):
             if not self._tts:
                 self.initialize()
             
+            audio_format = params.get('accept', 'audio/wav')
             ssml_text = SSMLBuilder.build_prosody(
                 text=text,
                 pitch=params.get('pitch', 0),
@@ -43,10 +44,10 @@ class TTSService(BaseService):
             response = self._tts.synthesize(
                 text=ssml_text,
                 voice=voice,
-                accept=params.get('accept', 'audio/wav')
+                accept=audio_format
             ).get_result().content
             
-            return FileManager.save_audio_file(response)
+            return FileManager.save_audio_file(response, audio_format)
             
         except Exception as e:
             raise self.handle_error(e, "TTS synthesis failed")
