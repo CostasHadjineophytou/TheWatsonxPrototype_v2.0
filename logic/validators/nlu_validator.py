@@ -1,39 +1,36 @@
 from .base_validator import BaseValidator
 from ..models.errors import ValidationError
+from backend.config.nlu_config import NLUConfig
 
 class NLUValidator(BaseValidator):
     """Validator for NLU operations"""
     
-    def validate_text(self, text: str) -> None:
+    def validate_text(self, text: str) -> tuple[bool, ValidationError]:
         """Validate input text"""
-        if not text or not text.strip():
-            raise ValidationError(
-                message="Text cannot be empty",
-                code="EMPTY_TEXT"
+        if not text:
+            return False, ValidationError(
+                message="Text is required",
+                code="EMPTY_TEXT",
+                details={"text": text}
             )
-            
-        if len(text) > 50000:  # IBM NLU limit
-            raise ValidationError(
-                message="Text exceeds maximum length of 50,000 characters",
-                code="TEXT_TOO_LONG"
-            )
-
-    def validate_features(self, features: list) -> None:
-        """Validate selected features"""
-        if not features:
-            raise ValidationError(
-                message="At least one analysis feature must be selected",
-                code="NO_FEATURES"
-            )
-            
-        valid_features = {
-            'sentiment', 'emotion', 'entities', 'keywords',
-            'categories', 'concepts', 'relations', 'semantic_roles', 'all'
-        }
+        return True, None
         
-        invalid_features = set(features) - valid_features
+    def validate_features(self, features: list) -> tuple[bool, ValidationError]:
+        """Validate requested features"""
+        if not features:
+            return False, ValidationError(
+                message="At least one feature must be selected",
+                code="NO_FEATURES",
+                details={"features": features}
+            )
+            
+        valid_features = NLUConfig.get_feature_ids()
+        invalid_features = [f for f in features if f not in valid_features and f != 'all']
         if invalid_features:
-            raise ValidationError(
-                message=f"Invalid features selected: {', '.join(invalid_features)}",
-                code="INVALID_FEATURES"
-            ) 
+            return False, ValidationError(
+                message="Invalid features requested",
+                code="INVALID_FEATURES",
+                details={"invalid_features": invalid_features}
+            )
+            
+        return True, None 

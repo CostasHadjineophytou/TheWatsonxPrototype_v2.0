@@ -25,7 +25,7 @@ class TextManager(BaseManager):
             if not is_valid:
                 raise self.handle_validation_error(
                     message=error.message,
-                    details={"request": str(request)}
+                    details=error.details
                 )
 
             full_prompt = self._build_prompt(request)

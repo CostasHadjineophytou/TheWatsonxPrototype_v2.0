@@ -45,7 +45,7 @@ class ProjectManager(BaseManager):
             if not is_valid:
                 raise self.handle_validation_error(
                     message=error.message,
-                    details={"project_id": project_id}
+                    details=error.details
                 )
 
             projects = self.project_service.list_projects()

@@ -47,7 +47,7 @@ class ModelManager(BaseManager):
             if not is_valid:
                 raise self.handle_validation_error(
                     message=error.message,
-                    details={"model_id": model_id}
+                    details=error.details
                 )
                 
             specs = self.model_service.get_model_specs(model_id)
