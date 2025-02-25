@@ -25,65 +25,39 @@ class ServiceValidator:
 
     def validate_tts_request(self, text: str, voice: str, params: dict) -> None:
         """Validate TTS request parameters"""
-        # Validate text
-        if not text or not isinstance(text, str):
+        if not text or len(text) > SpeechConfig.MAX_TEXT_LENGTH:
             raise ValidationError(
-                message="Text is required and must be a string",
-                code="INVALID_TEXT"
+                message="Invalid text length",
+                code="INVALID_TEXT",
+                details={"max_length": SpeechConfig.MAX_TEXT_LENGTH}
             )
             
-        if len(text) > SpeechConfig.MAX_TEXT_LENGTH:
+        if not voice:
             raise ValidationError(
-                message=f"Text exceeds maximum length of {SpeechConfig.MAX_TEXT_LENGTH} characters",
-                code="TEXT_TOO_LONG",
-                details={"length": len(text)}
-            )
-
-        # Validate voice
-        if not voice or not isinstance(voice, str):
-            raise ValidationError(
-                message="Voice ID is required",
+                message="Voice must be specified",
                 code="INVALID_VOICE"
             )
-
+            
         # Validate pitch
         pitch = params.get('pitch', 0)
         if not isinstance(pitch, (int, float)) or not (
-            SpeechConfig.TTS_PARAMS["pitch"]["min"] <= pitch <= SpeechConfig.TTS_PARAMS["pitch"]["max"]
+            SpeechConfig.PITCH_RANGE[0] <= pitch <= SpeechConfig.PITCH_RANGE[1]
         ):
             raise ValidationError(
                 message="Invalid pitch value",
                 code="INVALID_PITCH",
-                details={
-                    "value": pitch,
-                    "allowed_range": f"{SpeechConfig.TTS_PARAMS['pitch']['min']} to {SpeechConfig.TTS_PARAMS['pitch']['max']}"
-                }
+                details={"range": SpeechConfig.PITCH_RANGE}
             )
-
+            
         # Validate speed
         speed = params.get('speed', 0)
         if not isinstance(speed, (int, float)) or not (
-            SpeechConfig.TTS_PARAMS["speed"]["min"] <= speed <= SpeechConfig.TTS_PARAMS["speed"]["max"]
+            SpeechConfig.SPEED_RANGE[0] <= speed <= SpeechConfig.SPEED_RANGE[1]
         ):
             raise ValidationError(
                 message="Invalid speed value",
                 code="INVALID_SPEED",
-                details={
-                    "value": speed,
-                    "allowed_range": f"{SpeechConfig.TTS_PARAMS['speed']['min']} to {SpeechConfig.TTS_PARAMS['speed']['max']}"
-                }
-            )
-
-        # Validate accept format
-        accept = params.get('accept', SpeechConfig.TTS_PARAMS["accept"]["default"])
-        if accept not in SpeechConfig.TTS_PARAMS["accept"]["options"]:
-            raise ValidationError(
-                message="Invalid audio format",
-                code="INVALID_FORMAT",
-                details={
-                    "format": accept,
-                    "allowed_formats": SpeechConfig.TTS_PARAMS["accept"]["options"]
-                }
+                details={"range": SpeechConfig.SPEED_RANGE}
             )
 
     def validate_audio_file(self, file_path: str) -> None:

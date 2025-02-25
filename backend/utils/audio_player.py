@@ -1,19 +1,35 @@
 import pygame
 from typing import Callable, Optional
 from .errors import AudioError
+import logging
+import os
 
 class AudioPlayer:
     """Low-level audio playback functionality"""
     
     def __init__(self):
-        pygame.mixer.init()
+        try:
+            pygame.mixer.init()
+        except Exception as e:
+            raise AudioError(
+                message="Failed to initialize audio system",
+                code="AUDIO_INIT_ERROR",
+                details={"error": str(e)}
+            )
         self._current_sound: Optional[pygame.mixer.Sound] = None
         self._is_playing = False
         self._on_complete_callback: Optional[Callable] = None
         
     def play(self, audio_path: str, on_complete: Optional[Callable] = None):
-        """Play audio file"""
+        """Play audio file with error handling"""
         try:
+            if not os.path.exists(audio_path):
+                raise AudioError(
+                    message="Audio file not found",
+                    code="FILE_NOT_FOUND",
+                    details={"path": audio_path}
+                )
+                
             if self._current_sound:
                 self.stop()
                 

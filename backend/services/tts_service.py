@@ -2,11 +2,10 @@ from ibm_watson import TextToSpeechV1
 from ibm_cloud_sdk_core.authenticators import IAMAuthenticator
 from .base_service import BaseService
 from ..utils.errors import AuthenticationError
+from ..utils.file_manager import FileManager
 import os
 from pathlib import Path
-import time
 import glob
-from ..utils.file_manager import FileManager
 
 class TTSService(BaseService):
     """Handles Text-to-Speech API interactions"""
@@ -68,7 +67,6 @@ class TTSService(BaseService):
     def synthesize_text(self, text: str, voice: str, params: dict) -> str:
         """Raw TTS API call"""
         try:
-            self.validator.validate_tts_request(text, voice, params)
             if not self._tts:
                 self.initialize()
             
@@ -79,7 +77,8 @@ class TTSService(BaseService):
                 accept=params.get('accept', 'audio/wav')
             ).get_result().content
             
-            return self._save_audio_file(response)
+            return FileManager.save_audio_file(response)
+            
         except Exception as e:
             raise self.handle_error(e, "TTS synthesis failed")
 
@@ -103,20 +102,4 @@ class TTSService(BaseService):
         pitch = pitch.replace('%%', '%')
         speed = speed.replace('%%', '%')
         
-        return f"<prosody pitch='{pitch}' rate='{speed}'>{text}</prosody>"
-
-    def _save_audio_file(self, audio_content: bytes) -> str:
-        """Save audio content to file"""
-        timestamp = int(time.time() * 1000)
-        final_path = f"data/audio/output_{timestamp}.wav"
-        
-        try:
-            with open(final_path, "wb") as audio_file:
-                audio_file.write(audio_content)
-            
-            # Clean up old files after successful save
-            FileManager.cleanup_audio_files()
-            
-            return final_path
-        except Exception as e:
-            raise self.handle_error(e, "Failed to save audio file") 
+        return f"<prosody pitch='{pitch}' rate='{speed}'>{text}</prosody>" 

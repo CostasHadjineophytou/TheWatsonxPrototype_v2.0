@@ -1,9 +1,11 @@
 import os
 import json
 import logging
-from pathlib import Path
-from .errors import ConfigurationError
 import glob
+import time
+from pathlib import Path
+from typing import Optional
+from .errors import FileError, ConfigurationError
 
 class FileManager:
     """Handles file operations and directory management"""
@@ -92,22 +94,52 @@ class FileManager:
             return {}
 
     @staticmethod
+    def save_audio_file(audio_content: bytes) -> str:
+        """Save audio content with timestamp and proper permissions"""
+        try:
+            timestamp = int(time.time() * 1000)
+            final_path = f"data/audio/output_{timestamp}.wav"
+            
+            # Ensure directory exists
+            os.makedirs(os.path.dirname(final_path), exist_ok=True)
+            
+            # Write file
+            with open(final_path, "wb") as audio_file:
+                audio_file.write(audio_content)
+            
+            # Set permissions
+            os.chmod(final_path, 0o666)
+            
+            # Cleanup old files
+            FileManager.cleanup_audio_files()
+            
+            return final_path
+            
+        except Exception as e:
+            raise FileError(
+                message="Failed to save audio file",
+                code="AUDIO_SAVE_ERROR",
+                details={"error": str(e)}
+            )
+
+    @staticmethod
     def cleanup_audio_files(max_files: int = 5):
         """Clean up old audio files keeping only the most recent ones"""
         try:
             audio_dir = "data/audio"
             audio_files = glob.glob(f"{audio_dir}/*.wav")
             
-            # Keep only the N most recent files
             if len(audio_files) > max_files:
-                # Sort files by modification time (newest first)
+                # Sort by modification time (newest first)
                 audio_files.sort(key=lambda x: os.path.getmtime(x), reverse=True)
                 
                 # Remove older files
                 for file in audio_files[max_files:]:
                     try:
-                        os.remove(file)
-                    except:
-                        pass  # Ignore if file is in use
+                        if os.path.exists(file):
+                            os.remove(file)
+                    except Exception as e:
+                        logging.warning(f"Could not remove file {file}: {e}")
+                        
         except Exception as e:
-            print(f"Warning: Could not clean up audio files: {e}") 
+            logging.error(f"Audio cleanup failed: {e}") 
