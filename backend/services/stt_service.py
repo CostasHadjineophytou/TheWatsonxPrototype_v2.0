@@ -1,8 +1,9 @@
 from ibm_watson import SpeechToTextV1
 from ibm_cloud_sdk_core.authenticators import IAMAuthenticator
-from pydub import AudioSegment
 from .base_service import BaseService
 from ..utils.errors import AuthenticationError, ValidationError
+from ..utils.file_manager import FileManager
+from ..validators.service_validator import ServiceValidator
 
 class STTService(BaseService):
     """Handles Speech-to-Text API interactions"""
@@ -11,6 +12,7 @@ class STTService(BaseService):
         super().__init__()
         self.credentials_manager = credentials_manager
         self._stt = None
+        self.validator = ServiceValidator()
 
     def initialize(self):
         """Initialize STT client"""
@@ -35,11 +37,8 @@ class STTService(BaseService):
 
             if not self._stt:
                 self.initialize()
-
-            # Convert to WAV if needed
-            wav_path = self._ensure_wav_format(file_path)
             
-            with open(wav_path, 'rb') as audio_file:
+            with open(file_path, 'rb') as audio_file:
                 response = self._stt.recognize(
                     audio=audio_file,
                     content_type='audio/wav'
@@ -51,23 +50,6 @@ class STTService(BaseService):
             raise
         except Exception as e:
             raise self.handle_error(e, "Failed to transcribe audio")
-
-    def _ensure_wav_format(self, file_path: str) -> str:
-        """Convert audio to WAV format if needed"""
-        if file_path.endswith('.wav'):
-            return file_path
-            
-        try:
-            audio = AudioSegment.from_file(file_path)
-            wav_path = file_path.rsplit('.', 1)[0] + '.wav'
-            audio.export(wav_path, format='wav')
-            return wav_path
-        except Exception as e:
-            raise ValidationError(
-                message="Failed to convert audio format",
-                code="AUDIO_CONVERSION_ERROR",
-                details={"error": str(e)}
-            )
 
     def _extract_transcription(self, response: dict) -> str:
         """Extract transcription text from response"""

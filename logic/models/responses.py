@@ -40,4 +40,7 @@ class STTResponse:
     """Speech-to-Text response"""
     text: str
     audio_path: str
-    error: Optional[str] = None 
+    success: bool = False
+    error: Optional[str] = None
+    duration: Optional[float] = None  # Audio duration in seconds
+    word_count: Optional[int] = None  # Number of transcribed words 

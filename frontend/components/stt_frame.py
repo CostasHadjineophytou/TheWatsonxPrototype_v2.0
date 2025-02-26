@@ -97,8 +97,8 @@ class STTFrame(ttk.Frame):
             request = STTRequest(audio_path=file_path)
             response = self.stt_manager.transcribe_speech(request)
             
-            if response.error:
-                raise Exception(response.error)
+            if not response.success:
+                raise Exception(response.error or "Transcription failed")
                 
             # Display result
             self.result_text.config(state=tk.NORMAL)
@@ -106,7 +106,17 @@ class STTFrame(ttk.Frame):
             self.result_text.insert(tk.END, response.text)
             self.result_text.config(state=tk.DISABLED)
             
-            self.status_var.set("Transcription complete")
+            # Show statistics if available
+            stats = []
+            if response.duration:
+                stats.append(f"Duration: {response.duration:.1f}s")
+            if response.word_count:
+                stats.append(f"Words: {response.word_count}")
+                
+            status = "Transcription complete"
+            if stats:
+                status += f" ({' | '.join(stats)})"
+            self.status_var.set(status)
             
         except Exception as e:
             messagebox.showerror("Transcription Error", str(e))

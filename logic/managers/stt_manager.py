@@ -29,6 +29,13 @@ class STTManager(BaseManager):
                 transcription = self.stt_service.transcribe_audio(
                     file_path=request.audio_path
                 )
+                
+                if not transcription:
+                    raise self.handle_business_error(
+                        message="No transcription generated",
+                        code="EMPTY_TRANSCRIPTION"
+                    )
+                    
             except Exception as e:
                 raise self.handle_business_error(
                     message="Speech transcription failed",
@@ -38,7 +45,8 @@ class STTManager(BaseManager):
 
             return STTResponse(
                 text=transcription,
-                audio_path=request.audio_path
+                audio_path=request.audio_path,
+                success=True
             )
 
         except Exception as e:
@@ -46,5 +54,6 @@ class STTManager(BaseManager):
             return STTResponse(
                 text="",
                 audio_path=request.audio_path,
-                error=error.message
+                error=error.message,
+                success=False
             ) 

@@ -98,12 +98,22 @@ class SpeechValidator(BaseValidator):
                 }
             )
 
-        file_size = os.path.getsize(request.audio_path)
-        if file_size > SpeechConfig.MAX_AUDIO_SIZE:
+        try:
+            file_size = os.path.getsize(request.audio_path)
+            if file_size > SpeechConfig.MAX_AUDIO_SIZE:
+                return False, self.create_error(
+                    message=f"Audio file exceeds maximum size of {SpeechConfig.MAX_AUDIO_SIZE/1024/1024:.1f}MB",
+                    code="FILE_TOO_LARGE",
+                    details={
+                        "size": file_size,
+                        "max_size": SpeechConfig.MAX_AUDIO_SIZE
+                    }
+                )
+        except OSError:
             return False, self.create_error(
-                message=f"Audio file exceeds maximum size of {SpeechConfig.MAX_AUDIO_SIZE/1024/1024}MB",
-                code="FILE_TOO_LARGE",
-                details={"size": file_size}
+                message="Cannot access audio file",
+                code="FILE_ACCESS_ERROR",
+                details={"path": request.audio_path}
             )
 
         return True, None 

@@ -1,9 +1,10 @@
 class SpeechConfig:
     """Configuration constants for speech services TTS and STT"""
-    # STT
+    # STT Configuration
     MAX_AUDIO_SIZE = 100 * 1024 * 1024  # 100MB
-
-    # TTS
+    STT_SUPPORTED_FORMATS = ['.wav']  # For now just WAV, can expand later
+    
+    # TTS Configuration
     MAX_TEXT_LENGTH = 5000
     SUPPORTED_AUDIO_FORMATS = ['audio/wav', 'audio/mp3', 'audio/ogg']
     DEFAULT_VOICE = 'en-US_MichaelV3Voice'
