@@ -73,29 +73,21 @@ class SpeechValidator(BaseValidator):
         return True, None
 
     def validate_stt_request(self, request: STTRequest) -> Tuple[bool, Optional[LogicError]]:
-        """Validate STT request parameters"""
+        """Business-level validation"""
+        # Validate request structure
         if not request.audio_path:
             return False, self.create_error(
                 message="Audio file path is required",
                 code="NO_AUDIO_PATH"
             )
 
-        if not os.path.exists(request.audio_path):
-            return False, self.create_error(
-                message="Audio file not found",
-                code="FILE_NOT_FOUND",
-                details={"path": request.audio_path}
-            )
-
+        # Business rules validation
         file_extension = os.path.splitext(request.audio_path)[1].lower()
-        if file_extension not in SpeechConfig.SUPPORTED_AUDIO_FORMATS:
+        if file_extension not in SpeechConfig.STT_SUPPORTED_FORMATS:
             return False, self.create_error(
-                message="Unsupported audio format",
+                message=f"Unsupported audio format: {file_extension}",
                 code="UNSUPPORTED_FORMAT",
-                details={
-                    "format": file_extension,
-                    "supported_formats": SpeechConfig.SUPPORTED_AUDIO_FORMATS
-                }
+                details={"supported_formats": SpeechConfig.STT_SUPPORTED_FORMATS}
             )
 
         try:

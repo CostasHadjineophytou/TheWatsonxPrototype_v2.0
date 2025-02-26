@@ -61,37 +61,20 @@ class ServiceValidator:
             )
 
     def validate_audio_file(self, file_path: str) -> None:
-        """Validate audio file for STT"""
-        if not file_path:
-            raise ValidationError(
-                message="Audio file path is required",
-                code="NO_AUDIO_PATH"
-            )
-
+        """Service-level validation"""
+        # Technical validation
         if not os.path.exists(file_path):
             raise ValidationError(
                 message="Audio file not found",
-                code="FILE_NOT_FOUND",
-                details={"path": file_path}
+                code="FILE_NOT_FOUND"
             )
 
-        file_extension = os.path.splitext(file_path)[1].lower()
-        if file_extension not in SpeechConfig.STT_SUPPORTED_FORMATS:
-            raise ValidationError(
-                message="Unsupported audio format",
-                code="UNSUPPORTED_FORMAT",
-                details={
-                    "format": file_extension,
-                    "supported_formats": SpeechConfig.STT_SUPPORTED_FORMATS
-                }
-            )
-
+        # API-specific validation
         file_size = os.path.getsize(file_path)
         if file_size > SpeechConfig.MAX_AUDIO_SIZE:
             raise ValidationError(
-                message=f"Audio file exceeds maximum size of {SpeechConfig.MAX_AUDIO_SIZE/1024/1024}MB",
-                code="FILE_TOO_LARGE",
-                details={"size": file_size}
+                message="File too large for API",
+                code="FILE_TOO_LARGE"
             )
 
     @staticmethod
