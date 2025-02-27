@@ -132,6 +132,7 @@ STT_RESPONSE = {
 }
 
 # Sample TTS service responses
+SAMPLE_AUDIO_BINARY = b'mock audio data for testing' 
 TTS_RESPONSE = {
     "audio_length": 3.5,
     "characters": 42,

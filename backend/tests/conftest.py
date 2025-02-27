@@ -46,7 +46,7 @@ def mock_config():
 def mock_credentials():
     """Mock credentials dictionary"""
     return {
-        'api_key': 'test_api_key',
+        'apikey': 'test_api_key',
         'url': 'https://test-url.com'
     }
 
