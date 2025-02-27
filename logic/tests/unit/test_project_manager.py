@@ -10,13 +10,6 @@ from logic.models.responses import ProjectResponse
 class TestProjectManager:
     """Unit tests for ProjectManager class"""
 
-    @pytest.fixture
-    def setup_project_manager(self, mock_project_service):
-        """Setup ProjectManager instance with mocked dependencies"""
-        validator = ProjectValidator()
-        manager = ProjectManager(project_service=mock_project_service, validator=validator)
-        return manager
-
     def test_get_projects_success(self, setup_project_manager, mock_project_service):
         """Test successful retrieval of projects"""
         # Setup mock response
@@ -104,7 +97,7 @@ class TestProjectManager:
         # Assert
         assert result.id == 'ERROR'
         assert result.error is not None
-        assert 'validation failed' in result.error.lower()
+        assert 'project id is required' in result.error.lower()
         mock_project_service.list_projects.assert_not_called()
 
     def test_get_project_details_not_found(self, setup_project_manager, mock_project_service):

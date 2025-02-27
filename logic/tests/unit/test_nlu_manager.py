@@ -10,13 +10,6 @@ from backend.config.nlu_config import NLUConfig
 class TestNLUManager:
     """Unit tests for NLUManager class"""
 
-    @pytest.fixture
-    def setup_nlu_manager(self, mock_nlu_service):
-        """Setup NLUManager instance with mocked dependencies"""
-        validator = NLUValidator()
-        manager = NLUManager(nlu_service=mock_nlu_service, validator=validator)
-        return manager
-
     def test_analyze_text_success(self, setup_nlu_manager, mock_nlu_service):
         """Test successful text analysis"""
         # Setup mock response
@@ -61,7 +54,7 @@ class TestNLUManager:
 
         # Assert
         assert 'error' in result
-        assert 'validation failed' in result['error'].lower()
+        assert 'text is required' in result['error'].lower()
         mock_nlu_service.analyze_text.assert_not_called()
 
     def test_analyze_text_validation_error_invalid_features(self, setup_nlu_manager, mock_nlu_service):
@@ -75,7 +68,7 @@ class TestNLUManager:
 
         # Assert
         assert 'error' in result
-        assert 'validation failed' in result['error'].lower()
+        assert 'invalid features requested' in result['error'].lower()
         mock_nlu_service.analyze_text.assert_not_called()
 
     def test_analyze_text_service_error(self, setup_nlu_manager, mock_nlu_service):
