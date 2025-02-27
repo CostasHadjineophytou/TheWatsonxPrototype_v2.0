@@ -3,7 +3,6 @@ from ibm_cloud_sdk_core.authenticators import IAMAuthenticator
 from .base_service import BaseService
 from ..utils.errors import AuthenticationError, ValidationError
 from ..utils.file_manager import FileManager
-from ..validators.service_validator import ServiceValidator
 
 class STTService(BaseService):
     """Handles Speech-to-Text API interactions"""
@@ -12,7 +11,6 @@ class STTService(BaseService):
         super().__init__()
         self.credentials_manager = credentials_manager
         self._stt = None
-        self.validator = ServiceValidator()
 
     def initialize(self):
         """Initialize STT client"""

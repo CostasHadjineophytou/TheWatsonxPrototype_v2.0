@@ -19,6 +19,10 @@ class ProjectService(BaseClient):
     def list_projects(self):
         """Get list of all projects from IBM Cloud"""
         try:
+            # Validate credentials
+            if self.watson_client:
+                self.validator.validate_credentials(self.watson_client.credentials)
+            
             token = self.iam_service.get_iam_token()
             headers = {
                 "Authorization": f"Bearer {token}",
@@ -33,6 +37,9 @@ class ProjectService(BaseClient):
             
             return projects
             
+        except ValidationError as e:
+            # Re-raise validation errors
+            raise e
         except Exception as e:
             raise self.handle_error(e, "Failed to list projects")
 
@@ -52,30 +59,43 @@ class ProjectService(BaseClient):
         """
         # Validate inputs first
         try:
-            self.validator.validate_credentials(self.watson_client.credentials)
+            if self.watson_client:
+                self.validator.validate_credentials(self.watson_client.credentials)
             self.validator.validate_project_id(project_id)
+            
+            # Get projects from API
+            token = self.iam_service.get_iam_token()
+            
+            if self.watson_client:
+                projects = self.watson_client.get_projects(token)
+            else:
+                # Fallback to direct API call if watson_client not provided
+                headers = {
+                    "Authorization": f"Bearer {token}",
+                    "Content-Type": "application/json"
+                }
+                endpoint = f"{self.projects_url}/v2/projects"
+                response = self._make_request('GET', endpoint, headers=headers)
+                projects = response.get('resources', [])
+                
+            # Search for the project in the results
+            for project in projects:
+                if project.get('id') == project_id or project.get('metadata', {}).get('guid') == project_id:
+                    return project
+            
+            # If project not found, raise a specific ServiceError
+            raise ServiceError(
+                message=f"Project {project_id} not found",
+                code="PROJECT_NOT_FOUND",
+                details={"project_id": project_id}
+            )
+            
         except ValidationError as e:
             # Re-raise validation errors directly
             raise e
-            
-        # Get projects from API
-        try:
-            token = self.iam_service.get_token()
-            projects = self.watson_client.get_projects(token)
+        except ServiceError as e:
+            # Re-raise service errors directly
+            raise e
         except Exception as e:
             # Handle unexpected API errors
-            raise self.handle_error(e, "Failed to get project details")
-        
-        # This is not an exception case, but a normal logical flow:
-        # Search for the project in the results
-        for project in projects:
-            if project['metadata']['guid'] == project_id:
-                return project
-        
-        # If project not found, raise a specific ServiceError
-        # This is part of the normal logical flow, not exception handling
-        raise ServiceError(
-            message=f"Project {project_id} not found",
-            code="PROJECT_NOT_FOUND",
-            details={"project_id": project_id}
-        ) 
+            raise self.handle_error(e, "Failed to get project details") 

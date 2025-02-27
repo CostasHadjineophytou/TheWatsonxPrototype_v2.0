@@ -77,17 +77,6 @@ class ServiceValidator:
                 code="FILE_TOO_LARGE"
             )
 
-    @staticmethod
-    def validate_model_params(params: Dict[str, Any]) -> None:
-        """Validate model generation parameters"""
-        required_params = ['decoding_method', 'max_new_tokens']
-        for param in required_params:
-            if param not in params:
-                raise ValidationError(
-                    message=f"Missing required parameter: {param}",
-                    code="MISSING_PARAM",
-                    details={"param": param}
-                )
 
     @staticmethod
     def validate_project_id(project_id: str) -> None:
@@ -157,22 +146,6 @@ class ServiceValidator:
                     }
                 )
 
-    @staticmethod
-    def validate_nlu_request(text: str, features: Dict[str, Any]) -> None:
-        """Example combined NLU request validation."""
-        if not isinstance(text, str) or not text.strip():
-            raise ValidationError(
-                message="Text must be a non-empty string",
-                code="INVALID_TEXT"
-            )
-        if not isinstance(features, dict):
-            raise ValidationError(
-                message="Features must be a dictionary",
-                code="INVALID_FEATURES"
-            )
-        # Then validate the set of features
-        ServiceValidator.validate_nlu_features(features)
-
     def validate_nlu_request(self, text: str, features: dict) -> None:
         """Validate NLU service request"""
         # Check text type
@@ -202,4 +175,40 @@ class ServiceValidator:
             raise ValidationError(
                 message=f"Invalid features: {', '.join(invalid_features)}",
                 code="INVALID_FEATURES"
-            ) 
+            )
+
+    @staticmethod
+    def validate_watson_text_params(params: Dict[str, Any]) -> None:
+        """
+        Validate text generation parameters for IBM Watson API.
+        This method handles the IBM Watson-specific parameter names.
+        """
+        # Check that required parameters are present
+        required_params = [
+            'decoding_method',
+            'max_new_tokens',
+            'temperature',
+            'top_p',
+            'top_k',
+            'repetition_penalty'
+        ]
+        
+        missing = []
+        for param in required_params:
+            # Check for both snake_case and camelCase versions of the parameter
+            snake_case = param
+            camel_case = ''.join(word.capitalize() if i > 0 else word 
+                               for i, word in enumerate(param.split('_')))
+            
+            if snake_case not in params and camel_case not in params:
+                missing.append(param)
+        
+        if missing:
+            raise ValidationError(
+                message="Missing required Watson text parameters",
+                code="MISSING_WATSON_PARAMS",
+                details={"missing_params": missing}
+            )
+            
+        # We don't check for invalid parameters because the Watson API
+        # might accept parameters that we don't know about 

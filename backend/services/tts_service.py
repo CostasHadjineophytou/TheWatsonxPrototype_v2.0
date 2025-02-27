@@ -1,7 +1,7 @@
 from ibm_watson import TextToSpeechV1
 from ibm_cloud_sdk_core.authenticators import IAMAuthenticator
 from .base_service import BaseService
-from ..utils.errors import AuthenticationError
+from ..utils.errors import AuthenticationError, ValidationError
 from ..utils.file_manager import FileManager
 from ..utils.ssml_builder import SSMLBuilder
 
@@ -31,6 +31,9 @@ class TTSService(BaseService):
     def synthesize_text(self, text: str, voice: str, params: dict) -> str:
         """Raw TTS API call"""
         try:
+            # Add validation
+            self.validator.validate_tts_request(text, voice, params)
+            
             if not self._tts:
                 self.initialize()
             
@@ -49,6 +52,9 @@ class TTSService(BaseService):
             
             return FileManager.save_audio_file(response, audio_format)
             
+        except ValidationError as e:
+            # Re-raise validation errors
+            raise e
         except Exception as e:
             raise self.handle_error(e, "TTS synthesis failed")
 

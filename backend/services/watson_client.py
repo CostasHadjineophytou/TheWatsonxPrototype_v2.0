@@ -1,6 +1,7 @@
 from ibm_watsonx_ai import APIClient, Credentials
 from backend.config.config import Config
 from .base_service import BaseService
+from ..utils.errors import ValidationError
 
 class WatsonClient(BaseService):
     """Handles the base Watson client setup and authentication."""
@@ -29,5 +30,8 @@ class WatsonClient(BaseService):
             except Exception as e:
                 raise self.handle_error(e, "Failed to initialize Watson API client")
                 
+        except ValidationError as e:
+            # Re-raise validation errors
+            raise e
         except Exception as e:
             raise self.handle_error(e, "Failed to initialize Watson client") 

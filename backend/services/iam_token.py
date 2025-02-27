@@ -1,7 +1,7 @@
 import logging
 from backend.config.config import Config
 from backend.services.base_client import BaseClient
-from backend.utils.errors import AuthenticationError
+from backend.utils.errors import AuthenticationError, ValidationError
 
 class IAMTokenService(BaseClient):
     """Handles IBM Cloud IAM token operations."""
@@ -49,11 +49,13 @@ class IAMTokenService(BaseClient):
             logging.info("Successfully retrieved IAM token")
             return token
 
-        except AuthenticationError as auth_err:
+        except ValidationError as e:
+            # Re-raise validation errors
+            raise e
+        except AuthenticationError as e:
             # Already a known authentication error; log if desired, then re-raise
-            logging.error(f"IAM Token authentication error: {auth_err}")
-            raise auth_err
-
+            logging.error(f"IAM Token authentication error: {e}")
+            raise e
         except Exception as e:
             # Convert any other unknown exception to our custom error types
             raise self.handle_error(e, "Failed to get IAM token") 
