@@ -20,6 +20,16 @@ from backend.services.credentials_manager import CredentialsManager
 from backend.validators.service_validator import ServiceValidator
 from backend.validators.config_validator import ConfigValidator
 
+# Import sample data from fixtures
+from backend.tests.fixtures.sample_responses import (
+    MODELS_RESPONSE, MODEL_DETAIL_RESPONSE, TEXT_GENERATION_RESPONSE,
+    NLU_ANALYSIS_RESPONSE, PROJECTS_RESPONSE, PROJECT_DETAIL_RESPONSE,
+    STT_RESPONSE, TTS_RESPONSE, IAM_TOKEN_RESPONSE
+)
+from backend.tests.fixtures.sample_files import (
+    SAMPLE_AUDIO_FILE_PATH, SAMPLE_AUDIO_BINARY
+)
+
 
 @pytest.fixture
 def mock_config():
@@ -44,7 +54,7 @@ def mock_credentials():
 @pytest.fixture
 def mock_iam_token():
     """Mock IAM token"""
-    return "mock.iam.token.with.lots.of.characters"
+    return IAM_TOKEN_RESPONSE["access_token"]
 
 
 @pytest.fixture
@@ -105,98 +115,52 @@ def mock_service_factory(mock_watson_client, mock_iam_service):
 @pytest.fixture
 def sample_model_response():
     """Sample model response data"""
-    return {
-        'resources': [
-            {
-                'model_id': 'ibm/granite-20b-multilingual',
-                'name': 'Granite 20B Multilingual',
-                'type': 'foundation_model',
-                'description': 'IBM Granite 20B Multilingual model'
-            },
-            {
-                'model_id': 'ibm/mpt-7b-instruct',
-                'name': 'MPT 7B Instruct',
-                'type': 'foundation_model',
-                'description': 'MPT 7B Instruct model'
-            }
-        ]
-    }
+    return MODELS_RESPONSE
+
+
+@pytest.fixture
+def sample_model_detail():
+    """Sample model detail response"""
+    return MODEL_DETAIL_RESPONSE
 
 
 @pytest.fixture
 def sample_project_response():
     """Sample project response data"""
-    return {
-        'resources': [
-            {
-                'metadata': {
-                    'guid': 'project-id-1',
-                    'name': 'Test Project 1'
-                },
-                'entity': {
-                    'name': 'Test Project 1',
-                    'description': 'Test project description'
-                },
-                'id': 'project-id-1',
-                'name': 'Test Project 1',
-                'description': 'Test project description'
-            },
-            {
-                'metadata': {
-                    'guid': 'project-id-2',
-                    'name': 'Test Project 2'
-                },
-                'entity': {
-                    'name': 'Test Project 2',
-                    'description': 'Another test project'
-                },
-                'id': 'project-id-2',
-                'name': 'Test Project 2',
-                'description': 'Another test project'
-            }
-        ]
-    }
+    return PROJECTS_RESPONSE
+
+
+@pytest.fixture
+def sample_project_detail():
+    """Sample project detail response"""
+    return PROJECT_DETAIL_RESPONSE
 
 
 @pytest.fixture
 def sample_text_response():
     """Sample text generation response"""
-    return "This is a sample response from the text generation model."
+    return TEXT_GENERATION_RESPONSE["generated_text"]
 
 
 @pytest.fixture
 def sample_nlu_response():
     """Sample NLU analysis response"""
-    return {
-        'sentiment': {
-            'document': {
-                'score': 0.8,
-                'label': 'positive'
-            }
-        },
-        'entities': [
-            {
-                'type': 'Organization',
-                'text': 'IBM',
-                'relevance': 0.9
-            }
-        ],
-        'keywords': [
-            {
-                'text': 'AI',
-                'relevance': 0.85
-            }
-        ]
-    }
+    return NLU_ANALYSIS_RESPONSE
 
 
 @pytest.fixture
 def sample_audio_file_path():
     """Sample audio file path"""
-    return os.path.join(os.path.dirname(__file__), 'fixtures', 'test_audio.wav')
+    return SAMPLE_AUDIO_FILE_PATH
 
 
 @pytest.fixture
 def sample_tts_response():
     """Sample TTS response (binary audio data)"""
-    return b'mock audio data' 
+    return SAMPLE_AUDIO_BINARY
+
+
+@pytest.fixture
+def sample_stt_response():
+    """Sample STT response"""
+    return STT_RESPONSE 
