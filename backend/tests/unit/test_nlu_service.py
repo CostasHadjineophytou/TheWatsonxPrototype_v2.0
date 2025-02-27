@@ -1,221 +1,202 @@
 import pytest
-from unittest.mock import patch, MagicMock, call
+from unittest.mock import patch, MagicMock
 
 from backend.services.nlu_service import NLUService
 from backend.utils.errors import ValidationError, AuthenticationError, APIError
+from backend.tests.fixtures.sample_responses import NLU_ANALYSIS_RESPONSE
 
 
 class TestNLUService:
     """Tests for the NLUService class"""
 
-    def test_init(self, mock_watson_client):
+    def test_init(self, mock_credentials_manager):
         """Test initializing the NLUService"""
-        service = NLUService(mock_watson_client)
-        assert service.client == mock_watson_client
+        service = NLUService(mock_credentials_manager)
+        assert service.credentials_manager == mock_credentials_manager
+        assert service._nlu is None
 
-    @patch('backend.validators.service_validator.ServiceValidator.validate_nlu_params')
-    def test_analyze_text_success(self, mock_validate, mock_watson_client):
+    def test_initialize_success(self, mock_credentials_manager):
+        """Test successful NLU client initialization"""
+        mock_credentials = {
+            'apikey': 'test_api_key',
+            'url': 'https://test-url.com'
+        }
+        mock_credentials_manager.get_service_credentials.return_value = mock_credentials
+        
+        service = NLUService(mock_credentials_manager)
+        service.initialize()
+        
+        mock_credentials_manager.get_service_credentials.assert_called_once_with("Natural Language Understanding")
+        assert service._nlu is not None
+
+    def test_initialize_error(self, mock_credentials_manager):
+        """Test NLU client initialization failure"""
+        mock_credentials_manager.get_service_credentials.side_effect = AuthenticationError(
+            "Failed to get credentials", "NLU_INIT_ERROR"
+        )
+        
+        service = NLUService(mock_credentials_manager)
+        
+        with pytest.raises(AuthenticationError) as exc_info:
+            service.initialize()
+        
+        assert exc_info.value.code == "NLU_INIT_ERROR"
+        assert service._nlu is None
+
+    def test_analyze_text_success(self, mock_credentials_manager):
         """Test analyzing text successfully"""
-        # Mock the client's post_request method
-        mock_response = {
-            'sentiment': {
-                'document': {
-                    'score': 0.8,
-                    'label': 'positive'
-                }
-            },
-            'entities': [
-                {
-                    'type': 'Person',
-                    'text': 'John Doe',
-                    'relevance': 0.9
-                }
-            ]
-        }
-        mock_watson_client.post_request.return_value = mock_response
+        service = NLUService(mock_credentials_manager)
         
-        # Create the service
-        service = NLUService(mock_watson_client)
+        # Mock the NLU client
+        mock_nlu = MagicMock()
+        mock_result = MagicMock()
+        mock_result.get_result.return_value = NLU_ANALYSIS_RESPONSE
+        mock_nlu.analyze.return_value = mock_result
+        service._nlu = mock_nlu
         
-        # Parameters for analysis
-        text = "John Doe is a great person to work with."
+        text = "Sample text for analysis"
         features = {
-            'sentiment': {},
-            'entities': {}
+            'sentiment': {'document': True},
+            'entities': {'sentiment': True, 'limit': 10},
+            'keywords': {'sentiment': True, 'limit': 10}
         }
         
-        # Call the method
         result = service.analyze_text(text, features)
         
-        # Assertions
-        assert result == mock_response
-        mock_validate.assert_called_once()
-        mock_watson_client.post_request.assert_called_once()
-        # Check that the first argument to post_request is the correct endpoint
-        args, _ = mock_watson_client.post_request.call_args
-        assert args[0] == '/v1/analyze'
+        assert result == NLU_ANALYSIS_RESPONSE
+        mock_nlu.analyze.assert_called_once_with(
+            text=text,
+            features=features
+        )
 
-    def test_analyze_text_empty_text(self, mock_watson_client):
+    def test_analyze_text_validation_error(self, mock_credentials_manager):
+        """Test analyzing text with validation error"""
+        service = NLUService(mock_credentials_manager)
+        
+        with patch.object(service.validator, 'validate_nlu_request') as mock_validate:
+            mock_validate.side_effect = ValidationError(
+                "Invalid request", "INVALID_REQUEST"
+            )
+            
+            with pytest.raises(ValidationError) as exc_info:
+                service.analyze_text("Sample text", {'sentiment': {}})
+            
+            assert exc_info.value.code == "INVALID_REQUEST"
+            assert service._nlu is None
+
+    def test_analyze_text_auth_error(self, mock_credentials_manager):
+        """Test analyzing text with authentication error"""
+        service = NLUService(mock_credentials_manager)
+        mock_credentials_manager.get_service_credentials.side_effect = AuthenticationError(
+            "Authentication failed", "NLU_INIT_ERROR"
+        )
+        
+        text = "Sample text"
+        features = {'sentiment': {'document': True}}
+        
+        with pytest.raises(AuthenticationError) as exc_info:
+            service.analyze_text(text, features)
+        
+        assert exc_info.value.code == "NLU_INIT_ERROR"
+
+    def test_analyze_text_api_error(self, mock_credentials_manager):
+        """Test analyzing text with API error"""
+        service = NLUService(mock_credentials_manager)
+        
+        # Mock the NLU client
+        mock_nlu = MagicMock()
+        mock_nlu.analyze.side_effect = Exception("Failed to analyze text")
+        service._nlu = mock_nlu
+        
+        text = "Sample text"
+        features = {'sentiment': {'document': True}}
+        
+        with pytest.raises(APIError) as exc_info:
+            service.analyze_text(text, features)
+        
+        assert "Failed to analyze text" in str(exc_info.value)
+
+    def test_analyze_text_empty_text(self, mock_credentials_manager):
         """Test analyzing with empty text"""
-        # Create the service
-        service = NLUService(mock_watson_client)
+        service = NLUService(mock_credentials_manager)
         
-        # Call the method with empty text and expect exception
         with pytest.raises(ValidationError) as exc_info:
-            service.analyze_text("", {'sentiment': {}})
+            service.analyze_text("", {'sentiment': {'document': True}})
         
-        assert exc_info.value.code == "INVALID_TEXT"
-        mock_watson_client.post_request.assert_not_called()
+        assert exc_info.value.code == "EMPTY_TEXT"
+        assert service._nlu is None
 
-    def test_analyze_text_no_features(self, mock_watson_client):
-        """Test analyzing with no features"""
-        # Create the service
-        service = NLUService(mock_watson_client)
+    def test_analyze_text_invalid_features(self, mock_credentials_manager):
+        """Test analyzing with invalid features"""
+        service = NLUService(mock_credentials_manager)
         
-        # Call the method with no features and expect exception
         with pytest.raises(ValidationError) as exc_info:
-            service.analyze_text("Sample text", {})
+            service.analyze_text("Sample text", {'invalid_feature': {}})
         
         assert exc_info.value.code == "INVALID_FEATURES"
-        mock_watson_client.post_request.assert_not_called()
+        assert service._nlu is None
 
-    @patch('backend.validators.service_validator.ServiceValidator.validate_nlu_params')
-    def test_analyze_text_validation_error(self, mock_validate, mock_watson_client):
-        """Test analyzing text with validation error"""
-        # Mock the validator to raise a validation error
-        mock_validate.side_effect = ValidationError(
-            "Invalid parameters", "INVALID_PARAMS"
-        )
+    def test_analyze_text_lazy_initialization(self, mock_credentials_manager):
+        """Test that the NLU client is initialized only when needed"""
+        service = NLUService(mock_credentials_manager)
         
-        # Create the service
-        service = NLUService(mock_watson_client)
-        
-        # Call the method and expect exception
-        with pytest.raises(ValidationError) as exc_info:
-            service.analyze_text("Sample text", {'sentiment': {}})
-        
-        assert exc_info.value.code == "INVALID_PARAMS"
-        mock_watson_client.post_request.assert_not_called()
-
-    @patch('backend.validators.service_validator.ServiceValidator.validate_nlu_params')
-    def test_analyze_text_auth_error(self, mock_validate, mock_watson_client):
-        """Test analyzing text with authentication error"""
-        # Mock the client to raise an authentication error
-        mock_watson_client.post_request.side_effect = AuthenticationError(
-            "Authentication failed", "AUTHENTICATION_ERROR"
-        )
-        
-        # Create the service
-        service = NLUService(mock_watson_client)
-        
-        # Call the method and expect exception
-        with pytest.raises(AuthenticationError) as exc_info:
-            service.analyze_text("Sample text", {'sentiment': {}})
-        
-        assert exc_info.value.code == "AUTHENTICATION_ERROR"
-        mock_validate.assert_called_once()
-
-    @patch('backend.validators.service_validator.ServiceValidator.validate_nlu_params')
-    def test_analyze_text_api_error(self, mock_validate, mock_watson_client):
-        """Test analyzing text with API error"""
-        # Mock the client to raise an API error
-        mock_watson_client.post_request.side_effect = APIError(
-            "API request failed", "API_ERROR"
-        )
-        
-        # Create the service
-        service = NLUService(mock_watson_client)
-        
-        # Call the method and expect exception
-        with pytest.raises(APIError) as exc_info:
-            service.analyze_text("Sample text", {'sentiment': {}})
-        
-        assert exc_info.value.code == "API_ERROR"
-        mock_validate.assert_called_once()
-
-    @patch('backend.validators.service_validator.ServiceValidator.validate_nlu_params')
-    def test_analyze_text_with_url_success(self, mock_validate, mock_watson_client):
-        """Test analyzing text from URL successfully"""
-        # Mock the client's post_request method
-        mock_response = {
-            'sentiment': {
-                'document': {
-                    'score': 0.6,
-                    'label': 'positive'
-                }
-            },
-            'concepts': [
-                {
-                    'text': 'Artificial Intelligence',
-                    'relevance': 0.95
-                }
-            ]
+        # Mock credentials
+        mock_credentials = {
+            'apikey': 'test_api_key',
+            'url': 'https://test-url.com'
         }
-        mock_watson_client.post_request.return_value = mock_response
+        mock_credentials_manager.get_service_credentials.return_value = mock_credentials
         
-        # Create the service
-        service = NLUService(mock_watson_client)
+        # Mock NLU client and response
+        mock_nlu = MagicMock()
+        mock_result = MagicMock()
+        mock_result.get_result.return_value = NLU_ANALYSIS_RESPONSE
+        mock_nlu.analyze.return_value = mock_result
         
-        # Parameters for analysis
-        url = "https://example.com/article"
-        features = {
-            'sentiment': {},
-            'concepts': {}
+        # Mock authenticator
+        mock_authenticator = MagicMock()
+        
+        # Mock token response
+        mock_token_response = MagicMock()
+        mock_token_response.status_code = 200
+        mock_token_response.json.return_value = {
+            'access_token': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ0ZXN0IiwiaWF0IjoxNTE2MjM5MDIyLCJleHAiOjE1MTYyNDI2MjJ9.dKjDBrXoy2fsO4qvL6PtcHGRtcqtSXqaqnIBTIpCBVE',
+            'refresh_token': 'mock_refresh',
+            'token_type': 'Bearer',
+            'expires_in': 3600,
+            'expiration': 1699983600
         }
         
-        # Call the method
-        result = service.analyze_url(url, features)
-        
-        # Assertions
-        assert result == mock_response
-        mock_validate.assert_called_once()
-        mock_watson_client.post_request.assert_called_once()
-        # Check that the first argument to post_request is the correct endpoint
-        args, _ = mock_watson_client.post_request.call_args
-        assert args[0] == '/v1/analyze'
-        # Check that the payload contains the URL instead of text
-        _, kwargs = mock_watson_client.post_request.call_args
-        assert 'url' in kwargs['json']
-        assert kwargs['json']['url'] == url
-
-    def test_analyze_url_empty_url(self, mock_watson_client):
-        """Test analyzing with empty URL"""
-        # Create the service
-        service = NLUService(mock_watson_client)
-        
-        # Call the method with empty URL and expect exception
-        with pytest.raises(ValidationError) as exc_info:
-            service.analyze_url("", {'sentiment': {}})
-        
-        assert exc_info.value.code == "INVALID_URL"
-        mock_watson_client.post_request.assert_not_called()
-
-    def test_analyze_url_invalid_url(self, mock_watson_client):
-        """Test analyzing with invalid URL"""
-        # Create the service
-        service = NLUService(mock_watson_client)
-        
-        # Call the method with invalid URL and expect exception
-        with pytest.raises(ValidationError) as exc_info:
-            service.analyze_url("not-a-valid-url", {'sentiment': {}})
-        
-        assert exc_info.value.code == "INVALID_URL"
-        mock_watson_client.post_request.assert_not_called()
-
-    @patch('backend.validators.service_validator.ServiceValidator.validate_nlu_params')
-    def test_analyze_url_api_error(self, mock_validate, mock_watson_client):
-        """Test analyzing URL with API error"""
-        # Mock the client to raise an API error
-        mock_watson_client.post_request.side_effect = APIError(
-            "API request failed", "API_ERROR"
-        )
-        
-        # Create the service
-        service = NLUService(mock_watson_client)
-        
-        # Call the method and expect exception
-        with pytest.raises(APIError) as exc_info:
-            service.analyze_url("https://example.com", {'sentiment': {}})
-        
-        assert exc_info.value.code == "API_ERROR"
-        mock_validate.assert_called_once() 
+        with patch('ibm_watson.NaturalLanguageUnderstandingV1') as mock_nlu_class, \
+             patch('ibm_cloud_sdk_core.authenticators.IAMAuthenticator') as mock_auth_class, \
+             patch('requests.request', return_value=mock_token_response) as mock_request:
+            
+            # Setup the mocks
+            mock_auth_class.return_value = mock_authenticator
+            mock_nlu_class.return_value = mock_nlu
+            
+            # Make the call
+            result = service.analyze_text("Sample text", {'sentiment': {'document': True}})
+            
+            # Verify the results
+            assert result == NLU_ANALYSIS_RESPONSE
+            mock_credentials_manager.get_service_credentials.assert_called_once()
+            mock_auth_class.assert_called_once_with('test_api_key')
+            mock_nlu.set_service_url.assert_called_once_with('https://test-url.com')
+            mock_nlu.analyze.assert_called_once_with(
+                text="Sample text",
+                features={'sentiment': {'document': True}}
+            )
+            
+            # Verify token request
+            mock_request.assert_called_with(
+                method='POST',
+                url='https://iam.cloud.ibm.com/identity/token',
+                headers=mock_request.call_args[1]['headers'],  # Don't verify exact headers
+                data={
+                    'apikey': 'test_api_key',
+                    'grant_type': 'urn:ibm:params:oauth:grant-type:apikey',
+                    'response_type': 'cloud_iam'
+                },
+                timeout=60
+            ) 
