@@ -6,15 +6,9 @@ from logic.models.errors import ValidationError, LogicError
 from logic.validators.model_validator import ModelValidator
 from logic.models.responses import ModelResponse
 
+
 class TestModelManager:
     """Unit tests for ModelManager class"""
-
-    @pytest.fixture
-    def setup_model_manager(self, mock_model_service):
-        """Setup ModelManager instance with mocked dependencies"""
-        validator = ModelValidator()
-        manager = ModelManager(model_service=mock_model_service, validator=validator)
-        return manager
 
     def test_get_available_models_success(self, setup_model_manager, mock_model_service):
         """Test successful retrieval of available models"""
