@@ -212,3 +212,25 @@ class ServiceValidator:
             
         # We don't check for invalid parameters because the Watson API
         # might accept parameters that we don't know about 
+
+    @staticmethod
+    def validate_prompt(prompt: str) -> None:
+        """Validate text generation prompt"""
+        if not isinstance(prompt, str):
+            raise ValidationError(
+                message="Prompt must be a string",
+                code="INVALID_PROMPT_TYPE"
+            )
+            
+        if not prompt or not prompt.strip():
+            raise ValidationError(
+                message="Prompt cannot be empty",
+                code="EMPTY_PROMPT"
+            )
+            
+        if len(prompt) > TextConfig.MAX_PROMPT_LENGTH:
+            raise ValidationError(
+                message="Prompt exceeds maximum length",
+                code="PROMPT_TOO_LONG",
+                details={"max_length": TextConfig.MAX_PROMPT_LENGTH}
+            )

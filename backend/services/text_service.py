@@ -17,6 +17,7 @@ class TextService(BaseService):
             self.validator.validate_model_id(model_id)
             self.validator.validate_project_id(project_id)
             # Use the Watson-specific parameter validator
+            self.validator.validate_prompt(prompt)
             self.validator.validate_watson_text_params(params)
             self.validator.validate_credentials(self.watson_client.credentials)
 
