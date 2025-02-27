@@ -16,7 +16,12 @@ class TTSManager(BaseManager):
     def synthesize_speech(self, request: TTSRequest) -> TTSResponse:
         """Handle TTS request and response"""
         try:
-            self.validator.validate_tts_request(request)
+            # Validation
+            is_valid, error = self.validator.validate_tts_request(request)
+            if not is_valid:
+                return TTSResponse(audio_path="", error=error.message)
+
+            # Process request
             audio_path = self.service.synthesize_text(
                 request.text,
                 request.voice,
