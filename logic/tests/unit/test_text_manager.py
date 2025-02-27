@@ -14,13 +14,6 @@ from backend.config.text_config import TextConfig
 class TestTextManager:
     """Unit tests for TextManager class"""
 
-    @pytest.fixture
-    def setup_text_manager(self, mock_text_service):
-        """Setup TextManager instance with mocked dependencies"""
-        validator = TextValidator()
-        manager = TextManager(text_service=mock_text_service, validator=validator)
-        return manager
-
     def test_process_text_success(self, setup_text_manager, mock_text_service):
         """Test successful text processing"""
         # Setup mock response
@@ -50,8 +43,8 @@ class TestTextManager:
         assert not result.error
         mock_text_service.process_prompt.assert_called_once()
 
-    def test_process_text_validation_error(self, setup_text_manager, mock_text_service):
-        """Test text processing with invalid request"""
+    def test_process_text_validation_error_empty_text(self, setup_text_manager, mock_text_service):
+        """Test text processing with empty text"""
         # Execute
         manager = setup_text_manager
         request = TextRequest(
@@ -64,7 +57,24 @@ class TestTextManager:
         # Assert
         assert result.text == ""
         assert result.error is not None
-        assert "validation failed" in result.error.lower()
+        assert "please enter some text to generate" in result.error.lower()
+        mock_text_service.process_prompt.assert_not_called()
+
+    def test_process_text_validation_error_missing_model(self, setup_text_manager, mock_text_service):
+        """Test text processing with missing model ID"""
+        # Execute
+        manager = setup_text_manager
+        request = TextRequest(
+            text="Test prompt",
+            model_id="",  # Invalid empty model_id
+            project_id="test-project"
+        )
+        result = manager.process_text(request)
+
+        # Assert
+        assert result.text == ""
+        assert result.error is not None
+        assert "please select a model" in result.error.lower()
         mock_text_service.process_prompt.assert_not_called()
 
     def test_process_text_service_error(self, setup_text_manager, mock_text_service):
