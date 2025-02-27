@@ -9,6 +9,7 @@ class CredentialsManager(BaseClient):
     def __init__(self):
         super().__init__()
         self.iam_service = IAMTokenService()
+        # move the following url to the config file...
         self.resource_url = "https://resource-controller.cloud.ibm.com/v2/resource_instances"
 
     def get_service_credentials(self, service_name: str):

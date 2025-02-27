@@ -41,6 +41,6 @@ class NLUService(BaseService):
                 features=features
             ).get_result()
         except ValidationError:
-            raise  # Let validation issues bubble up
+            raise
         except Exception as e:
             raise self.handle_error(e, "Failed to analyze text") 
