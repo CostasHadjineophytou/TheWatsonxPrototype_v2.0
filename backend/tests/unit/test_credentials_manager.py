@@ -1,190 +1,126 @@
 import pytest
-from unittest.mock import patch, MagicMock, call
+from unittest.mock import patch, MagicMock
 
 from backend.services.credentials_manager import CredentialsManager
-from backend.utils.errors import ConfigurationError
+from backend.utils.errors import AuthenticationError, ConfigurationError, APIError
 
 
 class TestCredentialsManager:
     """Tests for the CredentialsManager class"""
 
-    def test_init(self, mock_config):
-        """Test initializing the CredentialsManager"""
-        manager = CredentialsManager(mock_config)
-        
-        assert manager.config == mock_config
+    @pytest.fixture
+    def mock_iam_service(self):
+        """Create a mock IAM token service"""
+        with patch('backend.services.credentials_manager.IAMTokenService') as mock:
+            mock_instance = MagicMock()
+            mock.return_value = mock_instance
+            mock_instance.get_iam_token.return_value = "mock_token"
+            yield mock_instance
 
-    def test_get_service_credentials_valid(self, mock_config):
-        """Test getting valid service credentials"""
-        # Mock the config to return valid credentials
-        mock_config.WATSON_API_KEY = "test_api_key"
-        mock_config.WATSON_URL = "https://test-url.com"
-        
-        # Create the manager
-        manager = CredentialsManager(mock_config)
-        
-        # Call the method
-        credentials = manager.get_service_credentials("watson")
-        
-        # Assertions
-        assert credentials == {
-            'api_key': 'test_api_key',
-            'url': 'https://test-url.com'
+    @pytest.fixture
+    def credentials_manager(self, mock_iam_service):
+        """Create a CredentialsManager instance with mocked dependencies"""
+        with patch('backend.services.credentials_manager.Config') as mock_config:
+            # Set up required config values
+            mock_config.IBM_CLOUD_API_KEY = "test_api_key"
+            mock_config.IBM_CLOUD_RESOURCE_URL = "https://test-resource-url.com"
+            manager = CredentialsManager()
+            manager.iam_service = mock_iam_service
+            return manager
+
+    def test_get_service_credentials_success(self, credentials_manager, mock_iam_service):
+        """Test successful retrieval of service credentials"""
+        # Mock the _make_request method to return valid resource data
+        mock_resources = {
+            'resources': [{
+                'name': 'test-watson-service',
+                'guid': 'test-instance-id',
+            }]
+        }
+        mock_credentials = {
+            'api_key': 'service_api_key',
+            'url': 'https://service-url.com'
         }
 
-    def test_get_service_credentials_invalid_service(self, mock_config):
-        """Test getting credentials for an invalid service"""
-        # Create the manager
-        manager = CredentialsManager(mock_config)
-        
-        # Call the method and expect exception
-        with pytest.raises(ConfigurationError) as exc_info:
-            manager.get_service_credentials("invalid_service")
-        
-        assert exc_info.value.code == "INVALID_SERVICE"
-        assert "Invalid service name" in exc_info.value.message
+        with patch.object(credentials_manager, '_make_request') as mock_request:
+            # Set up mock responses
+            mock_request.side_effect = [
+                mock_resources,  # First call gets resources
+                {'resources': [{'credentials': mock_credentials}]}  # Second call gets credentials
+            ]
 
-    def test_get_service_credentials_missing_api_key(self, mock_config):
-        """Test getting credentials with missing API key"""
-        # Mock the config with missing API key
-        mock_config.WATSON_API_KEY = ""
-        mock_config.WATSON_URL = "https://test-url.com"
-        
-        # Create the manager
-        manager = CredentialsManager(mock_config)
-        
-        # Call the method and expect exception
-        with pytest.raises(ConfigurationError) as exc_info:
-            manager.get_service_credentials("watson")
-        
-        assert exc_info.value.code == "MISSING_API_KEY"
-        assert "API key not configured" in exc_info.value.message
-
-    def test_get_service_credentials_missing_url(self, mock_config):
-        """Test getting credentials with missing URL"""
-        # Mock the config with missing URL
-        mock_config.WATSON_API_KEY = "test_api_key"
-        mock_config.WATSON_URL = ""
-        
-        # Create the manager
-        manager = CredentialsManager(mock_config)
-        
-        # Call the method and expect exception
-        with pytest.raises(ConfigurationError) as exc_info:
-            manager.get_service_credentials("watson")
-        
-        assert exc_info.value.code == "MISSING_URL"
-        assert "Service URL not configured" in exc_info.value.message
-
-    def test_get_service_credentials_nlu(self, mock_config):
-        """Test getting NLU service credentials"""
-        # Mock the config to return valid NLU credentials
-        mock_config.NLU_API_KEY = "nlu_api_key"
-        mock_config.NLU_URL = "https://nlu-url.com"
-        
-        # Create the manager
-        manager = CredentialsManager(mock_config)
-        
-        # Call the method
-        credentials = manager.get_service_credentials("nlu")
-        
-        # Assertions
-        assert credentials == {
-            'api_key': 'nlu_api_key',
-            'url': 'https://nlu-url.com'
-        }
-
-    def test_get_service_credentials_speech(self, mock_config):
-        """Test getting speech service credentials"""
-        # Mock the config to return valid speech credentials
-        mock_config.SPEECH_API_KEY = "speech_api_key"
-        mock_config.SPEECH_URL = "https://speech-url.com"
-        
-        # Create the manager
-        manager = CredentialsManager(mock_config)
-        
-        # Call the method
-        credentials = manager.get_service_credentials("speech")
-        
-        # Assertions
-        assert credentials == {
-            'api_key': 'speech_api_key',
-            'url': 'https://speech-url.com'
-        }
-
-    def test_get_service_credentials_tts(self, mock_config):
-        """Test getting TTS service credentials"""
-        # Mock the config to return valid TTS credentials
-        mock_config.TTS_API_KEY = "tts_api_key"
-        mock_config.TTS_URL = "https://tts-url.com"
-        
-        # Create the manager
-        manager = CredentialsManager(mock_config)
-        
-        # Call the method
-        credentials = manager.get_service_credentials("tts")
-        
-        # Assertions
-        assert credentials == {
-            'api_key': 'tts_api_key',
-            'url': 'https://tts-url.com'
-        }
-
-    def test_get_service_credentials_stt(self, mock_config):
-        """Test getting STT service credentials"""
-        # Mock the config to return valid STT credentials
-        mock_config.STT_API_KEY = "stt_api_key"
-        mock_config.STT_URL = "https://stt-url.com"
-        
-        # Create the manager
-        manager = CredentialsManager(mock_config)
-        
-        # Call the method
-        credentials = manager.get_service_credentials("stt")
-        
-        # Assertions
-        assert credentials == {
-            'api_key': 'stt_api_key',
-            'url': 'https://stt-url.com'
-        }
-
-    def test_get_service_credentials_env_vars(self, mock_config):
-        """Test getting credentials from environment variables"""
-        # Mock the config to return empty values (should fall back to env vars)
-        mock_config.WATSON_API_KEY = ""
-        mock_config.WATSON_URL = ""
-        
-        # Mock os.environ to return values
-        with patch('os.environ', {
-            'WATSON_API_KEY': 'env_api_key',
-            'WATSON_URL': 'https://env-url.com'
-        }):
-            # Create the manager
-            manager = CredentialsManager(mock_config)
-            
             # Call the method
-            credentials = manager.get_service_credentials("watson")
-            
-            # Assertions
-            assert credentials == {
-                'api_key': 'env_api_key',
-                'url': 'https://env-url.com'
-            }
+            result = credentials_manager.get_service_credentials('watson')
 
-    def test_get_service_credentials_missing_env_vars(self, mock_config):
-        """Test getting credentials with missing config and env vars"""
-        # Mock the config to return empty values
-        mock_config.WATSON_API_KEY = ""
-        mock_config.WATSON_URL = "https://test-url.com"
-        
-        # Mock os.environ to return empty values
-        with patch('os.environ', {}):
-            # Create the manager
-            manager = CredentialsManager(mock_config)
+            # Verify the result
+            assert result == mock_credentials
+            assert mock_iam_service.get_iam_token.called
+
+    def test_get_service_credentials_no_instance(self, credentials_manager):
+        """Test when no service instance is found"""
+        mock_resources = {'resources': []}
+
+        with patch.object(credentials_manager, '_make_request') as mock_request:
+            mock_request.return_value = mock_resources
+
+            with pytest.raises(AuthenticationError) as exc_info:
+                credentials_manager.get_service_credentials('nonexistent-service')
+
+            assert exc_info.value.code == "RESOURCE_NOT_FOUND"
+
+    def test_get_service_credentials_api_error(self, credentials_manager):
+        """Test handling of API errors"""
+        with patch.object(credentials_manager, '_make_request') as mock_request:
+            mock_request.side_effect = Exception("API Error")
+
+            with pytest.raises(APIError) as exc_info:
+                credentials_manager.get_service_credentials('watson')
+
+            assert "API Error" in str(exc_info.value)
+
+    def test_get_or_create_credentials_existing(self, credentials_manager):
+        """Test retrieving existing credentials"""
+        mock_credentials = {
+            'api_key': 'existing_key',
+            'url': 'https://existing-url.com'
+        }
+        mock_response = {
+            'resources': [{
+                'credentials': mock_credentials
+            }]
+        }
+
+        with patch.object(credentials_manager, '_make_request') as mock_request:
+            mock_request.return_value = mock_response
             
-            # Call the method and expect exception
-            with pytest.raises(ConfigurationError) as exc_info:
-                manager.get_service_credentials("watson")
-            
-            assert exc_info.value.code == "MISSING_API_KEY"
-            assert "API key not configured" in exc_info.value.message 
+            result = credentials_manager._get_or_create_credentials(
+                'test-instance-id',
+                {'Authorization': 'Bearer token'}
+            )
+
+            assert result == mock_credentials
+            # Verify only GET request was made
+            assert mock_request.call_count == 1
+
+    def test_get_or_create_credentials_create_new(self, credentials_manager):
+        """Test creating new credentials when none exist"""
+        mock_new_credentials = {
+            'api_key': 'new_key',
+            'url': 'https://new-url.com'
+        }
+
+        with patch.object(credentials_manager, '_make_request') as mock_request:
+            # First call returns empty resources, second call returns new credentials
+            mock_request.side_effect = [
+                {'resources': []},
+                {'credentials': mock_new_credentials}
+            ]
+
+            result = credentials_manager._get_or_create_credentials(
+                'test-instance-id',
+                {'Authorization': 'Bearer token'}
+            )
+
+            assert result == mock_new_credentials
+            # Verify both GET and POST requests were made
+            assert mock_request.call_count == 2 
