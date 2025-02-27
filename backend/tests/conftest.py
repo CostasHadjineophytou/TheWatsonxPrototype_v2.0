@@ -61,7 +61,7 @@ def mock_iam_token():
 def mock_iam_service(mock_iam_token):
     """Mock IAM token service"""
     mock_service = MagicMock(spec=IAMTokenService)
-    mock_service.get_token.return_value = mock_iam_token
+    mock_service.get_iam_token.return_value = mock_iam_token
     return mock_service
 
 

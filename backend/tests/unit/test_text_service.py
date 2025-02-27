@@ -4,6 +4,7 @@ from unittest.mock import patch, MagicMock
 from backend.services.text_service import TextService
 from backend.utils.errors import ValidationError, AuthenticationError, APIError
 from backend.tests.fixtures.sample_responses import TEXT_GENERATION_RESPONSE
+from backend.config.text_config import TextConfig
 
 
 class TestTextService:
@@ -30,14 +31,10 @@ class TestTextService:
         model_id = "ibm/granite-20b-multilingual"
         project_id = "test-project"
         prompt = "Generate some text"
-        params = {
-            "temperature": 0.7,
-            "max_new_tokens": 100,
-            "decoding_method": "sample",
-            "top_p": 0.9,
-            "top_k": 50,
-            "repetition_penalty": 1.0
-        }
+        # Use the default parameters from TextConfig
+        params = TextConfig.DEFAULT_PARAMS.copy()
+        # Add decoding_method which is required by the validator but not in DEFAULT_PARAMS
+        params["decoding_method"] = "sample"
         
         result = service.process_prompt(model_id, project_id, prompt, params)
         
@@ -71,14 +68,10 @@ class TestTextService:
             model_id = ""  # Invalid model ID
             project_id = "test-project"
             prompt = "Generate some text"
-            params = {
-                "temperature": 0.7,
-                "max_new_tokens": 100,
-                "decoding_method": "sample",
-                "top_p": 0.9,
-                "top_k": 50,
-                "repetition_penalty": 1.0
-            }
+            # Use the default parameters from TextConfig
+            params = TextConfig.DEFAULT_PARAMS.copy()
+            # Add decoding_method which is required by the validator but not in DEFAULT_PARAMS
+            params["decoding_method"] = "sample"
             
             with pytest.raises(ValidationError) as exc_info:
                 service.process_prompt(model_id, project_id, prompt, params)
@@ -102,14 +95,10 @@ class TestTextService:
             model_id = "ibm/granite-20b-multilingual"
             project_id = ""  # Invalid project ID
             prompt = "Generate some text"
-            params = {
-                "temperature": 0.7,
-                "max_new_tokens": 100,
-                "decoding_method": "sample",
-                "top_p": 0.9,
-                "top_k": 50,
-                "repetition_penalty": 1.0
-            }
+            # Use the default parameters from TextConfig
+            params = TextConfig.DEFAULT_PARAMS.copy()
+            # Add decoding_method which is required by the validator but not in DEFAULT_PARAMS
+            params["decoding_method"] = "sample"
             
             with pytest.raises(ValidationError) as exc_info:
                 service.process_prompt(model_id, project_id, prompt, params)
@@ -134,15 +123,11 @@ class TestTextService:
             model_id = "ibm/granite-20b-multilingual"
             project_id = "test-project"
             prompt = "Generate some text"
-            params = {
-                "temperature": 0.7,
-                "max_new_tokens": 100,
-                "decoding_method": "sample",
-                "top_p": 0.9,
-                "top_k": 50,
-                "repetition_penalty": 1.0,
-                "invalid_param": "value"  # Invalid parameter
-            }
+            # Use the default parameters from TextConfig with an invalid parameter
+            params = TextConfig.DEFAULT_PARAMS.copy()
+            # Add decoding_method which is required by the validator but not in DEFAULT_PARAMS
+            params["decoding_method"] = "sample"
+            params["invalid_param"] = "value"  # Invalid parameter
             
             with pytest.raises(ValidationError) as exc_info:
                 service.process_prompt(model_id, project_id, prompt, params)
@@ -170,14 +155,10 @@ class TestTextService:
         model_id = "ibm/granite-20b-multilingual"
         project_id = "test-project"
         prompt = "Generate some text"
-        params = {
-            "temperature": 0.7,
-            "max_new_tokens": 100,
-            "decoding_method": "sample",
-            "top_p": 0.9,
-            "top_k": 50,
-            "repetition_penalty": 1.0
-        }
+        # Use the default parameters from TextConfig
+        params = TextConfig.DEFAULT_PARAMS.copy()
+        # Add decoding_method which is required by the validator but not in DEFAULT_PARAMS
+        params["decoding_method"] = "sample"
         
         with pytest.raises(APIError) as exc_info:
             service.process_prompt(model_id, project_id, prompt, params)
@@ -210,14 +191,10 @@ class TestTextService:
             model_id = "ibm/granite-20b-multilingual"
             project_id = "test-project"
             prompt = "Generate some text"
-            params = {
-                "temperature": 0.7,
-                "max_new_tokens": 100,
-                "decoding_method": "sample",
-                "top_p": 0.9,
-                "top_k": 50,
-                "repetition_penalty": 1.0
-            }
+            # Use the default parameters from TextConfig
+            params = TextConfig.DEFAULT_PARAMS.copy()
+            # Add decoding_method which is required by the validator but not in DEFAULT_PARAMS
+            params["decoding_method"] = "sample"
             
             with pytest.raises(AuthenticationError) as exc_info:
                 service.process_prompt(model_id, project_id, prompt, params)
@@ -242,14 +219,10 @@ class TestTextService:
         model_id = "ibm/granite-20b-multilingual"
         project_id = "test-project"
         prompt = "Generate some text"
-        params = {
-            "temperature": 0.7,
-            "max_new_tokens": 100,
-            "decoding_method": "sample",
-            "top_p": 0.9,
-            "top_k": 50,
-            "repetition_penalty": 1.0
-        }
+        # Use the default parameters from TextConfig
+        params = TextConfig.DEFAULT_PARAMS.copy()
+        # Add decoding_method which is required by the validator but not in DEFAULT_PARAMS
+        params["decoding_method"] = "sample"
         
         result = service.process_prompt(model_id, project_id, prompt, params)
         
