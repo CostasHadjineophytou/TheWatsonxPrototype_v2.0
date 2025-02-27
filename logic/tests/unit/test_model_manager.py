@@ -6,7 +6,6 @@ from logic.models.errors import ValidationError, LogicError
 from logic.validators.model_validator import ModelValidator
 from logic.models.responses import ModelResponse
 
-
 class TestModelManager:
     """Unit tests for ModelManager class"""
 
@@ -94,7 +93,7 @@ class TestModelManager:
         # Assert
         assert result.id == 'ERROR'
         assert result.error is not None
-        assert 'validation failed' in result.error.lower()
+        assert 'Model ID is required' in result.error
         mock_model_service.get_model_specs.assert_not_called()
 
     def test_get_model_details_service_error(self, setup_model_manager, mock_model_service):
@@ -108,7 +107,8 @@ class TestModelManager:
 
         # Assert
         assert result.id == 'ERROR'
-        assert result.error == 'Failed to get model details'
+        assert 'Failed to get model details' in result.error
+        assert 'Service error' in result.error
         mock_model_service.get_model_specs.assert_called_once_with('model1')
 
     def test_format_model_display(self, setup_model_manager):
