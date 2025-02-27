@@ -5,252 +5,160 @@ import json
 
 from backend.services.iam_token import IAMTokenService
 from backend.utils.errors import ValidationError, AuthenticationError, APIError, ConfigurationError
+from backend.config.config import Config
 
 
 class TestIAMTokenService:
     """Tests for the IAMTokenService class"""
 
     @pytest.fixture
-    def mock_credentials_manager(self):
-        """Mock credentials manager for testing"""
-        mock_manager = MagicMock()
-        mock_manager.get_service_credentials.return_value = {
-            "apikey": "test_api_key",
-            "url": "https://iam.cloud.ibm.com/identity/token"
-        }
-        return mock_manager
+    def mock_iam_service(self):
+        """Create a mock IAM token service for testing"""
+        with patch('backend.services.iam_token.BaseClient.__init__', return_value=None):
+            service = IAMTokenService()
+            service.api_key = "test_api_key"
+            service.token_url = Config.IAM_TOKEN_URL
+            service.validator = MagicMock()
+            # Don't mock _make_request here, we'll patch it in each test
+            return service
 
-    def test_init(self, mock_credentials_manager):
+    def test_init(self):
         """Test initializing the IAMTokenService"""
-        service = IAMTokenService(mock_credentials_manager)
-        assert service.credentials_manager == mock_credentials_manager
-        assert service._token is None
-        assert service._expiration == 0
+        with patch('backend.services.iam_token.BaseClient.__init__', return_value=None) as mock_init:
+            service = IAMTokenService()
+            mock_init.assert_called_once()
+            assert service.token_url == Config.IAM_TOKEN_URL
 
-    def test_init_missing_credentials(self):
-        """Test initializing with missing credentials"""
-        # Create a mock credentials manager that returns None
-        mock_manager = MagicMock()
-        mock_manager.get_service_credentials.return_value = None
-        
-        # Expect exception when initializing
-        with pytest.raises(ConfigurationError) as exc_info:
-            IAMTokenService(mock_manager)
-        
-        assert exc_info.value.code == "MISSING_CREDENTIALS"
-
-    def test_init_missing_apikey(self):
-        """Test initializing with missing API key"""
-        # Create a mock credentials manager that returns credentials without apikey
-        mock_manager = MagicMock()
-        mock_manager.get_service_credentials.return_value = {
-            "url": "https://iam.cloud.ibm.com/identity/token"
-        }
-        
-        # Expect exception when initializing
-        with pytest.raises(ConfigurationError) as exc_info:
-            IAMTokenService(mock_manager)
-        
-        assert exc_info.value.code == "MISSING_API_KEY"
-
-    @patch('requests.post')
-    def test_get_token_first_time(self, mock_post, mock_credentials_manager):
-        """Test getting a token for the first time"""
+    def test_get_iam_token_success(self, mock_iam_service):
+        """Test getting an IAM token successfully"""
         # Mock the response from the IAM API
-        mock_response = MagicMock()
-        mock_response.status_code = 200
-        mock_response.json.return_value = {
+        mock_response = {
             "access_token": "mock_token_value",
             "token_type": "Bearer",
             "expires_in": 3600,
             "expiration": int(time.time()) + 3600
         }
-        mock_post.return_value = mock_response
         
-        # Create the service
-        service = IAMTokenService(mock_credentials_manager)
+        # Patch the _make_request method directly on the service instance
+        mock_iam_service._make_request = MagicMock(return_value=mock_response)
         
         # Call the method
-        token = service.get_token()
+        token = mock_iam_service.get_iam_token()
         
         # Assertions
         assert token == "mock_token_value"
-        assert service._token == "mock_token_value"
-        assert service._expiration > 0
-        mock_post.assert_called_once()
-        # Check that the request was made with the correct parameters
-        args, kwargs = mock_post.call_args
-        assert args[0] == "https://iam.cloud.ibm.com/identity/token"
-        assert "grant_type=urn:ibm:params:oauth:grant-type:apikey" in kwargs["data"]
-        assert "apikey=test_api_key" in kwargs["data"]
-
-    @patch('requests.post')
-    def test_get_token_cached(self, mock_post, mock_credentials_manager):
-        """Test getting a cached token"""
-        # Set up the service with a cached token
-        service = IAMTokenService(mock_credentials_manager)
-        service._token = "cached_token"
-        service._expiration = int(time.time()) + 1800  # Token expires in 30 minutes
         
-        # Call the method
-        token = service.get_token()
+        # Verify validator was called
+        mock_iam_service.validator.validate_credentials.assert_called_once_with({"api_key": "test_api_key"})
         
-        # Assertions
-        assert token == "cached_token"
-        # The post method should not be called since we have a valid cached token
-        mock_post.assert_not_called()
+        # Verify _make_request was called with correct parameters
+        mock_iam_service._make_request.assert_called_once()
+        args, kwargs = mock_iam_service._make_request.call_args
+        assert kwargs["method"] == "POST"
+        assert kwargs["url"] == Config.IAM_TOKEN_URL
+        assert "Content-Type" in kwargs["headers"]
+        assert kwargs["headers"]["Content-Type"] == "application/x-www-form-urlencoded"
+        assert "grant_type" in kwargs["data"]
+        assert kwargs["data"]["grant_type"] == "urn:ibm:params:oauth:grant-type:apikey"
+        assert "apikey" in kwargs["data"]
+        assert kwargs["data"]["apikey"] == "test_api_key"
+        assert kwargs["is_form_data"] is True
 
-    @patch('requests.post')
-    def test_get_token_expired(self, mock_post, mock_credentials_manager):
-        """Test getting a token when the cached one is expired"""
-        # Mock the response from the IAM API
-        mock_response = MagicMock()
-        mock_response.status_code = 200
-        mock_response.json.return_value = {
-            "access_token": "new_token_value",
+    def test_get_iam_token_no_token_in_response(self, mock_iam_service):
+        """Test getting an IAM token with no token in response"""
+        # Mock the response from the IAM API with no access_token
+        mock_response = {
             "token_type": "Bearer",
             "expires_in": 3600,
             "expiration": int(time.time()) + 3600
         }
-        mock_post.return_value = mock_response
         
-        # Set up the service with an expired token
-        service = IAMTokenService(mock_credentials_manager)
-        service._token = "expired_token"
-        service._expiration = int(time.time()) - 100  # Token expired 100 seconds ago
-        
-        # Call the method
-        token = service.get_token()
-        
-        # Assertions
-        assert token == "new_token_value"
-        assert service._token == "new_token_value"
-        assert service._expiration > int(time.time())
-        mock_post.assert_called_once()
-
-    @patch('requests.post')
-    def test_get_token_auth_error(self, mock_post, mock_credentials_manager):
-        """Test getting a token with authentication error"""
-        # Mock the response from the IAM API with an error
-        mock_response = MagicMock()
-        mock_response.status_code = 401
-        mock_response.json.return_value = {
-            "errorCode": "BXNIM0415E",
-            "errorMessage": "Provided API key could not be found"
-        }
-        mock_post.return_value = mock_response
-        
-        # Create the service
-        service = IAMTokenService(mock_credentials_manager)
+        # Patch the _make_request method directly on the service instance
+        mock_iam_service._make_request = MagicMock(return_value=mock_response)
         
         # Call the method and expect exception
         with pytest.raises(AuthenticationError) as exc_info:
-            service.get_token()
+            mock_iam_service.get_iam_token()
+        
+        assert exc_info.value.code == "NO_TOKEN"
+        assert "No access token in response" in str(exc_info.value)
+        
+        # Verify validator was called
+        mock_iam_service.validator.validate_credentials.assert_called_once_with({"api_key": "test_api_key"})
+
+    def test_get_iam_token_validation_error(self, mock_iam_service):
+        """Test getting an IAM token with validation error"""
+        # Mock the validator to raise a validation error
+        mock_iam_service.validator.validate_credentials.side_effect = ValidationError(
+            "Invalid API key", "INVALID_API_KEY"
+        )
+        
+        # Call the method and expect exception
+        with pytest.raises(ValidationError) as exc_info:
+            mock_iam_service.get_iam_token()
         
         assert exc_info.value.code == "INVALID_API_KEY"
-        mock_post.assert_called_once()
-
-    @patch('requests.post')
-    def test_get_token_server_error(self, mock_post, mock_credentials_manager):
-        """Test getting a token with server error"""
-        # Mock the response from the IAM API with a server error
-        mock_response = MagicMock()
-        mock_response.status_code = 500
-        mock_response.json.return_value = {
-            "errorCode": "INTERNAL_SERVER_ERROR",
-            "errorMessage": "Internal server error"
-        }
-        mock_post.return_value = mock_response
+        assert "Invalid API key" in str(exc_info.value)
         
-        # Create the service
-        service = IAMTokenService(mock_credentials_manager)
+        # Verify validator was called
+        mock_iam_service.validator.validate_credentials.assert_called_once_with({"api_key": "test_api_key"})
+
+    def test_get_iam_token_authentication_error(self, mock_iam_service):
+        """Test getting an IAM token with authentication error"""
+        # Mock _make_request to raise an authentication error
+        mock_iam_service._make_request = MagicMock(side_effect=AuthenticationError(
+            "Authentication failed", "AUTH_ERROR"
+        ))
+        
+        # Call the method and expect exception
+        with pytest.raises(AuthenticationError) as exc_info:
+            mock_iam_service.get_iam_token()
+        
+        assert exc_info.value.code == "AUTH_ERROR"
+        assert "Authentication failed" in str(exc_info.value)
+        
+        # Verify validator was called
+        mock_iam_service.validator.validate_credentials.assert_called_once_with({"api_key": "test_api_key"})
+
+    def test_get_iam_token_api_error(self, mock_iam_service):
+        """Test getting an IAM token with API error"""
+        # Mock _make_request to raise an API error
+        mock_iam_service._make_request = MagicMock(side_effect=APIError(
+            "API request failed", "API_ERROR"
+        ))
         
         # Call the method and expect exception
         with pytest.raises(APIError) as exc_info:
-            service.get_token()
+            mock_iam_service.get_iam_token()
         
-        assert exc_info.value.code == "IAM_SERVICE_ERROR"
-        mock_post.assert_called_once()
+        assert exc_info.value.code == "API_ERROR"
+        assert "API request failed" in str(exc_info.value)
+        
+        # Verify validator was called
+        mock_iam_service.validator.validate_credentials.assert_called_once_with({"api_key": "test_api_key"})
 
-    @patch('requests.post')
-    def test_get_token_connection_error(self, mock_post, mock_credentials_manager):
-        """Test getting a token with connection error"""
-        # Mock the post method to raise a connection error
-        mock_post.side_effect = Exception("Connection error")
+    def test_get_iam_token_generic_exception(self, mock_iam_service):
+        """Test getting an IAM token with a generic exception"""
+        # Mock _make_request to raise a generic exception
+        mock_iam_service._make_request = MagicMock(side_effect=Exception("Unknown error"))
         
-        # Create the service
-        service = IAMTokenService(mock_credentials_manager)
+        # Mock handle_error to return a specific error
+        mock_iam_service.handle_error = MagicMock(return_value=APIError(
+            "Failed to get IAM token", "IAM_ERROR"
+        ))
         
         # Call the method and expect exception
         with pytest.raises(APIError) as exc_info:
-            service.get_token()
+            mock_iam_service.get_iam_token()
         
-        assert exc_info.value.code == "IAM_CONNECTION_ERROR"
-        mock_post.assert_called_once()
-
-    @patch('requests.post')
-    def test_refresh_token(self, mock_post, mock_credentials_manager):
-        """Test explicitly refreshing a token"""
-        # Mock the response from the IAM API
-        mock_response = MagicMock()
-        mock_response.status_code = 200
-        mock_response.json.return_value = {
-            "access_token": "refreshed_token_value",
-            "token_type": "Bearer",
-            "expires_in": 3600,
-            "expiration": int(time.time()) + 3600
-        }
-        mock_post.return_value = mock_response
+        assert exc_info.value.code == "IAM_ERROR"
+        assert "Failed to get IAM token" in str(exc_info.value)
         
-        # Set up the service with a valid token
-        service = IAMTokenService(mock_credentials_manager)
-        service._token = "old_token"
-        service._expiration = int(time.time()) + 1800  # Token still valid for 30 minutes
+        # Verify validator was called
+        mock_iam_service.validator.validate_credentials.assert_called_once_with({"api_key": "test_api_key"})
         
-        # Call the refresh method
-        service.refresh_token()
-        
-        # Assertions
-        assert service._token == "refreshed_token_value"
-        assert service._expiration > int(time.time())
-        mock_post.assert_called_once()
-
-    def test_is_token_valid_with_valid_token(self, mock_credentials_manager):
-        """Test checking if a token is valid when it is"""
-        # Set up the service with a valid token
-        service = IAMTokenService(mock_credentials_manager)
-        service._token = "valid_token"
-        service._expiration = int(time.time()) + 1800  # Token valid for 30 minutes
-        
-        # Check if the token is valid
-        assert service.is_token_valid() is True
-
-    def test_is_token_valid_with_expired_token(self, mock_credentials_manager):
-        """Test checking if a token is valid when it is expired"""
-        # Set up the service with an expired token
-        service = IAMTokenService(mock_credentials_manager)
-        service._token = "expired_token"
-        service._expiration = int(time.time()) - 100  # Token expired 100 seconds ago
-        
-        # Check if the token is valid
-        assert service.is_token_valid() is False
-
-    def test_is_token_valid_with_no_token(self, mock_credentials_manager):
-        """Test checking if a token is valid when none exists"""
-        # Set up the service with no token
-        service = IAMTokenService(mock_credentials_manager)
-        service._token = None
-        service._expiration = 0
-        
-        # Check if the token is valid
-        assert service.is_token_valid() is False
-
-    def test_is_token_valid_near_expiration(self, mock_credentials_manager):
-        """Test checking if a token is valid when it's close to expiration"""
-        # Set up the service with a token that's about to expire
-        service = IAMTokenService(mock_credentials_manager)
-        service._token = "almost_expired_token"
-        service._expiration = int(time.time()) + 50  # Token expires in 50 seconds
-        
-        # Check if the token is valid (should be False since it's within the buffer time)
-        assert service.is_token_valid() is False 
+        # Verify handle_error was called
+        mock_iam_service.handle_error.assert_called_once()
+        args, kwargs = mock_iam_service.handle_error.call_args
+        assert isinstance(args[0], Exception)
+        assert args[1] == "Failed to get IAM token" 
