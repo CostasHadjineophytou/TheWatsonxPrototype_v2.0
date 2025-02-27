@@ -234,3 +234,8 @@ class ServiceValidator:
                 code="PROMPT_TOO_LONG",
                 details={"max_length": TextConfig.MAX_PROMPT_LENGTH}
             )
+
+    @staticmethod
+    def validate_resource() -> None:
+        """Validate resource access. Placeholder for now."""
+        pass

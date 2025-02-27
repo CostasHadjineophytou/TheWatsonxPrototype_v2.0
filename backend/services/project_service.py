@@ -19,9 +19,8 @@ class ProjectService(BaseClient):
     def list_projects(self):
         """Get list of all projects from IBM Cloud"""
         try:
-            # Validate credentials
-            if self.watson_client:
-                self.validator.validate_credentials(self.watson_client.credentials)
+            # Validate resource access
+            self.validator.validate_resource()
             
             token = self.iam_service.get_iam_token()
             headers = {
@@ -54,29 +53,23 @@ class ProjectService(BaseClient):
             Dictionary containing project details
             
         Raises:
-            ValidationError: If credentials or project ID are invalid
+            ValidationError: If project ID is invalid or resource access is denied
             ServiceError: If the project is not found or API issues occur
         """
-        # Validate inputs first
         try:
-            if self.watson_client:
-                self.validator.validate_credentials(self.watson_client.credentials)
+            # Validate inputs and access
+            self.validator.validate_resource()
             self.validator.validate_project_id(project_id)
             
             # Get projects from API
             token = self.iam_service.get_iam_token()
-            
-            if self.watson_client:
-                projects = self.watson_client.get_projects(token)
-            else:
-                # Fallback to direct API call if watson_client not provided
-                headers = {
-                    "Authorization": f"Bearer {token}",
-                    "Content-Type": "application/json"
-                }
-                endpoint = f"{self.projects_url}/v2/projects"
-                response = self._make_request('GET', endpoint, headers=headers)
-                projects = response.get('resources', [])
+            headers = {
+                "Authorization": f"Bearer {token}",
+                "Content-Type": "application/json"
+            }
+            endpoint = f"{self.projects_url}/v2/projects"
+            response = self._make_request('GET', endpoint, headers=headers)
+            projects = response.get('resources', [])
                 
             # Search for the project in the results
             for project in projects:
