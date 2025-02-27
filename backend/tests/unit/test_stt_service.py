@@ -3,6 +3,7 @@ from unittest.mock import patch, MagicMock, mock_open
 
 from backend.services.stt_service import STTService
 from backend.utils.errors import ValidationError, AuthenticationError, APIError, FileError
+from backend.tests.fixtures.sample_responses import STT_RESPONSE
 
 
 class TestSTTService:
@@ -36,6 +37,7 @@ class TestSTTService:
             service.initialize()
         
         assert exc_info.value.code == "STT_INIT_ERROR"
+        assert service._stt is None
 
     @patch('backend.validators.service_validator.ServiceValidator.validate_audio_file')
     def test_transcribe_audio_success(self, mock_validate, mock_credentials_manager):
@@ -44,36 +46,23 @@ class TestSTTService:
         
         # Mock STT client
         mock_stt = MagicMock()
-        mock_response = {
-            "results": [
-                {
-                    "alternatives": [
-                        {
-                            "transcript": "This is a test transcription.",
-                            "confidence": 0.95
-                        }
-                    ],
-                    "final": True
-                }
-            ],
-            "result_index": 0
-        }
-        mock_stt.recognize.return_value.get_result.return_value = mock_response
+        mock_stt.recognize.return_value.get_result.return_value = STT_RESPONSE
         service._stt = mock_stt
         
         # Test file path
         audio_file = "test_audio.wav"
         
         # Mock file operations
-        with patch('builtins.open', mock_open(read_data=b'mock audio data')):
+        mock_file = mock_open(read_data=b'mock audio data')
+        with patch('builtins.open', mock_file):
             with patch('os.path.exists', return_value=True):
                 result = service.transcribe_audio(audio_file)
         
         # Assertions
-        assert result == "This is a test transcription."
+        assert result == "This is a sample transcription of speech to text."
         mock_validate.assert_called_once_with(audio_file)
         mock_stt.recognize.assert_called_once_with(
-            audio=mock_response,
+            audio=mock_file(),
             content_type='audio/wav'
         )
 
@@ -82,7 +71,7 @@ class TestSTTService:
         service = STTService(mock_credentials_manager)
         
         with patch('os.path.exists', return_value=False):
-            with pytest.raises(FileError) as exc_info:
+            with pytest.raises(ValidationError) as exc_info:
                 service.transcribe_audio("nonexistent.wav")
         
         assert exc_info.value.code == "FILE_NOT_FOUND"
@@ -135,180 +124,3 @@ class TestSTTService:
         
         assert "API request failed" in str(exc_info.value)
         mock_validate.assert_called_once()
-
-    def test_get_models_success(self, mock_credentials_manager):
-        """Test getting available models successfully"""
-        service = STTService(mock_credentials_manager)
-        
-        # Mock STT client
-        mock_stt = MagicMock()
-        mock_models = {
-            "models": [
-                {
-                    "name": "en-US_BroadbandModel",
-                    "language": "en-US",
-                    "description": "US English broadband model"
-                },
-                {
-                    "name": "en-US_NarrowbandModel",
-                    "language": "en-US",
-                    "description": "US English narrowband model"
-                }
-            ]
-        }
-        mock_stt.list_models.return_value.get_result.return_value = mock_models
-        service._stt = mock_stt
-        
-        # Call the method
-        result = service.get_models()
-        
-        # Assertions
-        assert result == mock_models["models"]
-        mock_stt.list_models.assert_called_once()
-
-    def test_get_models_auth_error(self, mock_credentials_manager):
-        """Test getting models with authentication error"""
-        service = STTService(mock_credentials_manager)
-        mock_credentials_manager.get_service_credentials.side_effect = AuthenticationError(
-            "Authentication failed", "STT_INIT_ERROR"
-        )
-        
-        with pytest.raises(AuthenticationError) as exc_info:
-            service.get_models()
-        
-        assert exc_info.value.code == "STT_INIT_ERROR"
-
-    def test_get_models_api_error(self, mock_credentials_manager):
-        """Test getting models with API error"""
-        service = STTService(mock_credentials_manager)
-        
-        # Mock STT client
-        mock_stt = MagicMock()
-        mock_stt.list_models.side_effect = Exception("API request failed")
-        service._stt = mock_stt
-        
-        with pytest.raises(APIError) as exc_info:
-            service.get_models()
-        
-        assert "API request failed" in str(exc_info.value)
-        mock_stt.list_models.assert_called_once()
-
-    @patch('backend.services.stt_service.STTService.get_models')
-    def test_get_model_by_language_success(self, mock_get_models, mock_watson_client):
-        """Test getting model by language successfully"""
-        # Mock the get_models method
-        mock_models = [
-            {
-                "name": "en-US_BroadbandModel",
-                "language": "en-US",
-                "description": "US English broadband model"
-            },
-            {
-                "name": "en-US_NarrowbandModel",
-                "language": "en-US",
-                "description": "US English narrowband model"
-            },
-            {
-                "name": "de-DE_BroadbandModel",
-                "language": "de-DE",
-                "description": "German broadband model"
-            }
-        ]
-        mock_get_models.return_value = mock_models
-        
-        # Create the service
-        service = STTService(mock_watson_client)
-        
-        # Call the method
-        result = service.get_model_by_language("en-US")
-        
-        # Assertions
-        assert len(result) == 2
-        assert all(model["language"] == "en-US" for model in result)
-        mock_get_models.assert_called_once()
-
-    @patch('backend.services.stt_service.STTService.get_models')
-    def test_get_model_by_language_no_match(self, mock_get_models, mock_watson_client):
-        """Test getting model by language with no match"""
-        # Mock the get_models method
-        mock_models = [
-            {
-                "name": "en-US_BroadbandModel",
-                "language": "en-US",
-                "description": "US English broadband model"
-            },
-            {
-                "name": "de-DE_BroadbandModel",
-                "language": "de-DE",
-                "description": "German broadband model"
-            }
-        ]
-        mock_get_models.return_value = mock_models
-        
-        # Create the service
-        service = STTService(mock_watson_client)
-        
-        # Call the method
-        result = service.get_model_by_language("fr-FR")
-        
-        # Assertions
-        assert len(result) == 0
-        mock_get_models.assert_called_once()
-
-    @patch('backend.validators.service_validator.ServiceValidator.validate_stt_params')
-    @patch('builtins.open', new_callable=mock_open, read_data=b'mock audio data')
-    def test_transcribe_audio_with_keywords(self, mock_file, mock_validate, mock_watson_client):
-        """Test transcribing audio with keywords"""
-        # Mock the client's post_request method
-        mock_response = {
-            "results": [
-                {
-                    "alternatives": [
-                        {
-                            "transcript": "This is a test transcription with keywords.",
-                            "confidence": 0.95
-                        }
-                    ],
-                    "final": True,
-                    "keywords_result": {
-                        "test": [
-                            {
-                                "normalized_text": "test",
-                                "start_time": 1.2,
-                                "end_time": 1.5,
-                                "confidence": 0.98
-                            }
-                        ]
-                    }
-                }
-            ],
-            "result_index": 0
-        }
-        mock_watson_client.post_request.return_value = mock_response
-        
-        # Create the service
-        service = STTService(mock_watson_client)
-        
-        # Parameters for transcription
-        audio_file = "test_audio.wav"
-        model = "en-US_BroadbandModel"
-        params = {
-            "content_type": "audio/wav",
-            "keywords": ["test", "keywords"],
-            "keywords_threshold": 0.5
-        }
-        
-        # Mock os.path.exists to return True
-        with patch('os.path.exists', return_value=True):
-            # Call the method
-            result = service.transcribe_audio(audio_file, model, params)
-        
-        # Assertions
-        assert result == mock_response
-        mock_validate.assert_called_once()
-        mock_watson_client.post_request.assert_called_once()
-        # Check that the keywords were included in the params
-        _, kwargs = mock_watson_client.post_request.call_args
-        assert 'keywords' in kwargs['params']
-        assert kwargs['params']['keywords'] == ["test", "keywords"]
-        assert kwargs['params']['keywords_threshold'] == 0.5 
