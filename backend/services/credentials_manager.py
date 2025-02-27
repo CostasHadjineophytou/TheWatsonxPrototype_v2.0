@@ -2,6 +2,7 @@ import logging
 from backend.services.base_client import BaseClient
 from .iam_token import IAMTokenService
 from ..utils.errors import AuthenticationError
+from ..config.config import Config
 
 class CredentialsManager(BaseClient):
     """Manages service credentials for IBM Cloud services."""
@@ -9,8 +10,7 @@ class CredentialsManager(BaseClient):
     def __init__(self):
         super().__init__()
         self.iam_service = IAMTokenService()
-        # move the following url to the config file...
-        self.resource_url = "https://resource-controller.cloud.ibm.com/v2/resource_instances"
+        self.resource_url = Config.IBM_CLOUD_RESOURCE_URL
 
     def get_service_credentials(self, service_name: str):
         """Get credentials for a specific service by name."""

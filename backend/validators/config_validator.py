@@ -11,7 +11,8 @@ class ConfigValidator:
             'IBM_CLOUD_API_KEY',
             'IBM_CLOUD_MODELS_URL',
             'IBM_CLOUD_PROJECTS_URL',
-            'IAM_TOKEN_URL'
+            'IAM_TOKEN_URL',
+            'IBM_CLOUD_RESOURCE_URL'
         ]
         
         missing = [var for var in required_vars if not getattr(Config, var)]
