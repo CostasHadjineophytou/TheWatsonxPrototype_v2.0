@@ -2,7 +2,7 @@ import logging
 from .watson_client import WatsonClient
 from .iam_token import IAMTokenService
 from backend.config.config import Config
-from ..utils.errors import ServiceError
+from ..utils.errors import ServiceError, ValidationError
 from backend.services.base_client import BaseClient
 from ..utils.file_manager import FileManager
 
@@ -37,22 +37,45 @@ class ProjectService(BaseClient):
             raise self.handle_error(e, "Failed to list projects")
 
     def get_project_details(self, project_id: str) -> dict:
-        """Get detailed project information"""
+        """
+        Get detailed project information
+        
+        Args:
+            project_id: The ID of the project to retrieve
+            
+        Returns:
+            Dictionary containing project details
+            
+        Raises:
+            ValidationError: If credentials or project ID are invalid
+            ServiceError: If the project is not found or API issues occur
+        """
+        # Validate inputs first
         try:
             self.validator.validate_credentials(self.watson_client.credentials)
             self.validator.validate_project_id(project_id)
+        except ValidationError as e:
+            # Re-raise validation errors directly
+            raise e
             
+        # Get projects from API
+        try:
             token = self.iam_service.get_token()
             projects = self.watson_client.get_projects(token)
-            
-            for project in projects:
-                if project['metadata']['guid'] == project_id:
-                    return project
-                    
-            raise ServiceError(
-                message=f"Project {project_id} not found",
-                code="PROJECT_NOT_FOUND",
-                details={"project_id": project_id}
-            )
         except Exception as e:
-            raise self.handle_error(e, "Failed to get project details") 
+            # Handle unexpected API errors
+            raise self.handle_error(e, "Failed to get project details")
+        
+        # This is not an exception case, but a normal logical flow:
+        # Search for the project in the results
+        for project in projects:
+            if project['metadata']['guid'] == project_id:
+                return project
+        
+        # If project not found, raise a specific ServiceError
+        # This is part of the normal logical flow, not exception handling
+        raise ServiceError(
+            message=f"Project {project_id} not found",
+            code="PROJECT_NOT_FOUND",
+            details={"project_id": project_id}
+        ) 

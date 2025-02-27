@@ -4,7 +4,6 @@ import logging
 import glob
 import time
 from pathlib import Path
-from typing import Optional
 from .errors import FileError, ConfigurationError
 
 class FileManager:
@@ -37,24 +36,19 @@ class FileManager:
                         file.chmod(0o666)
             except Exception as e:
                 print(f"Warning: Could not set permissions for {directory}: {e}")
-    
-    @staticmethod
-    def save_json(filepath: str, data: dict):
-        """Save data as JSON file"""
-        os.makedirs(os.path.dirname(filepath), exist_ok=True)
-        with open(filepath, 'w') as f:
-            json.dump(data, f, indent=2)
-    
-    @staticmethod
-    def load_json(filepath: str) -> dict:
-        """Load data from JSON file"""
-        if not os.path.exists(filepath):
-            return {}
-        with open(filepath, 'r') as f:
-            return json.load(f)
+
 
     def save_json(self, filename: str, data: dict):
-        """Save data to a JSON file"""
+        """
+        Save data to a JSON file with error handling
+        
+        Args:
+            filename: Path to save the file
+            data: Dictionary data to save as JSON
+        
+        Raises:
+            FileError: If the file cannot be saved
+        """
         try:
             # Ensure directory exists
             Path(filename).parent.mkdir(parents=True, exist_ok=True)
@@ -66,32 +60,55 @@ class FileManager:
                 f"Failed to save file {filename}",
                 extra={"error": str(e)}
             )
-            raise ConfigurationError(
-                message=f"Failed to save file {filename}",
-                code="FILE_SAVE_ERROR",
+            raise FileError(
+                message=f"Failed to save data to {filename}",
+                code="DATA_SAVE_ERROR",
                 details={"error": str(e)}
             )
 
     def load_json(self, filename: str) -> dict:
-        """Load data from a JSON file"""
+        """
+        Load data from a JSON file with error handling
+        
+        Args:
+            filename: Path to the JSON file
+            
+        Returns:
+            Dictionary containing the loaded data
+            
+        Raises:
+            FileError: If the file cannot be loaded due to not found, invalid JSON, or other errors
+        """
         try:
             with open(filename, "r") as f:
                 return json.load(f)
         except FileNotFoundError:
             self.logger.error(f"File {filename} not found")
-            return {}
+            raise FileError(
+                message=f"File not found: {filename}",
+                code="FILE_NOT_FOUND",
+                details={"filename": filename}
+            )
         except json.JSONDecodeError as e:
             self.logger.error(
                 f"Invalid JSON in {filename}",
                 extra={"error": str(e)}
             )
-            return {}
+            raise FileError(
+                message=f"Invalid JSON format in {filename}",
+                code="INVALID_JSON",
+                details={"error": str(e), "filename": filename}
+            )
         except Exception as e:
             self.logger.error(
                 f"Error loading {filename}",
                 extra={"error": str(e)}
             )
-            return {}
+            raise FileError(
+                message=f"Failed to load file: {filename}",
+                code="FILE_LOAD_ERROR",
+                details={"error": str(e), "filename": filename}
+            )
 
     @staticmethod
     def save_audio_file(audio_content: bytes, audio_format: str = "audio/wav") -> str:
