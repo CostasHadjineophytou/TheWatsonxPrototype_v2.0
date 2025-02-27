@@ -1,8 +1,8 @@
 import pytest
-from unittest.mock import patch, MagicMock, call
+from unittest.mock import patch, MagicMock
 
 from backend.services.model_service import ModelService
-from backend.utils.errors import ValidationError, AuthenticationError, APIError
+from backend.utils.errors import ValidationError, APIError
 
 
 class TestModelService:
@@ -11,233 +11,106 @@ class TestModelService:
     def test_init(self, mock_watson_client):
         """Test initializing the ModelService"""
         service = ModelService(mock_watson_client)
-        assert service.client == mock_watson_client
+        assert service.watson_client == mock_watson_client
+        assert hasattr(service, 'file_manager')
 
-    @patch('requests.get')
-    def test_get_models_success(self, mock_get, mock_watson_client):
-        """Test getting models successfully"""
-        # Mock the client's get_request method
+    @patch('backend.utils.file_manager.FileManager.save_json')
+    def test_list_models_success(self, mock_save_json, mock_watson_client):
+        """Test listing models successfully"""
         mock_response = {
-            'resources': [
+            "resources": [
                 {
-                    'model_id': 'ibm/granite-20b-multilingual',
-                    'name': 'Granite 20B Multilingual',
-                    'type': 'foundation_model'
-                },
-                {
-                    'model_id': 'ibm/mpt-7b-instruct',
-                    'name': 'MPT 7B Instruct',
-                    'type': 'foundation_model'
+                    "model_id": "test_model",
+                    "name": "Test Model"
                 }
             ]
         }
-        mock_watson_client.get_request.return_value = mock_response
+        mock_watson_client.client.foundation_models.get_model_specs.return_value = mock_response
         
-        # Create the service
         service = ModelService(mock_watson_client)
+        result = service.list_models()
         
-        # Call the method
-        result = service.get_models()
-        
-        # Assertions
         assert result == mock_response
-        mock_watson_client.get_request.assert_called_once_with('/v2/models')
+        mock_watson_client.client.foundation_models.get_model_specs.assert_called_once()
+        mock_save_json.assert_called_once_with("data/cloud/models.json", mock_response["resources"])
 
-    def test_get_models_auth_error(self, mock_watson_client):
-        """Test getting models with authentication error"""
-        # Mock the client to raise an authentication error
-        mock_watson_client.get_request.side_effect = AuthenticationError(
-            "Authentication failed", "AUTHENTICATION_ERROR"
-        )
-        
-        # Create the service
+    def test_list_models_validation_error(self, mock_watson_client):
+        """Test listing models with invalid credentials"""
         service = ModelService(mock_watson_client)
         
-        # Call the method and expect exception
-        with pytest.raises(AuthenticationError) as exc_info:
-            service.get_models()
-        
-        assert exc_info.value.code == "AUTHENTICATION_ERROR"
-        mock_watson_client.get_request.assert_called_once_with('/v2/models')
+        # Mock validator to raise ValidationError
+        with patch.object(service.validator, 'validate_credentials') as mock_validate:
+            mock_validate.side_effect = ValidationError("Invalid credentials", "INVALID_CREDENTIALS")
+            
+            with pytest.raises(ValidationError) as exc_info:
+                service.list_models()
+            
+            assert exc_info.value.code == "INVALID_CREDENTIALS"
+            mock_watson_client.client.foundation_models.get_model_specs.assert_not_called()
 
-    def test_get_models_api_error(self, mock_watson_client):
-        """Test getting models with API error"""
-        # Mock the client to raise an API error
-        mock_watson_client.get_request.side_effect = APIError(
-            "API request failed", "API_ERROR"
-        )
+    def test_list_models_api_error(self, mock_watson_client):
+        """Test listing models with API error"""
+        mock_watson_client.client.foundation_models.get_model_specs.side_effect = Exception("API Error")
         
-        # Create the service
         service = ModelService(mock_watson_client)
-        
-        # Call the method and expect exception
         with pytest.raises(APIError) as exc_info:
-            service.get_models()
+            service.list_models()
         
-        assert exc_info.value.code == "API_ERROR"
-        mock_watson_client.get_request.assert_called_once_with('/v2/models')
+        assert str(exc_info.value) == "API Error"
 
-    @patch('requests.get')
-    def test_get_model_by_id_success(self, mock_get, mock_watson_client):
-        """Test getting a specific model by ID successfully"""
-        # Mock the client's get_request method
-        model_id = 'ibm/granite-20b-multilingual'
-        mock_response = {
-            'model_id': model_id,
-            'name': 'Granite 20B Multilingual',
-            'type': 'foundation_model',
-            'description': 'IBM Granite 20B Multilingual model'
+    def test_get_model_specs_success(self, mock_watson_client):
+        """Test getting model specs successfully"""
+        mock_model = {
+            "model_id": "test_model",
+            "name": "Test Model"
         }
-        mock_watson_client.get_request.return_value = mock_response
-        
-        # Create the service
-        service = ModelService(mock_watson_client)
-        
-        # Call the method
-        result = service.get_model_by_id(model_id)
-        
-        # Assertions
-        assert result == mock_response
-        mock_watson_client.get_request.assert_called_once_with(f'/v2/models/{model_id}')
-
-    def test_get_model_by_id_invalid_id(self, mock_watson_client):
-        """Test getting a model with invalid ID"""
-        # Create the service
-        service = ModelService(mock_watson_client)
-        
-        # Call the method with empty ID and expect exception
-        with pytest.raises(ValidationError) as exc_info:
-            service.get_model_by_id("")
-        
-        assert exc_info.value.code == "INVALID_MODEL_ID"
-        mock_watson_client.get_request.assert_not_called()
-
-    def test_get_model_by_id_auth_error(self, mock_watson_client):
-        """Test getting a model with authentication error"""
-        # Mock the client to raise an authentication error
-        model_id = 'ibm/granite-20b-multilingual'
-        mock_watson_client.get_request.side_effect = AuthenticationError(
-            "Authentication failed", "AUTHENTICATION_ERROR"
-        )
-        
-        # Create the service
-        service = ModelService(mock_watson_client)
-        
-        # Call the method and expect exception
-        with pytest.raises(AuthenticationError) as exc_info:
-            service.get_model_by_id(model_id)
-        
-        assert exc_info.value.code == "AUTHENTICATION_ERROR"
-        mock_watson_client.get_request.assert_called_once_with(f'/v2/models/{model_id}')
-
-    def test_get_model_by_id_api_error(self, mock_watson_client):
-        """Test getting a model with API error"""
-        # Mock the client to raise an API error
-        model_id = 'ibm/granite-20b-multilingual'
-        mock_watson_client.get_request.side_effect = APIError(
-            "API request failed", "API_ERROR"
-        )
-        
-        # Create the service
-        service = ModelService(mock_watson_client)
-        
-        # Call the method and expect exception
-        with pytest.raises(APIError) as exc_info:
-            service.get_model_by_id(model_id)
-        
-        assert exc_info.value.code == "API_ERROR"
-        mock_watson_client.get_request.assert_called_once_with(f'/v2/models/{model_id}')
-
-    @patch('requests.get')
-    def test_filter_models_by_type_success(self, mock_get, mock_watson_client):
-        """Test filtering models by type successfully"""
-        # Mock the client's get_request method
         mock_response = {
-            'resources': [
+            "resources": [mock_model]
+        }
+        mock_watson_client.client.foundation_models.get_model_specs.return_value = mock_response
+        
+        service = ModelService(mock_watson_client)
+        result = service.get_model_specs("test_model")
+        
+        assert result == mock_model
+        mock_watson_client.client.foundation_models.get_model_specs.assert_called_once()
+
+    def test_get_model_specs_not_found(self, mock_watson_client):
+        """Test getting specs for non-existent model"""
+        mock_response = {
+            "resources": [
                 {
-                    'model_id': 'ibm/granite-20b-multilingual',
-                    'name': 'Granite 20B Multilingual',
-                    'type': 'foundation_model'
-                },
-                {
-                    'model_id': 'ibm/mpt-7b-instruct',
-                    'name': 'MPT 7B Instruct',
-                    'type': 'foundation_model'
-                },
-                {
-                    'model_id': 'ibm/custom-model',
-                    'name': 'Custom Model',
-                    'type': 'custom_model'
+                    "model_id": "other_model",
+                    "name": "Other Model"
                 }
             ]
         }
-        mock_watson_client.get_request.return_value = mock_response
+        mock_watson_client.client.foundation_models.get_model_specs.return_value = mock_response
         
-        # Create the service
         service = ModelService(mock_watson_client)
+        result = service.get_model_specs("test_model")
         
-        # Call the method
-        result = service.filter_models_by_type('foundation_model')
-        
-        # Assertions
-        assert len(result) == 2
-        assert all(model['type'] == 'foundation_model' for model in result)
-        mock_watson_client.get_request.assert_called_once_with('/v2/models')
+        assert result is None
 
-    def test_filter_models_by_type_empty_type(self, mock_watson_client):
-        """Test filtering models with empty type"""
-        # Create the service
+    def test_get_model_specs_invalid_id(self, mock_watson_client):
+        """Test getting model specs with invalid model ID"""
         service = ModelService(mock_watson_client)
         
-        # Call the method with empty type and expect exception
-        with pytest.raises(ValidationError) as exc_info:
-            service.filter_models_by_type("")
-        
-        assert exc_info.value.code == "INVALID_MODEL_TYPE"
-        mock_watson_client.get_request.assert_not_called()
+        with patch.object(service.validator, 'validate_model_id') as mock_validate:
+            mock_validate.side_effect = ValidationError("Invalid model ID", "INVALID_MODEL_ID")
+            
+            with pytest.raises(ValidationError) as exc_info:
+                service.get_model_specs("")
+            
+            assert exc_info.value.code == "INVALID_MODEL_ID"
+            mock_watson_client.client.foundation_models.get_model_specs.assert_not_called()
 
-    def test_filter_models_by_type_no_matches(self, mock_watson_client):
-        """Test filtering models with no matches"""
-        # Mock the client's get_request method
-        mock_response = {
-            'resources': [
-                {
-                    'model_id': 'ibm/granite-20b-multilingual',
-                    'name': 'Granite 20B Multilingual',
-                    'type': 'foundation_model'
-                },
-                {
-                    'model_id': 'ibm/mpt-7b-instruct',
-                    'name': 'MPT 7B Instruct',
-                    'type': 'foundation_model'
-                }
-            ]
-        }
-        mock_watson_client.get_request.return_value = mock_response
+    def test_get_model_specs_api_error(self, mock_watson_client):
+        """Test getting model specs with API error"""
+        mock_watson_client.client.foundation_models.get_model_specs.side_effect = Exception("API Error")
         
-        # Create the service
         service = ModelService(mock_watson_client)
-        
-        # Call the method
-        result = service.filter_models_by_type('custom_model')
-        
-        # Assertions
-        assert len(result) == 0
-        mock_watson_client.get_request.assert_called_once_with('/v2/models')
-
-    def test_filter_models_by_type_api_error(self, mock_watson_client):
-        """Test filtering models with API error"""
-        # Mock the client to raise an API error
-        mock_watson_client.get_request.side_effect = APIError(
-            "API request failed", "API_ERROR"
-        )
-        
-        # Create the service
-        service = ModelService(mock_watson_client)
-        
-        # Call the method and expect exception
         with pytest.raises(APIError) as exc_info:
-            service.filter_models_by_type('foundation_model')
+            service.get_model_specs("test_model")
         
-        assert exc_info.value.code == "API_ERROR"
-        mock_watson_client.get_request.assert_called_once_with('/v2/models') 
+        assert str(exc_info.value) == "API Error" 
