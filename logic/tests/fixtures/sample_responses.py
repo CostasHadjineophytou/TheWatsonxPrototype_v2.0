@@ -1,7 +1,7 @@
 """Sample responses for logic layer tests"""
 
 # Sample text processing result
-TEXT_PROCESSING_RESULT = {
+TTS_RESULT = {
     'original': 'Sample input text',
     'processed': 'Processed sample text',
     'metadata': {
@@ -15,20 +15,24 @@ TEXT_PROCESSING_RESULT = {
 NLU_ANALYSIS_RESULT = {
     'text': 'Sample text for analysis',
     'sentiment': {
-        'score': 0.8,
-        'label': 'positive'
+        'document': {
+            'label': 'positive',
+            'score': 0.8
+        }
     },
     'entities': [
         {
-            'type': 'PERSON',
             'text': 'John',
-            'confidence': 0.95
+            'type': 'PERSON',
+            'confidence': 0.95,
+            'relevance': 0.8
         }
     ],
     'keywords': [
         {
             'text': 'sample',
-            'relevance': 0.8
+            'relevance': 0.8,
+            'count': 1
         }
     ]
 }

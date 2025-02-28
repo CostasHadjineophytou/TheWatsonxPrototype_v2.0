@@ -6,7 +6,7 @@ from unittest.mock import MagicMock
 from logic.managers.tts_manager import TTSManager
 from logic.models.speech_request import TTSRequest
 from logic.validators.speech_validator import SpeechValidator
-from logic.tests.fixtures.sample_responses import TEXT_PROCESSING_RESULT
+from logic.tests.fixtures.sample_responses import TTS_RESULT
 
 
 class TestTTSSynthesis:
@@ -59,7 +59,7 @@ class TestTTSSynthesis:
         
         # Create TTS request with test data
         request = TTSRequest(
-            text=TEXT_PROCESSING_RESULT['original'],
+            text=TTS_RESULT['original'],
             voice="en-US_AllisonV3Voice",
             accept="audio/wav",
             pitch=0,
