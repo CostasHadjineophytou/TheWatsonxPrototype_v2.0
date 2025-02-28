@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Optional, Dict
+from typing import Optional, Dict, List
 
 @dataclass
 class ModelResponse:
@@ -8,7 +8,16 @@ class ModelResponse:
     name: str
     type: str
     description: Optional[str] = None
-    parameters: Optional[Dict] = None
+    long_description: Optional[str] = None
+    source: Optional[str] = None
+    number_params: Optional[str] = None
+    functions: Optional[List[Dict]] = None
+    tasks: Optional[List[Dict]] = None
+    model_limits: Optional[Dict] = None
+    limits: Optional[Dict] = None
+    lifecycle: Optional[List[Dict]] = None
+    versions: Optional[List[Dict]] = None
+    supported_languages: Optional[List[str]] = None
     error: Optional[str] = None
 
 @dataclass
