@@ -59,11 +59,6 @@ class WatsonApp(tk.Tk):
             self.stt_manager
         )
         self.notebook.add(self.stt_tab, text="Speech to Text")
-        
-        # Placeholder for Dataset Management
-        frame = ttk.Frame(self.notebook)
-        self.notebook.add(frame, text="Dataset Management")
-        ttk.Label(frame, text="Dataset Management - Coming Soon").pack(pady=20)
 
     def run(self):
         """Start the application"""
