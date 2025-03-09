@@ -1,8 +1,10 @@
-from ..models.errors import LogicError
-from .base_manager import BaseManager
+from typing import Dict, List
 from backend.services.nlu_service import NLUService
-from ..validators.nlu_validator import NLUValidator
 from backend.config.nlu_config import NLUConfig
+from ..validators.nlu_validator import NLUValidator
+from ..models.requests import NLURequest
+from ..models.responses import NLUResponse
+from .base_manager import BaseManager
 
 class NLUManager(BaseManager):
     """Business logic for NLU operations"""
@@ -12,152 +14,232 @@ class NLUManager(BaseManager):
         self.nlu_service = nlu_service
         self.validator = validator
 
-    def analyze_text(self, text: str, features: list) -> dict:
-        """Process NLU analysis request"""
+    def analyze_text(self, text: str, features: List[str]) -> Dict:
+        """Process NLU analysis request (legacy method)"""
+        # Create a request object
+        request = NLURequest(text=text, features=features)
+        # Use the new method
+        response = self._analyze_request(request)
+        # Convert response back to dict for backward compatibility
+        if response.error:
+            return {"error": response.error}
+            
+        result = {}
+        if response.sentiment:
+            result['sentiment'] = response.sentiment
+        if response.emotion:
+            result['emotion'] = response.emotion
+        if response.entities:
+            result['entities'] = response.entities
+        if response.keywords:
+            result['keywords'] = response.keywords
+        if response.categories:
+            result['categories'] = response.categories
+        if response.concepts:
+            result['concepts'] = response.concepts
+        if response.relations:
+            result['relations'] = response.relations
+        if response.semantic_roles:
+            result['semantic_roles'] = response.semantic_roles
+            
+        return result
+        
+    def analyze_request(self, request: NLURequest) -> NLUResponse:
+        """Process NLU analysis request using data classes"""
         try:
-            # Validate inputs
-            self.validator.validate_text(text)
-            self.validator.validate_features(features)
+            # Validate text
+            is_valid, error = self.validator.validate_text(request.text)
+            if not is_valid:
+                raise self.handle_validation_error(
+                    message=error.message,
+                    details=error.details
+                )
 
-            # Convert feature list to API format
-            if 'all' in features:
-                features_dict = NLUConfig.get_all_features()
-            else:
-                features_dict = {
-                    f_id: NLUConfig.get_feature_params(f_id)
-                    for f_id in features
-                }
+            # Validate features
+            is_valid, error = self.validator.validate_features(request.features)
+            if not is_valid:
+                raise self.handle_validation_error(
+                    message=error.message,
+                    details=error.details
+                )
+
+            # Convert features to API format
+            try:
+                if 'all' in request.features:
+                    features_dict = NLUConfig.get_all_features()
+                else:
+                    features_dict = {
+                        f_id: NLUConfig.get_feature_params(f_id)
+                        for f_id in request.features
+                    }
+            except Exception as e:
+                raise self.handle_business_error(
+                    message="Failed to process features configuration",
+                    code="FEATURE_CONFIG_ERROR",
+                    details={"features": request.features, "error": str(e)}
+                )
             
-            # Get raw analysis
-            result = self.nlu_service.analyze_text(text, features_dict)
+            # Get analysis
+            try:
+                result = self.nlu_service.analyze_text(request.text, features_dict)
+            except Exception as e:
+                raise self.handle_business_error(
+                    message="NLU analysis failed",
+                    code="ANALYSIS_ERROR",
+                    details={"error": str(e)}
+                )
             
-            # Transform for business use
-            return self._transform_response(result)
+            # Transform response
+            transformed = self._transform_response(result)
+            if "error" in transformed:
+                return NLUResponse(
+                    text=request.text,
+                    features_analyzed=request.features,
+                    error=transformed["error"]
+                )
+                
+            return NLUResponse(
+                text=request.text,
+                features_analyzed=request.features,
+                sentiment=transformed.get('sentiment'),
+                emotion=transformed.get('emotion'),
+                entities=transformed.get('entities'),
+                keywords=transformed.get('keywords'),
+                categories=transformed.get('categories'),
+                concepts=transformed.get('concepts'),
+                relations=transformed.get('relations'),
+                semantic_roles=transformed.get('semantic_roles')
+            )
             
         except Exception as e:
-            self.log_error(e)
-            raise
+            error = self.handle_unknown_error(e, "Failed to complete NLU analysis")
+            return NLUResponse(
+                text=request.text,
+                features_analyzed=request.features,
+                error=error.message
+            )
+    
+    # Alias for backward compatibility
+    _analyze_request = analyze_request
 
     def get_available_features(self) -> list:
         """Get list of available features"""
-        return NLUConfig.get_feature_ids()
+        try:
+            return NLUConfig.get_feature_ids()
+        except Exception as e:
+            error = self.handle_unknown_error(e, "Failed to get feature list")
+            return []
 
-    def _transform_response(self, result: dict) -> dict:
-        """Transform API response to business model"""
+    def _transform_response(self, result: Dict) -> Dict:
+        """Transform API response to business format"""
         if not result:
             return {"error": "No analysis results available"}
 
-        transformed = {}
-        
-        # Transform sentiment
-        if 'sentiment' in result:
-            try:
-                sentiment = result['sentiment']['document']
-                transformed['sentiment'] = {
-                    'label': sentiment.get('label', 'N/A'),
-                    'score': sentiment.get('score', 0.0)
-                }
-            except (KeyError, TypeError):
-                transformed['sentiment'] = {'error': 'Error processing sentiment'}
+        try:
+            transformed = {}
             
-        # Transform emotion
-        if 'emotion' in result:
-            try:
-                transformed['emotion'] = result['emotion']['document']['emotion']
-            except (KeyError, TypeError):
-                transformed['emotion'] = {'error': 'Error processing emotions'}
+            # Transform each feature's results
+            if 'sentiment' in result:
+                transformed['sentiment'] = self._transform_sentiment(result['sentiment'])
+            if 'emotion' in result:
+                transformed['emotion'] = self._transform_emotion(result['emotion'])
+            if 'entities' in result:
+                transformed['entities'] = self._transform_entities(result['entities'])
+            if 'keywords' in result:
+                transformed['keywords'] = self._transform_keywords(result['keywords'])
+            if 'categories' in result:
+                transformed['categories'] = self._transform_categories(result['categories'])
+            if 'concepts' in result:
+                transformed['concepts'] = self._transform_concepts(result['concepts'])
+            if 'relations' in result:
+                transformed['relations'] = self._transform_relations(result['relations'])
+            if 'semantic_roles' in result:
+                transformed['semantic_roles'] = self._transform_semantic_roles(result['semantic_roles'])
+
+            return transformed
             
-        # Transform entities
-        if 'entities' in result:
-            try:
-                entities = result['entities']
-                if entities:
-                    transformed['entities'] = [{
-                        'text': e.get('text', 'N/A'),
-                        'type': e.get('type', 'N/A'),
-                        'confidence': e.get('confidence', 0.0),
-                        'relevance': e.get('relevance', 0.0)
-                    } for e in entities]
-                else:
-                    transformed['entities'] = []
-            except (KeyError, TypeError):
-                transformed['entities'] = {'error': 'Error processing entities'}
+        except Exception as e:
+            error = self.handle_unknown_error(e, "Failed to transform NLU response")
+            return {"error": error.message}
 
-        # Transform keywords
-        if 'keywords' in result:
-            try:
-                keywords = result['keywords']
-                if keywords:
-                    transformed['keywords'] = [{
-                        'text': k.get('text', 'N/A'),
-                        'relevance': k.get('relevance', 0.0),
-                        'count': k.get('count', 1)
-                    } for k in keywords]
-                else:
-                    transformed['keywords'] = []
-            except (KeyError, TypeError):
-                transformed['keywords'] = {'error': 'Error processing keywords'}
+    def _transform_sentiment(self, sentiment: Dict) -> Dict:
+        """Transform sentiment analysis results"""
+        try:
+            doc_sentiment = sentiment.get('document', {})
+            return {
+                'label': doc_sentiment.get('label', 'N/A'),
+                'score': doc_sentiment.get('score', 0.0)
+            }
+        except Exception:
+            return {'error': 'Error processing sentiment'}
 
-        # Transform categories
-        if 'categories' in result:
-            try:
-                categories = result['categories']
-                if categories:
-                    transformed['categories'] = [{
-                        'label': c.get('label', 'N/A'),
-                        'score': c.get('score', 0.0)
-                    } for c in categories]
-                else:
-                    transformed['categories'] = []
-            except (KeyError, TypeError):
-                transformed['categories'] = {'error': 'Error processing categories'}
+    def _transform_emotion(self, emotion: Dict) -> Dict:
+        """Transform emotion analysis results"""
+        try:
+            doc_emotion = emotion.get('document', {}).get('emotion', {})
+            return {score: value for score, value in doc_emotion.items()}
+        except Exception:
+            return {'error': 'Error processing emotion'}
 
-        # Transform concepts
-        if 'concepts' in result:
-            try:
-                concepts = result['concepts']
-                if concepts:
-                    transformed['concepts'] = [{
-                        'text': c.get('text', 'N/A'),
-                        'relevance': c.get('relevance', 0.0),
-                        'dbpedia_resource': c.get('dbpedia_resource', '')
-                    } for c in concepts]
-                else:
-                    transformed['concepts'] = []
-            except (KeyError, TypeError):
-                transformed['concepts'] = {'error': 'Error processing concepts'}
+    def _transform_entities(self, entities: List[Dict]) -> List[Dict]:
+        """Transform entities analysis results"""
+        if not entities:
+            return []
+        return [{
+            'text': e.get('text', 'N/A'),
+            'type': e.get('type', 'N/A'),
+            'confidence': e.get('confidence', 0.0),
+            'relevance': e.get('relevance', 0.0)
+        } for e in entities]
 
-        # Transform relations
-        if 'relations' in result:
-            try:
-                relations = result['relations']
-                if relations:
-                    transformed['relations'] = [{
-                        'type': r.get('type', 'N/A'),
-                        'sentence': r.get('sentence', ''),
-                        'arguments': [{
-                            'text': a.get('text', 'N/A'),
-                            'type': a.get('type', '')
-                        } for a in r.get('arguments', [])]
-                    } for r in relations]
-                else:
-                    transformed['relations'] = []
-            except (KeyError, TypeError):
-                transformed['relations'] = {'error': 'Error processing relations'}
+    def _transform_keywords(self, keywords: List[Dict]) -> List[Dict]:
+        """Transform keywords analysis results"""
+        if not keywords:
+            return []
+        return [{
+            'text': k.get('text', 'N/A'),
+            'relevance': k.get('relevance', 0.0),
+            'count': k.get('count', 1)
+        } for k in keywords]
 
-        # Transform semantic roles
-        if 'semantic_roles' in result:
-            try:
-                roles = result['semantic_roles']
-                if roles:
-                    transformed['semantic_roles'] = [{
-                        'subject': r.get('subject', {}).get('text', ''),
-                        'action': r.get('action', {}).get('text', ''),
-                        'object': r.get('object', {}).get('text', '')
-                    } for r in roles]
-                else:
-                    transformed['semantic_roles'] = []
-            except (KeyError, TypeError):
-                transformed['semantic_roles'] = {'error': 'Error processing semantic roles'}
+    def _transform_categories(self, categories: List[Dict]) -> List[Dict]:
+        """Transform categories analysis results"""
+        if not categories:
+            return []
+        return [{
+            'label': c.get('label', 'N/A'),
+            'score': c.get('score', 0.0)
+        } for c in categories]
 
-        return transformed 
+    def _transform_concepts(self, concepts: List[Dict]) -> List[Dict]:
+        """Transform concepts analysis results"""
+        if not concepts:
+            return []
+        return [{
+            'text': c.get('text', 'N/A'),
+            'relevance': c.get('relevance', 0.0),
+            'dbpedia_resource': c.get('dbpedia_resource', '')
+        } for c in concepts]
+
+    def _transform_relations(self, relations: List[Dict]) -> List[Dict]:
+        """Transform relations analysis results"""
+        if not relations:
+            return []
+        return [{
+            'type': r.get('type', 'N/A'),
+            'sentence': r.get('sentence', ''),
+            'arguments': [{
+                'text': a.get('text', 'N/A'),
+                'type': a.get('type', '')
+            } for a in r.get('arguments', [])]
+        } for r in relations]
+
+    def _transform_semantic_roles(self, roles: List[Dict]) -> List[Dict]:
+        """Transform semantic roles analysis results"""
+        if not roles:
+            return []
+        return [{
+            'subject': r.get('subject', {}).get('text', ''),
+            'action': r.get('action', {}).get('text', ''),
+            'object': r.get('object', {}).get('text', '')
+        } for r in roles] 

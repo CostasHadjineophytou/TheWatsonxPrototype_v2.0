@@ -1,17 +1,37 @@
 from ibm_watsonx_ai import APIClient, Credentials
 from backend.config.config import Config
+from .base_service import BaseService
+from ..utils.errors import ValidationError, APIError
 
-class WatsonClient:
+class WatsonClient(BaseService):
     """Handles the base Watson client setup and authentication."""
     
     def __init__(self):
-        self.api_key = Config.IBM_CLOUD_API_KEY
-        self.models_url = Config.IBM_CLOUD_MODELS_URL
-        
-        # Create credentials object using the API key & models URL
-        self.credentials = Credentials(
-            url=self.models_url,
-            api_key=self.api_key
-        )
-        # Create APIClient object using the credentials
-        self.client = APIClient(self.credentials) 
+        """Initialize Watson client with validation and error handling"""
+        try:
+            # Initialize base class first
+            super().__init__()
+            
+            # Validate credentials
+            credentials = {
+                'api_key': Config.IBM_CLOUD_API_KEY,
+                'url': Config.IBM_CLOUD_MODELS_URL
+            }
+            self.validator.validate_credentials(credentials)
+            
+            # Create credentials object using the API key & models URL
+            self.credentials = Credentials(
+                url=credentials['url'],
+                api_key=credentials['api_key']
+            )
+            
+            # Create APIClient object
+            self.client = APIClient(self.credentials)
+                
+        except ValidationError as e:
+            # Re-raise validation errors
+            raise e
+        except Exception as e:
+            if isinstance(e, APIError):
+                raise e
+            raise self.handle_error(e, "Failed to initialize Watson client") 

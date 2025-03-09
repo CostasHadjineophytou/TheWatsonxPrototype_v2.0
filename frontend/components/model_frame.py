@@ -65,75 +65,85 @@ class ModelFrame(ttk.LabelFrame):
             self.event_generate('<<ModelChanged>>')
 
     def show_details(self):
+        """Show details for selected model"""
         selected = self.model_var.get()
-        for model in self.model_list:
-            if self.model_manager.format_model_display(model) == selected:
-                details = self.model_manager.get_model_details(model.id)
-                if details:
-                    self.show_details_window(details)
-                break
+        model_id = self.model_manager.get_model_id_by_display_name(selected)
+        if model_id:
+            self.show_details_window(model_id)
                 
-    def show_details_window(self, details):
+    def show_details_window(self, model_id: str):
+        # Get model details from manager
+        model_details = self.model_manager.get_model_details(model_id)
+        
         window = tk.Toplevel(self)
-        window.title(f"Model Details: {details['name']}")
-        window.geometry("600x400")
+        window.title(f"Model Details: {model_details.name}")
+        window.geometry("800x600")
         
-        # Create scrollable frame
-        container = ttk.Frame(window)
-        container.pack(fill='both', expand=True, padx=10, pady=10)
+        # Create a style for white background
+        style = ttk.Style()
+        style.configure("White.TFrame", background="white")
+        style.configure("White.TLabel", background="white", foreground="black")
+        style.configure("WhiteBold.TLabel", background="white", foreground="black", font=('Segoe UI', 11, 'bold'))
         
-        canvas = tk.Canvas(container)
-        scrollbar = ttk.Scrollbar(container, orient="vertical", command=canvas.yview)
-        scrollable_frame = ttk.Frame(canvas)
+        # Create main frame
+        main_frame = ttk.Frame(window)
+        main_frame.pack(fill='both', expand=True, padx=20, pady=10)
         
-        canvas.configure(yscrollcommand=scrollbar.set)
+        # Create canvas for scrolling with explicit background color
+        canvas = tk.Canvas(main_frame, bg="white")  # Use bg for standard tkinter widgets
+        scrollbar = ttk.Scrollbar(main_frame, orient="vertical", command=canvas.yview)
         
-        # Add content using ttk.Labels
-        sections = [
-            ("Basic Information", [
-                f"Model: {details['name']}",
-                f"Provider: {details['provider']}",
-                f"Source: {details['source']}",
-                f"Parameters: {details['parameters']}"
-            ]),
-            ("Description", [details['description']]),
-            ("Detailed Description", [details['long_description']]),
-            ("Tasks", [', '.join(details['tasks'])]),
-            ("Limits", [
-                f"Max Sequence Length: {details['limits'].get('max_sequence_length', 'N/A')}",
-                f"Max Output Tokens: {details['limits'].get('max_output_tokens', 'N/A')}"
-            ])
-        ]
-        
-        # Create labels for each section
-        for section_title, section_items in sections:
-            # Section header
-            header = ttk.Label(scrollable_frame, 
-                              text=section_title,
-                              style='Header.TLabel',
-                              font=('Segoe UI', 10, 'bold'))
-            header.pack(anchor='w', pady=(10, 5))
-            
-            # Section content
-            for item in section_items:
-                content = ttk.Label(scrollable_frame,
-                                  text=item,
-                                  wraplength=550,
-                                  justify='left')
-                content.pack(anchor='w', padx=10)
+        # Use a standard tkinter Frame for the scrollable content (it accepts bg parameter)
+        scrollable_frame = tk.Frame(canvas, bg="white")
         
         # Configure scrolling
-        canvas.create_window((0, 0), window=scrollable_frame, anchor='nw', width=550)
-        scrollable_frame.bind("<Configure>", 
-                             lambda e: canvas.configure(scrollregion=canvas.bbox("all")))
+        canvas.configure(yscrollcommand=scrollbar.set)
+        scrollable_frame.bind(
+            "<Configure>",
+            lambda e: canvas.configure(scrollregion=canvas.bbox("all"))
+        )
+
+        # Get formatted sections from model manager
+        sections = self.model_manager.get_formatted_sections(model_details)
         
-        # Pack scrollbar and canvas
-        scrollbar.pack(side='right', fill='y')
-        canvas.pack(side='left', fill='both', expand=True)
+        # Create labels for each section - this is UI-specific code
+        for section_title, section_items in sections:
+            # Section header with explicit colors
+            header = tk.Label(
+                scrollable_frame,
+                text=section_title,
+                font=('Segoe UI', 11, 'bold'),
+                fg="black",
+                bg="white",
+                anchor="w",
+                justify="left"
+            )
+            header.pack(anchor='w', pady=(15, 5), fill='x')
+            
+            # Section content with explicit colors
+            for item in section_items:
+                is_bullet = item.startswith('•')
+                padding = (20, 2) if is_bullet else (10, 2)
+                
+                content = tk.Label(
+                    scrollable_frame,
+                    text=item,
+                    wraplength=700,
+                    justify='left',
+                    fg="black",
+                    bg="white",
+                    anchor="w"
+                )
+                content.pack(anchor='w', padx=padding, pady=2, fill='x')
         
+        # Setup scrolling
+        canvas.create_window((0, 0), window=scrollable_frame, anchor="nw", width=750)
+        canvas.pack(side="left", fill="both", expand=True)
+        scrollbar.pack(side="right", fill="y")
+
         # Add close button
-        close_btn = ttk.Button(window, text="Close", command=window.destroy)
-        close_btn.pack(pady=5)
+        close_button = ttk.Button(window, text="Close", command=window.destroy)
+        close_button.pack(pady=10)
         
     def get_selected_model(self):
         selected = self.model_var.get()

@@ -1,6 +1,6 @@
 from .errors import (
     BackendError, APIError, AuthenticationError, 
-    ServiceError, ValidationError, ConfigurationError
+    ServiceError, ConfigurationError
 )
 
 def handle_api_error(error: Exception) -> BackendError:

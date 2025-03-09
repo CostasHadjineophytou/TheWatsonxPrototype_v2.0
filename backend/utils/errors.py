@@ -24,4 +24,12 @@ class ValidationError(BackendError):
 
 class ConfigurationError(BackendError):
     """Configuration/setup errors"""
+    pass
+
+class FileError(BackendError):
+    """File operation errors"""
+    pass
+
+class AudioError(BackendError):
+    """Audio playback related errors"""
     pass 

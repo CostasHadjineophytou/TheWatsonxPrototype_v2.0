@@ -22,9 +22,9 @@ class ParameterFrame(ttk.LabelFrame):
             "temperature",
             TextConfig.DEFAULT_PARAMS["temperature"],
             widget_type="scale",
-            min_val=0.0,
-            max_val=1.0,
-            help_text="Controls randomness in the output (0.0 = deterministic, 1.0 = creative)"
+            min_val=TextConfig.PARAM_RULES["temperature"]["min"],
+            max_val=TextConfig.PARAM_RULES["temperature"]["max"],
+            help_text=TextConfig.get_param_description("temperature")
         )
         
         # Max tokens
@@ -33,7 +33,9 @@ class ParameterFrame(ttk.LabelFrame):
             "max_tokens",
             TextConfig.DEFAULT_PARAMS["max_new_tokens"],
             widget_type="entry",
-            help_text="Maximum number of tokens to generate"
+            min_val=TextConfig.PARAM_RULES["max_new_tokens"]["min"],
+            max_val=TextConfig.PARAM_RULES["max_new_tokens"]["max"],
+            help_text=TextConfig.get_param_description("max_new_tokens")
         )
         
         # Min tokens
@@ -42,7 +44,9 @@ class ParameterFrame(ttk.LabelFrame):
             "min_tokens",
             TextConfig.DEFAULT_PARAMS["min_new_tokens"],
             widget_type="entry",
-            help_text="Minimum number of tokens to generate"
+            min_val=TextConfig.PARAM_RULES["min_new_tokens"]["min"],
+            max_val=TextConfig.PARAM_RULES["min_new_tokens"]["max"],
+            help_text=TextConfig.get_param_description("min_new_tokens")
         )
         
         # Top P
@@ -51,9 +55,9 @@ class ParameterFrame(ttk.LabelFrame):
             "top_p",
             TextConfig.DEFAULT_PARAMS["top_p"],
             widget_type="scale",
-            min_val=0.0,
-            max_val=1.0,
-            help_text="Nucleus sampling: controls diversity via cumulative probability"
+            min_val=TextConfig.PARAM_RULES["top_p"]["min"],
+            max_val=TextConfig.PARAM_RULES["top_p"]["max"],
+            help_text=TextConfig.get_param_description("top_p")
         )
         
         # Top K
@@ -62,7 +66,9 @@ class ParameterFrame(ttk.LabelFrame):
             "top_k",
             TextConfig.DEFAULT_PARAMS["top_k"],
             widget_type="entry",
-            help_text="Controls diversity by limiting to k most likely tokens"
+            min_val=TextConfig.PARAM_RULES["top_k"]["min"],
+            max_val=TextConfig.PARAM_RULES["top_k"]["max"],
+            help_text=TextConfig.get_param_description("top_k")
         )
         
         # Repetition Penalty
@@ -71,9 +77,9 @@ class ParameterFrame(ttk.LabelFrame):
             "repetition_penalty",
             TextConfig.DEFAULT_PARAMS["repetition_penalty"],
             widget_type="scale",
-            min_val=1.0,
-            max_val=2.0,
-            help_text="Penalizes repetition in generated text"
+            min_val=TextConfig.PARAM_RULES["repetition_penalty"]["min"],
+            max_val=TextConfig.PARAM_RULES["repetition_penalty"]["max"],
+            help_text=TextConfig.get_param_description("repetition_penalty")
         )
         
         # Random Seed
@@ -191,7 +197,7 @@ class ParameterFrame(ttk.LabelFrame):
         if not model_details:
             return
             
-        print(f"Updating parameters for model: {model_details['name']}")
+        print(f"Updating parameters for model: {model_details.name}")
         
         # Reset all parameters to defaults
         self.temperature_var.set(TextConfig.DEFAULT_PARAMS["temperature"])
@@ -203,16 +209,7 @@ class ParameterFrame(ttk.LabelFrame):
         self.random_seed_var.set(TextConfig.DEFAULT_PARAMS["random_seed"])
         self.stop_sequences_var.set(str(TextConfig.DEFAULT_PARAMS["stop_sequences"]))
         
-        # Then apply model-specific limits
-        limits = model_details.get('limits', {})
-        
-        # Update max tokens limit if specified by model
-        max_output = limits.get('max_output_tokens')
-        if max_output and hasattr(self, 'max_tokens_var'):
-            current = int(self.max_tokens_var.get())
-            if current > max_output:
-                print(f"Adjusting max tokens from {current} to {max_output}")
-                self.max_tokens_var.set(max_output)
+        # No need to check for limits since we're using defaults
         
         # Force UI update
         self.update()

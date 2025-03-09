@@ -1,6 +1,9 @@
 class TextConfig:
     """Configuration for text processing"""
     
+    # Maximum length allowed for text generation prompts
+    MAX_PROMPT_LENGTH = 4096  # Standard token limit for most LLMs
+    
     SYSTEM_PROMPT = """You are Granite Chat, created by IBM. You're designed to assist with information and answer questions. 
     You don't have feelings or emotions, so you don't experience happiness or sadness. 
     You're here to help make the user's day more productive or enjoyable. 
@@ -17,4 +20,49 @@ class TextConfig:
         "repetition_penalty": 1.0,
         "random_seed": 42,
         "stop_sequences": ["Human:", "AI:"]
-    } 
+    }
+
+    # Parameter validation rules
+    PARAM_RULES = {
+        "temperature": {
+            "min": 0.0,
+            "max": 2.0,
+            "description": "Controls randomness in the output (0.0 = deterministic, 2.0 = very creative)"
+        },
+        "top_p": {
+            "min": 0.0,
+            "max": 1.0,
+            "description": "Nucleus sampling: controls diversity via cumulative probability"
+        },
+        "top_k": {
+            "min": 1,
+            "max": 100,
+            "description": "Controls diversity by limiting to k most likely tokens"
+        },
+        "max_new_tokens": {
+            "min": 1,
+            "max": 2048,
+            "description": "Maximum number of tokens to generate"
+        },
+        "min_new_tokens": {
+            "min": 0,
+            "max": 2048,
+            "description": "Minimum number of tokens to generate"
+        },
+        "repetition_penalty": {
+            "min": 1.0,
+            "max": 2.0,
+            "description": "Penalizes repetition in generated text"
+        }
+    }
+
+    @classmethod
+    def get_param_rule(cls, param_name: str) -> dict:
+        """Get validation rules for a parameter"""
+        return cls.PARAM_RULES.get(param_name, {})
+
+    @classmethod
+    def get_param_description(cls, param_name: str) -> str:
+        """Get parameter description for tooltips/help"""
+        rule = cls.get_param_rule(param_name)
+        return rule.get('description', '')

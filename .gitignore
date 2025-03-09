@@ -42,3 +42,6 @@ ENV/
 .coverage
 htmlcov/
 .pytest_cache/ 
+/data
+data/cloud/user_projects.json
+data/cloud/models.json

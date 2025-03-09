@@ -11,6 +11,7 @@ class NLUFeature:
 
 class NLUConfig:
     """NLU service configuration"""
+    MAX_TEXT_LENGTH = 50000
     
     FEATURES = {
         'sentiment': NLUFeature(

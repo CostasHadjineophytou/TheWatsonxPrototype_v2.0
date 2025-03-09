@@ -1,30 +1,13 @@
 import logging
-from dataclasses import dataclass
+from typing import Dict
 from ibm_watsonx_ai.foundation_models.utils.enums import DecodingMethods
 from ibm_watsonx_ai.metanames import GenTextParamsMetaNames as GenParams
 from backend.services.text_service import TextService
 from backend.config.text_config import TextConfig
-from logic.models.text_request import TextRequest
-from logic.models.errors import LogicError
-from logic.models.responses import TextResponse
+from ..models.requests import TextRequest
+from ..models.responses import TextResponse
 from .base_manager import BaseManager
-from logic.validators.text_validator import TextValidator
-
-@dataclass
-class TextRequest:
-    """Data class for text generation requests"""
-    text: str
-    model_id: str
-    project_id: str
-    temperature: float = TextConfig.DEFAULT_PARAMS["temperature"]
-    max_tokens: int = TextConfig.DEFAULT_PARAMS["max_new_tokens"]
-    min_tokens: int = TextConfig.DEFAULT_PARAMS["min_new_tokens"]
-    top_k: int = TextConfig.DEFAULT_PARAMS["top_k"]
-    top_p: float = TextConfig.DEFAULT_PARAMS["top_p"]
-    repetition_penalty: float = TextConfig.DEFAULT_PARAMS["repetition_penalty"]
-    random_seed: int = TextConfig.DEFAULT_PARAMS["random_seed"]
-    stop_sequences: list = None
-    system_prompt: str = TextConfig.SYSTEM_PROMPT
+from ..validators.text_validator import TextValidator
 
 class TextManager(BaseManager):
     """Business logic for text processing"""
@@ -37,11 +20,15 @@ class TextManager(BaseManager):
     def process_text(self, request: TextRequest) -> TextResponse:
         """Process text generation request"""
         try:
-            # Use validator
+            # Validation
             is_valid, error = self.validator.validate(request)
             if not is_valid:
-                raise error
+                raise self.handle_validation_error(
+                    message=error.message,
+                    details=error.details
+                )
 
+            # Prepare request
             full_prompt = self._build_prompt(request)
             params = self._prepare_params(request)
             
@@ -53,7 +40,7 @@ class TextManager(BaseManager):
                     params=params
                 )
             except Exception as e:
-                raise LogicError(
+                raise self.handle_business_error(
                     message="Text generation failed",
                     code="GENERATION_ERROR",
                     details={"error": str(e)}
@@ -67,14 +54,14 @@ class TextManager(BaseManager):
                 parameters_used=params
             )
             
-        except LogicError as e:
-            self.log_error(e)
+        except Exception as e:
+            error = self.handle_unknown_error(e, "Failed to process text")
             return TextResponse(
                 text="",
                 model_id=request.model_id,
                 prompt=request.text,
                 parameters_used={},
-                error=e.message
+                error=error.message
             )
 
     def _build_prompt(self, request: TextRequest) -> str:
@@ -85,7 +72,7 @@ class TextManager(BaseManager):
         prompt_parts.append(f"Human: {request.text}\n\nAI:")
         return "\n\n".join(prompt_parts)
 
-    def _prepare_params(self, request: TextRequest) -> dict:
+    def _prepare_params(self, request: TextRequest) -> Dict:
         """Prepare model parameters"""
         return {
             GenParams.DECODING_METHOD: DecodingMethods.SAMPLE,

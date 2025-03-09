@@ -2,6 +2,7 @@ import tkinter as tk
 from tkinter import ttk
 from frontend.tabs.llm_tab import LLMTab
 from frontend.tabs.nlu_tab import NLUTab
+from frontend.tabs.speech_tabs import TTSTab, STTTab
 from logic.manager_factory import ManagerFactory
 
 class WatsonApp(tk.Tk):
@@ -17,6 +18,9 @@ class WatsonApp(tk.Tk):
         self.model_manager = self.manager_factory.create_model_manager()
         self.project_manager = self.manager_factory.create_project_manager()
         self.nlu_manager = self.manager_factory.create_nlu_manager()
+        self.tts_manager = self.manager_factory.create_tts_manager()
+        self.stt_manager = self.manager_factory.create_stt_manager()
+        self.audio_manager = self.manager_factory.create_audio_manager()
         
         self._init_ui()
         
@@ -25,7 +29,7 @@ class WatsonApp(tk.Tk):
         self.notebook = ttk.Notebook(self)
         self.notebook.pack(expand=True, fill='both', padx=5, pady=5)
         
-        # Inject managers into tabs
+        # Foundation Models tab
         self.llm_tab = LLMTab(
             self.notebook,
             self.text_manager,
@@ -34,17 +38,27 @@ class WatsonApp(tk.Tk):
         )
         self.notebook.add(self.llm_tab, text="Foundation Models")
         
+        # Text Analysis tab
         self.nlu_tab = NLUTab(
             self.notebook,
             self.nlu_manager
         )
         self.notebook.add(self.nlu_tab, text="Text Analysis")
         
-        # Placeholder tabs for future services
-        for future_tab in ["Speech-to-Text", "Text-to-Speech", "Dataset Management"]:
-            frame = ttk.Frame(self.notebook)
-            self.notebook.add(frame, text=future_tab)
-            ttk.Label(frame, text=f"{future_tab} - Coming Soon").pack(pady=20)
+        # Text-to-Speech tab
+        self.tts_tab = TTSTab(
+            self.notebook,
+            self.tts_manager,
+            self.audio_manager
+        )
+        self.notebook.add(self.tts_tab, text="Text to Speech")
+        
+        # Speech-to-Text tab
+        self.stt_tab = STTTab(
+            self.notebook,
+            self.stt_manager
+        )
+        self.notebook.add(self.stt_tab, text="Speech to Text")
 
     def run(self):
         """Start the application"""

@@ -1,16 +1,15 @@
 from ibm_watson import NaturalLanguageUnderstandingV1
 from ibm_cloud_sdk_core.authenticators import IAMAuthenticator
 from .base_service import BaseService
-from ..utils.errors import ServiceError, AuthenticationError, ValidationError
-from ..validators.service_validator import ServiceValidator
+from ..utils.errors import AuthenticationError, ValidationError
+from .credentials_manager import CredentialsManager
 
 class NLUService(BaseService):
     """Handles raw NLU API interactions"""
     
-    def __init__(self, credentials_manager):
+    def __init__(self, credentials_manager: CredentialsManager):
         super().__init__()
         self.credentials_manager = credentials_manager
-        self.validator = ServiceValidator()
         self._nlu = None
 
     def initialize(self):
@@ -33,7 +32,7 @@ class NLUService(BaseService):
     def analyze_text(self, text: str, features: dict) -> dict:
         """Raw API call to analyze text"""
         try:
-            # Validate first
+            # Validate the request
             self.validator.validate_nlu_request(text, features)
 
             # Initialize if needed
@@ -46,13 +45,12 @@ class NLUService(BaseService):
                 features=features
             ).get_result()
             
-        except ValidationError:
-            # Let validation errors propagate up
-            raise
+        except ValidationError as e:
+            # Re-raise validation errors
+            raise e
+        except AuthenticationError as e:
+            # Re-raise authentication errors
+            raise e
         except Exception as e:
-            # Wrap other errors
-            raise ServiceError(
-                message="NLU analysis failed",
-                code="NLU_ANALYSIS_ERROR",
-                details={"error": str(e)}
-            ) 
+            # Handle other errors
+            raise self.handle_error(e, "Failed to analyze text") 

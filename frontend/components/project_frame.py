@@ -5,7 +5,7 @@ from tkinter import messagebox
 class ProjectFrame(ttk.LabelFrame):
     def __init__(self, parent, project_manager):
         super().__init__(parent, text="Project Selection")
-        self.project_manager = project_manager  # Injected
+        self.project_manager = project_manager  # Injected from app.py
         self._init_ui()
         
     def _init_ui(self):
@@ -33,4 +33,5 @@ class ProjectFrame(ttk.LabelFrame):
         """Get the ID of the selected project"""
         selected = self.project_var.get()
         project = self.project_manager.get_project_by_name(selected)
-        return project.get('id') if project else None 
+        # Let project_manager handle the data structure
+        return project.id if project else None 

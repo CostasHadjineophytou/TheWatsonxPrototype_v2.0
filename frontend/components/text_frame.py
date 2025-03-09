@@ -1,6 +1,6 @@
 import tkinter as tk
 from tkinter import ttk, messagebox
-from logic.models.text_request import TextRequest
+from logic.models.requests import TextRequest
 
 class TextFrame(ttk.Frame):
     def __init__(self, parent, text_manager, model_frame, project_frame, parameter_frame):
