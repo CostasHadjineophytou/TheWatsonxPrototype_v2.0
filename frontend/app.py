@@ -78,40 +78,29 @@ class WatsonApp(tk.Tk):
         self.notebook = ttk.Notebook(self)
         self.notebook.pack(fill='both', expand=True, padx=10, pady=10)
         
-        # Status bar
-        self.status_var = tk.StringVar()
-        self.status_var.set("Ready")
-        status_bar = ttk.Label(
-            self, 
-            textvariable=self.status_var,
-            relief=tk.SUNKEN, 
-            anchor=tk.W
-        )
-        status_bar.pack(side=tk.BOTTOM, fill=tk.X)
-        
         # Create tabs
         self.llm_tab = LLMTab(
             self.notebook, 
             text_manager=self.text_manager,
             model_manager=self.model_manager,
             project_manager=self.project_manager,
-            status_var=self.status_var
+            
         )
         self.nlu_tab = NLUTab(
             self.notebook,
             nlu_manager=self.nlu_manager,
-            status_var=self.status_var
+            
         )
         self.tts_tab = TTSTab(
             self.notebook,
             tts_manager=self.tts_manager,
             audio_manager=self.audio_manager,
-            status_var=self.status_var
+            
         )
         self.stt_tab = STTTab(
             self.notebook,
             stt_manager=self.stt_manager,
-            status_var=self.status_var
+            
         )
         
         # Add tabs to notebook
