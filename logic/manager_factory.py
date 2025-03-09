@@ -6,6 +6,7 @@ from logic.managers.text_manager import TextManager
 from logic.managers.tts_manager import TTSManager
 from logic.managers.stt_manager import STTManager
 from logic.managers.nlu_manager import NLUManager
+from logic.managers.service_checker_manager import ServiceCheckerManager
 from logic.validators import (
     ModelValidator, 
     ProjectValidator, 
@@ -57,4 +58,8 @@ class ManagerFactory:
         return STTManager(stt_service, self.speech_validator)
 
     def create_audio_manager(self) -> AudioManager:
-        return AudioManager() 
+        return AudioManager()
+        
+    def create_service_checker(self) -> ServiceCheckerManager:
+        service = self.service_factory.create_service_checker_service()
+        return ServiceCheckerManager(service) 

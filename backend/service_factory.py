@@ -7,6 +7,7 @@ from backend.services.credentials_manager import CredentialsManager
 from backend.services.nlu_service import NLUService
 from backend.services.tts_service import TTSService
 from backend.services.stt_service import STTService
+from backend.services.service_checker import ServiceCheckerService
 from .validators.config_validator import ConfigValidator
 
 class ServiceFactory:
@@ -37,4 +38,7 @@ class ServiceFactory:
         return TTSService(self.credentials_manager)
 
     def create_stt_service(self) -> STTService:
-        return STTService(self.credentials_manager) 
+        return STTService(self.credentials_manager)
+        
+    def create_service_checker_service(self) -> ServiceCheckerService:
+        return ServiceCheckerService(self.iam_service) 

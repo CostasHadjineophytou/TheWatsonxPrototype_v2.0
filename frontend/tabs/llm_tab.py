@@ -7,7 +7,7 @@ from frontend.components.llm_components.text_frame import TextFrame
 from frontend.styles.colors import Colors
 
 class LLMTab(ttk.Frame):
-    def __init__(self, parent, text_manager, model_manager, project_manager):
+    def __init__(self, parent, text_manager, model_manager, project_manager, status_var=None):
         super().__init__(parent)
         
         # Receive managers from parent
