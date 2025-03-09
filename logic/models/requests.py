@@ -43,3 +43,9 @@ class TTSRequest:
 class STTRequest:
     """Speech-to-Text request parameters"""
     audio_path: str 
+
+@dataclass
+class NLURequest:
+    """Natural Language Understanding request parameters"""
+    text: str
+    features: List[str]  # List of NLU features to analyze 

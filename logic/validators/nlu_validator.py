@@ -1,10 +1,25 @@
 from typing import Tuple, Optional
 from .base_validator import BaseValidator
 from ..models.errors import LogicError
+from ..models.requests import NLURequest
 from backend.config.nlu_config import NLUConfig
 
 class NLUValidator(BaseValidator):
     """Validates NLU operations"""
+    
+    def validate(self, request: NLURequest) -> Tuple[bool, Optional[LogicError]]:
+        """Validate NLU request"""
+        # Validate text
+        is_valid, error = self.validate_text(request.text)
+        if not is_valid:
+            return False, error
+            
+        # Validate features
+        is_valid, error = self.validate_features(request.features)
+        if not is_valid:
+            return False, error
+            
+        return True, None
     
     def validate_text(self, text: str) -> Tuple[bool, Optional[LogicError]]:
         """
@@ -51,7 +66,10 @@ class NLUValidator(BaseValidator):
             return False, self.create_error(
                 message="Invalid features requested",
                 code="INVALID_FEATURES",
-                details={"invalid_features": invalid_features}
+                details={
+                    "invalid_features": invalid_features,
+                    "valid_features": valid_features
+                }
             )
             
         return True, None 

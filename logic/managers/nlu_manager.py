@@ -2,6 +2,8 @@ from typing import Dict, List
 from backend.services.nlu_service import NLUService
 from backend.config.nlu_config import NLUConfig
 from ..validators.nlu_validator import NLUValidator
+from ..models.requests import NLURequest
+from ..models.responses import NLUResponse
 from .base_manager import BaseManager
 
 class NLUManager(BaseManager):
@@ -13,10 +15,40 @@ class NLUManager(BaseManager):
         self.validator = validator
 
     def analyze_text(self, text: str, features: List[str]) -> Dict:
-        """Process NLU analysis request"""
+        """Process NLU analysis request (legacy method)"""
+        # Create a request object
+        request = NLURequest(text=text, features=features)
+        # Use the new method
+        response = self._analyze_request(request)
+        # Convert response back to dict for backward compatibility
+        if response.error:
+            return {"error": response.error}
+            
+        result = {}
+        if response.sentiment:
+            result['sentiment'] = response.sentiment
+        if response.emotion:
+            result['emotion'] = response.emotion
+        if response.entities:
+            result['entities'] = response.entities
+        if response.keywords:
+            result['keywords'] = response.keywords
+        if response.categories:
+            result['categories'] = response.categories
+        if response.concepts:
+            result['concepts'] = response.concepts
+        if response.relations:
+            result['relations'] = response.relations
+        if response.semantic_roles:
+            result['semantic_roles'] = response.semantic_roles
+            
+        return result
+        
+    def analyze_request(self, request: NLURequest) -> NLUResponse:
+        """Process NLU analysis request using data classes"""
         try:
             # Validate text
-            is_valid, error = self.validator.validate_text(text)
+            is_valid, error = self.validator.validate_text(request.text)
             if not is_valid:
                 raise self.handle_validation_error(
                     message=error.message,
@@ -24,7 +56,7 @@ class NLUManager(BaseManager):
                 )
 
             # Validate features
-            is_valid, error = self.validator.validate_features(features)
+            is_valid, error = self.validator.validate_features(request.features)
             if not is_valid:
                 raise self.handle_validation_error(
                     message=error.message,
@@ -33,23 +65,23 @@ class NLUManager(BaseManager):
 
             # Convert features to API format
             try:
-                if 'all' in features:
+                if 'all' in request.features:
                     features_dict = NLUConfig.get_all_features()
                 else:
                     features_dict = {
                         f_id: NLUConfig.get_feature_params(f_id)
-                        for f_id in features
+                        for f_id in request.features
                     }
             except Exception as e:
                 raise self.handle_business_error(
                     message="Failed to process features configuration",
                     code="FEATURE_CONFIG_ERROR",
-                    details={"features": features, "error": str(e)}
+                    details={"features": request.features, "error": str(e)}
                 )
             
             # Get analysis
             try:
-                result = self.nlu_service.analyze_text(text, features_dict)
+                result = self.nlu_service.analyze_text(request.text, features_dict)
             except Exception as e:
                 raise self.handle_business_error(
                     message="NLU analysis failed",
@@ -58,11 +90,37 @@ class NLUManager(BaseManager):
                 )
             
             # Transform response
-            return self._transform_response(result)
+            transformed = self._transform_response(result)
+            if "error" in transformed:
+                return NLUResponse(
+                    text=request.text,
+                    features_analyzed=request.features,
+                    error=transformed["error"]
+                )
+                
+            return NLUResponse(
+                text=request.text,
+                features_analyzed=request.features,
+                sentiment=transformed.get('sentiment'),
+                emotion=transformed.get('emotion'),
+                entities=transformed.get('entities'),
+                keywords=transformed.get('keywords'),
+                categories=transformed.get('categories'),
+                concepts=transformed.get('concepts'),
+                relations=transformed.get('relations'),
+                semantic_roles=transformed.get('semantic_roles')
+            )
             
         except Exception as e:
             error = self.handle_unknown_error(e, "Failed to complete NLU analysis")
-            return {"error": error.message}
+            return NLUResponse(
+                text=request.text,
+                features_analyzed=request.features,
+                error=error.message
+            )
+    
+    # Alias for backward compatibility
+    _analyze_request = analyze_request
 
     def get_available_features(self) -> list:
         """Get list of available features"""

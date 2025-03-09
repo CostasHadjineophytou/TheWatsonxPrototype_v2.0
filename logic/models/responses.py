@@ -51,4 +51,19 @@ class STTResponse:
     success: bool = False
     error: Optional[str] = None
     duration: Optional[float] = None  # Audio duration in seconds
-    word_count: Optional[int] = None  # Number of transcribed words 
+    word_count: Optional[int] = None  # Number of transcribed words
+
+@dataclass
+class NLUResponse:
+    """Natural Language Understanding response"""
+    text: str  # Original text analyzed
+    features_analyzed: List[str]  # Features that were analyzed
+    sentiment: Optional[Dict] = None  # Document-level sentiment
+    emotion: Optional[Dict] = None    # Document-level emotions
+    entities: Optional[List[Dict]] = None  # Named entities found
+    keywords: Optional[List[Dict]] = None  # Key terms extracted
+    categories: Optional[List[Dict]] = None  # Content categories
+    concepts: Optional[List[Dict]] = None   # High-level concepts
+    relations: Optional[List[Dict]] = None  # Semantic relationships
+    semantic_roles: Optional[List[Dict]] = None  # Subject-action-object
+    error: Optional[str] = None 
