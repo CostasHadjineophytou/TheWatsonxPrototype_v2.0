@@ -13,16 +13,34 @@ class TextInputFrame(ttk.Frame):
         self._init_ui()
         
     def _init_ui(self):
+        # Create a labeled frame for text input
+        input_frame = ttk.LabelFrame(self, text="Text to Speech")
+        input_frame.pack(fill='both', expand=True, padx=5, pady=5)
+        
         # Text input
-        text_label = ttk.Label(self, text="Enter text to synthesize:")
+        text_label = ttk.Label(input_frame, text="Enter text to synthesize:")
         text_label.pack(anchor='w', padx=10, pady=(10,0))
         
-        self.text_input = tk.Text(self, height=5, width=50)
-        self.text_input.pack(fill='x', padx=10, pady=5)
+        # Text area with scrollbar
+        text_container = ttk.Frame(input_frame)
+        text_container.pack(fill='both', expand=True, padx=10, pady=5)
+        
+        scrollbar = ttk.Scrollbar(text_container)
+        scrollbar.pack(side=tk.RIGHT, fill='y')
+        
+        self.text_input = tk.Text(
+            text_container, 
+            height=15, 
+            width=50,
+            wrap=tk.WORD,
+            yscrollcommand=scrollbar.set
+        )
+        self.text_input.pack(side=tk.LEFT, fill='both', expand=True)
+        scrollbar.config(command=self.text_input.yview)
         
         # Button and status frame
-        button_frame = ttk.Frame(self)
-        button_frame.pack(fill='x', padx=10, pady=5)
+        button_frame = ttk.Frame(input_frame)
+        button_frame.pack(fill='x', padx=10, pady=(5, 10))
         
         # Synthesize button
         self.synthesize_btn = ttk.Button(
@@ -41,14 +59,6 @@ class TextInputFrame(ttk.Frame):
             padding=(10, 0)
         )
         self.status_label.pack(side=tk.LEFT, fill='x', expand=True, pady=5)
-        
-        # Progress bar - using default style
-        self.progress = ttk.Progressbar(
-            self,
-            mode='indeterminate',
-            length=200
-        )
-        self.progress.pack(fill='x', padx=10, pady=5)
     
     def get_text(self):
         """Get the current text from the input field"""
@@ -56,7 +66,6 @@ class TextInputFrame(ttk.Frame):
     
     def synthesize_text(self):
         """Handle synthesis request"""
-        # Get parameters from parent
         try:
             text = self.get_text()
             if not text:
@@ -102,11 +111,9 @@ class TextInputFrame(ttk.Frame):
         """Show synthesis in progress"""
         self.synthesize_btn.config(state=tk.DISABLED)
         self.synthesize_btn.config(text="Synthesizing...")
-        self.progress.start(10)
         self.status_var.set("Synthesizing speech...")
         
     def _end_synthesis(self):
         """End synthesis state"""
         self.synthesize_btn.config(state=tk.NORMAL)
-        self.synthesize_btn.config(text="Synthesize")
-        self.progress.stop() 
+        self.synthesize_btn.config(text="Synthesize") 

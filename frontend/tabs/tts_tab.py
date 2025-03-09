@@ -15,29 +15,25 @@ class TTSTab(ttk.Frame):
         self._init_ui()
     
     def _init_ui(self):
-        # Create main panel with vertical layout
-        main_panel = ttk.Frame(self)
-        main_panel.pack(fill='both', expand=True, padx=5, pady=5)
+        # Left panel - Settings and history
+        left_panel = ttk.Frame(self)
+        left_panel.pack(side=tk.LEFT, fill='y', padx=5, pady=5)
         
-        # Top section - Text input
-        self.text_input_frame = TextInputFrame(self, self.tts_manager, self.audio_manager)
-        self.text_input_frame.pack(fill='x', pady=5)
-        
-        # Middle section - Settings
-        settings_frame = ttk.Frame(main_panel)
-        settings_frame.pack(fill='x', pady=5)
-        
-        # Voice and parameters
-        self.voice_selection_frame = VoiceSelectionFrame(settings_frame, self.tts_manager)
+        # Voice settings
+        self.voice_selection_frame = VoiceSelectionFrame(left_panel, self.tts_manager)
         self.voice_selection_frame.pack(fill='x', pady=5)
         
         # Audio format
-        self.audio_format_frame = AudioFormatFrame(settings_frame)
+        self.audio_format_frame = AudioFormatFrame(left_panel)
         self.audio_format_frame.pack(fill='x', pady=5)
         
-        # Bottom section - Audio history
-        self.audio_history_frame = AudioHistoryFrame(main_panel, self.audio_manager)
+        # Audio history (placed below settings in left panel)
+        self.audio_history_frame = AudioHistoryFrame(left_panel, self.audio_manager)
         self.audio_history_frame.pack(fill='both', expand=True, pady=5)
+        
+        # Right panel - Text input and synthesis
+        self.text_input_frame = TextInputFrame(self, self.tts_manager, self.audio_manager)
+        self.text_input_frame.pack(side=tk.RIGHT, fill='both', expand=True, padx=5, pady=5)
     
     def get_voice(self):
         """Get the selected voice"""

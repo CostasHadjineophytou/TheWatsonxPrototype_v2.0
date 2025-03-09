@@ -14,12 +14,35 @@ class AudioHistoryFrame(ttk.Frame):
         self.history_container = ttk.LabelFrame(self, text="Recent Synthesized Audio")
         self.history_container.pack(fill='both', expand=True, padx=5, pady=5)
         
-        # History list container
-        self.history_frame = ttk.Frame(self.history_container)
-        self.history_frame.pack(fill='both', expand=True, padx=5, pady=5)
+        # History list container with scrollbar
+        history_container = ttk.Frame(self.history_container)
+        history_container.pack(fill='both', expand=True, padx=5, pady=5)
+        
+        # Add scrollbar
+        scrollbar = ttk.Scrollbar(history_container)
+        scrollbar.pack(side=tk.RIGHT, fill='y')
+        
+        # Create a canvas for scrolling
+        self.canvas = tk.Canvas(history_container, width=250)
+        self.canvas.pack(side=tk.LEFT, fill='both', expand=True)
+        
+        # Connect scrollbar to canvas
+        scrollbar.config(command=self.canvas.yview)
+        self.canvas.config(yscrollcommand=scrollbar.set)
+        
+        # Create a frame inside the canvas to hold history items
+        self.history_frame = ttk.Frame(self.canvas)
+        self.canvas.create_window((0, 0), window=self.history_frame, anchor='nw')
+        
+        # Configure the history frame to expand to fill canvas
+        self.history_frame.bind('<Configure>', self._on_frame_configure)
         
         # Start periodic updates
         self._update_history()
+    
+    def _on_frame_configure(self, event):
+        """Reset the scroll region to encompass the inner frame"""
+        self.canvas.configure(scrollregion=self.canvas.bbox("all"))
         
     def _update_history(self):
         """Update audio history display"""
@@ -44,8 +67,8 @@ class AudioHistoryFrame(ttk.Frame):
             # Info label
             timestamp = audio_info['timestamp'].strftime("%H:%M:%S")
             text = audio_info['metadata'].get('text', '')
-            if len(text) > 30:
-                text = text[:30] + '...'
+            if len(text) > 25:
+                text = text[:25] + '...'
                 
             label = ttk.Label(
                 item_frame,

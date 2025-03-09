@@ -23,7 +23,7 @@ class VoiceSelectionFrame(ttk.Frame):
             voice_frame, 
             textvariable=self.voice_var,
             state="readonly",
-            width=47
+            width=30
         )
         self.voice_dropdown.pack(fill='x', padx=10, pady=5)
         
