@@ -4,10 +4,10 @@ from typing import Dict, Any
 @dataclass
 class NLUFeature:
     """NLU feature configuration"""
-    id: str              # API identifier
-    display_name: str    # UI display name
-    description: str     # Help text
-    default_params: Dict[str, Any] = None  # Default API parameters
+    id: str
+    display_name: str
+    description: str
+    default_params: Dict[str, Any] = None
 
 class NLUConfig:
     """NLU service configuration"""
