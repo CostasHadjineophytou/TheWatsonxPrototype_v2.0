@@ -19,7 +19,7 @@ class ProjectService(BaseClient):
     def list_projects(self):
         """Get list of all projects from IBM Cloud"""
         try:
-            # Validate resource access
+
             self.validator.validate_resource()
             
             token = self.iam_service.get_iam_token()
@@ -37,7 +37,6 @@ class ProjectService(BaseClient):
             return projects
             
         except ValidationError as e:
-            # Re-raise validation errors
             raise e
         except Exception as e:
             raise self.handle_error(e, "Failed to list projects")
@@ -57,11 +56,10 @@ class ProjectService(BaseClient):
             ServiceError: If the project is not found or API issues occur
         """
         try:
-            # Validate inputs and access
+            
             self.validator.validate_resource()
             self.validator.validate_project_id(project_id)
             
-            # Get projects from API
             token = self.iam_service.get_iam_token()
             headers = {
                 "Authorization": f"Bearer {token}",
@@ -76,7 +74,6 @@ class ProjectService(BaseClient):
                 if project.get('id') == project_id or project.get('metadata', {}).get('guid') == project_id:
                     return project
             
-            # If project not found, raise a specific ServiceError
             raise ServiceError(
                 message=f"Project {project_id} not found",
                 code="PROJECT_NOT_FOUND",
@@ -84,11 +81,8 @@ class ProjectService(BaseClient):
             )
             
         except ValidationError as e:
-            # Re-raise validation errors directly
             raise e
         except ServiceError as e:
-            # Re-raise service errors directly
             raise e
         except Exception as e:
-            # Handle unexpected API errors
             raise self.handle_error(e, "Failed to get project details") 

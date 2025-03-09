@@ -14,7 +14,7 @@ class IAMTokenService(BaseClient):
     def get_iam_token(self):
         """Retrieve IAM token using the configured API key."""
         try:
-            # Validate credentials
+            
             self.validator.validate_credentials({"api_key": self.api_key})
 
             headers = {
@@ -28,16 +28,15 @@ class IAMTokenService(BaseClient):
                 'apikey': self.api_key,
             }
 
-            # Use BaseClient's _make_request to unify behavior and error handling
+            # Use BaseClient's _make_request
             response_json = self._make_request(
                 method='POST',
                 url=self.token_url,
                 headers=headers,
                 data=data,
-                is_form_data=True  # Tells _make_request to send the data as form data
+                is_form_data=True
             )
 
-            # response_json is the parsed JSON dict returned by _make_request
             token = response_json.get('access_token')
             if not token:
                 raise AuthenticationError(
@@ -50,12 +49,9 @@ class IAMTokenService(BaseClient):
             return token
 
         except ValidationError as e:
-            # Re-raise validation errors
             raise e
         except AuthenticationError as e:
-            # Already a known authentication error; log if desired, then re-raise
             logging.error(f"IAM Token authentication error: {e}")
             raise e
         except Exception as e:
-            # Convert any other unknown exception to our custom error types
             raise self.handle_error(e, "Failed to get IAM token") 

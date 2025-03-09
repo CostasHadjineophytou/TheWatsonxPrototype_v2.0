@@ -14,20 +14,17 @@ class ModelService(BaseService):
     def list_models(self):
         """Get list of all available models"""
         try:
-            # Add validation for credentials
+
             self.validator.validate_credentials(self.watson_client.credentials)
             
-            # Get models from API
             response = self.watson_client.client.foundation_models.get_model_specs()
             models = response.get('resources', [])
             
-            # Save raw model data
             self.file_manager.save_json("data/cloud/models.json", models)
             
             return response
             
         except ValidationError as e:
-            # Re-raise validation errors
             raise e
         except Exception as e:
             raise self.handle_error(e, "Failed to list models")
@@ -44,7 +41,6 @@ class ModelService(BaseService):
                     return model
             return None
         except ValidationError as e:
-            # Re-raise validation errors
             raise e
         except Exception as e:
             raise self.handle_error(e, "Failed to get model specifications")

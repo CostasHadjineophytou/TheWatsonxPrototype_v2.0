@@ -32,25 +32,19 @@ class NLUService(BaseService):
     def analyze_text(self, text: str, features: dict) -> dict:
         """Raw API call to analyze text"""
         try:
-            # Validate the request
             self.validator.validate_nlu_request(text, features)
 
-            # Initialize if needed
             if not self._nlu:
                 self.initialize()
 
-            # Make API call
             return self._nlu.analyze(
                 text=text,
                 features=features
             ).get_result()
             
         except ValidationError as e:
-            # Re-raise validation errors
             raise e
         except AuthenticationError as e:
-            # Re-raise authentication errors
             raise e
         except Exception as e:
-            # Handle other errors
             raise self.handle_error(e, "Failed to analyze text") 

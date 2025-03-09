@@ -9,27 +9,22 @@ class WatsonClient(BaseService):
     def __init__(self):
         """Initialize Watson client with validation and error handling"""
         try:
-            # Initialize base class first
             super().__init__()
             
-            # Validate credentials
             credentials = {
                 'api_key': Config.IBM_CLOUD_API_KEY,
                 'url': Config.IBM_CLOUD_MODELS_URL
             }
             self.validator.validate_credentials(credentials)
             
-            # Create credentials object using the API key & models URL
             self.credentials = Credentials(
                 url=credentials['url'],
                 api_key=credentials['api_key']
             )
             
-            # Create APIClient object
             self.client = APIClient(self.credentials)
                 
         except ValidationError as e:
-            # Re-raise validation errors
             raise e
         except Exception as e:
             if isinstance(e, APIError):

@@ -21,13 +21,12 @@ class BaseClient(BaseHandler):
         try:
             headers = headers or {}
             
-            # Handle form data vs JSON data
             if is_form_data:
                 response = requests.request(
                     method=method,
                     url=url,
                     headers=headers,
-                    data=data,  # Send as form data
+                    data=data,
                     params=params
                 )
             else:

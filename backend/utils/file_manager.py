@@ -27,10 +27,8 @@ class FileManager:
             path.mkdir(parents=True, exist_ok=True)
             
             try:
-                # Set directory permissions
                 path.chmod(0o777)
                 
-                # Set permissions for any existing files
                 for file in path.glob('*'):
                     if file.is_file():
                         file.chmod(0o666)
@@ -50,7 +48,6 @@ class FileManager:
             FileError: If the file cannot be saved
         """
         try:
-            # Ensure directory exists
             Path(filename).parent.mkdir(parents=True, exist_ok=True)
             
             with open(filename, "w") as f:
@@ -124,17 +121,13 @@ class FileManager:
             extension = audio_format.split('/')[-1]  # Extract 'wav' from 'audio/wav'
             final_path = f"data/audio/output_{timestamp}.{extension}"
             
-            # Ensure directory exists
             os.makedirs(os.path.dirname(final_path), exist_ok=True)
             
-            # Write file
             with open(final_path, "wb") as audio_file:
                 audio_file.write(audio_content)
             
-            # Set permissions
             os.chmod(final_path, 0o666)
             
-            # Cleanup old files
             FileManager.cleanup_audio_files()
             
             return final_path
@@ -151,16 +144,13 @@ class FileManager:
         """Clean up old audio files keeping only the most recent ones"""
         try:
             audio_dir = "data/audio"
-            # Update to match all supported formats
             audio_files = []
             for ext in ['wav', 'mp3', 'ogg']:
                 audio_files.extend(glob.glob(f"{audio_dir}/*.{ext}"))
             
             if len(audio_files) > max_files:
-                # Sort by modification time (newest first)
                 audio_files.sort(key=lambda x: os.path.getmtime(x), reverse=True)
                 
-                # Remove older files
                 for file in audio_files[max_files:]:
                     try:
                         if os.path.exists(file):

@@ -15,7 +15,7 @@ class CredentialsManager(BaseClient):
     def get_service_credentials(self, service_name: str):
         """Get credentials for a specific service by name."""
         try:
-            # Optional additional validation beyond "just have an API key"
+            
             self.validator.validate_credentials({"api_key": self.api_key})
             
             # Acquire an IAM token for further calls
@@ -25,7 +25,6 @@ class CredentialsManager(BaseClient):
                 'Accept': 'application/json',
             }
 
-            # Example: get the resource instances to find the relevant service
             response_json = self._make_request(
                 method='GET',
                 url=self.resource_url,
