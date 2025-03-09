@@ -5,7 +5,7 @@ import os
 from logic.managers.stt_manager import STTManager
 from logic.models.errors import ValidationError, LogicError
 from logic.validators.speech_validator import SpeechValidator
-from logic.models.speech_request import STTRequest
+from logic.models.requests import STTRequest
 from logic.models.responses import STTResponse
 from backend.config.speech_config import SpeechConfig
 

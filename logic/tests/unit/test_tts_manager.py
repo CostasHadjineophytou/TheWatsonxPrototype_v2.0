@@ -3,7 +3,7 @@ from unittest.mock import patch, MagicMock
 
 from logic.managers.tts_manager import TTSManager
 from logic.models.errors import ValidationError, LogicError
-from logic.models.speech_request import TTSRequest
+from logic.models.requests import TTSRequest
 from logic.validators.speech_validator import SpeechValidator
 
 

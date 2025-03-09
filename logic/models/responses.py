@@ -21,21 +21,20 @@ class ModelResponse:
     error: Optional[str] = None
 
 @dataclass
-class TextResponse:
-    """Formatted text generation response"""
-    text: str
-    model_id: str
-    prompt: str
-    parameters_used: Dict
-    error: Optional[str] = None
-
-@dataclass
 class ProjectResponse:
     """Formatted project information"""
     id: str
     name: str
     description: Optional[str] = None
     created_at: Optional[str] = None
+    error: Optional[str] = None
+@dataclass
+class TextResponse:
+    """Formatted text generation response"""
+    text: str
+    model_id: str
+    prompt: str
+    parameters_used: Dict
     error: Optional[str] = None
 
 @dataclass

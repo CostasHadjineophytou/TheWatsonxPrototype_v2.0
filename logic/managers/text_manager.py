@@ -4,7 +4,7 @@ from ibm_watsonx_ai.foundation_models.utils.enums import DecodingMethods
 from ibm_watsonx_ai.metanames import GenTextParamsMetaNames as GenParams
 from backend.services.text_service import TextService
 from backend.config.text_config import TextConfig
-from ..models.text_request import TextRequest  # Import from models
+from ..models.requests import TextRequest
 from ..models.responses import TextResponse
 from .base_manager import BaseManager
 from ..validators.text_validator import TextValidator

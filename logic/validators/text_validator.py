@@ -1,5 +1,5 @@
 from typing import Tuple, Optional
-from ..models.text_request import TextRequest
+from ..models.requests import TextRequest
 from ..models.errors import LogicError
 from .base_validator import BaseValidator
 from backend.config.text_config import TextConfig

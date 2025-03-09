@@ -1,7 +1,7 @@
 import tkinter as tk
 from tkinter import ttk, messagebox
 from ..styles.colors import Colors
-from logic.models.speech_request import TTSRequest
+from logic.models.requests import TTSRequest
 
 class TTSFrame(ttk.Frame):
     """UI frame for Text-to-Speech"""

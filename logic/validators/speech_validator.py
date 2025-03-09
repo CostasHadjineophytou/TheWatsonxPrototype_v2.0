@@ -2,7 +2,7 @@ import os
 from typing import Tuple, Optional
 from .base_validator import BaseValidator
 from ..models.errors import LogicError
-from ..models.speech_request import TTSRequest, STTRequest
+from ..models.requests import TTSRequest, STTRequest
 from backend.config.speech_config import SpeechConfig
 
 class SpeechValidator(BaseValidator):

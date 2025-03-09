@@ -1,7 +1,7 @@
 import tkinter as tk
 from tkinter import ttk, filedialog, messagebox
 from ..styles.colors import Colors
-from logic.models.speech_request import STTRequest
+from logic.models.requests import STTRequest
 
 class STTFrame(ttk.Frame):
     """UI frame for Speech-to-Text"""

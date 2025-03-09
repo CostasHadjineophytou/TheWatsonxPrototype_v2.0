@@ -2,7 +2,7 @@ from typing import Dict, List
 from backend.services.tts_service import TTSService
 from ..validators.speech_validator import SpeechValidator
 from .base_manager import BaseManager
-from ..models.speech_request import TTSRequest
+from ..models.requests import TTSRequest
 from ..models.responses import TTSResponse
 
 class TTSManager(BaseManager):

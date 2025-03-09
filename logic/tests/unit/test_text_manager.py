@@ -6,7 +6,7 @@ from ibm_watsonx_ai.metanames import GenTextParamsMetaNames as GenParams
 from logic.managers.text_manager import TextManager
 from logic.models.errors import ValidationError, LogicError
 from logic.validators.text_validator import TextValidator
-from logic.models.text_request import TextRequest
+from logic.models.requests import TextRequest
 from logic.models.responses import TextResponse
 from backend.config.text_config import TextConfig
 
