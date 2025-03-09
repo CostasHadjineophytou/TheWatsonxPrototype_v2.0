@@ -2,11 +2,12 @@ from ibm_watson import NaturalLanguageUnderstandingV1
 from ibm_cloud_sdk_core.authenticators import IAMAuthenticator
 from .base_service import BaseService
 from ..utils.errors import AuthenticationError, ValidationError
+from .credentials_manager import CredentialsManager
 
 class NLUService(BaseService):
     """Handles raw NLU API interactions"""
     
-    def __init__(self, credentials_manager):
+    def __init__(self, credentials_manager: CredentialsManager):
         super().__init__()
         self.credentials_manager = credentials_manager
         self._nlu = None
