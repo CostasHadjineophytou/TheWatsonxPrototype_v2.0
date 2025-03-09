@@ -1,5 +1,5 @@
 import logging
-from typing import Dict
+from typing import Dict, Any
 from ibm_watsonx_ai.foundation_models.utils.enums import DecodingMethods
 from ibm_watsonx_ai.metanames import GenTextParamsMetaNames as GenParams
 from backend.services.text_service import TextService
@@ -16,6 +16,43 @@ class TextManager(BaseManager):
         super().__init__()
         self.text_service = text_service
         self.validator = validator
+
+    def generate_text(self, text: str, model_id: str, project_id: str, **params) -> Dict[str, Any]:
+        """
+        Generate text using simple parameters
+        
+        Args:
+            text: The input text to process
+            model_id: The model ID to use
+            project_id: The project ID to use
+            **params: Additional parameters for text generation
+            
+        Returns:
+            Dictionary with generation results
+        """
+        # Create TextRequest object from parameters
+        request = TextRequest(
+            text=text,
+            model_id=model_id,
+            project_id=project_id,
+            **params
+        )
+        
+        # Process the request using the existing method
+        response = self.process_text(request)
+        
+        # Return a dictionary that matches the structure of TextResponse
+        result = {
+            "text": response.text,
+            "model_id": response.model_id,
+            "prompt": response.prompt,
+            "parameters_used": response.parameters_used
+        }
+        
+        if hasattr(response, "error") and response.error:
+            result["error"] = response.error
+            
+        return result
 
     def process_text(self, request: TextRequest) -> TextResponse:
         """Process text generation request"""
