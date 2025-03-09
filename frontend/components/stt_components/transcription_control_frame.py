@@ -48,12 +48,16 @@ class TranscriptionControlFrame(ttk.Frame):
                 self.status_var.set("Please select an audio file first")
                 messagebox.showwarning("No File", "Please select an audio file first.")
                 return
+            
+            # Get selected model
+            model = self.parent.get_selected_model()
+            model_info = f" using model {model}" if model else ""
                 
             # Start transcription UI
             self._start_transcription()
             
-            # Call STT service
-            response = self.stt_manager.transcribe_audio(file_path)
+            # Call STT service with selected model
+            response = self.stt_manager.transcribe_audio(file_path, model)
             
             if not response.get('success'):
                 raise Exception(response.get('error') or "Transcription failed")
@@ -67,6 +71,8 @@ class TranscriptionControlFrame(ttk.Frame):
                 stats.append(f"Duration: {response['duration']:.1f}s")
             if response.get('word_count'):
                 stats.append(f"Words: {response['word_count']}")
+            if response.get('model'):
+                stats.append(f"Model: {response['model']}")
                 
             status = "Transcription complete"
             if stats:

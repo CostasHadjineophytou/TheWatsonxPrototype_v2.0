@@ -28,19 +28,51 @@ class STTService(BaseService):
                 details={"error": str(e)}
             )
 
-    def transcribe_audio(self, file_path: str) -> str:
-        """Transcribe audio to text"""
+    def get_available_models(self):
+        """Get list of available STT models"""
+        if not self._stt:
+            self.initialize()
+        
+        try:
+            response = self._stt.list_models().get_result()
+            return [model['name'] for model in response['models']]
+        except Exception as e:
+            raise ValidationError(
+                message="Failed to retrieve STT models",
+                code="MODEL_LIST_ERROR",
+                details={"error": str(e)}
+            )
+
+    def transcribe_audio(self, file_path: str, model: str = None) -> str:
+        """
+        Transcribe audio to text
+        
+        Args:
+            file_path: Path to audio file
+            model: STT model to use (optional)
+        
+        Returns:
+            Transcription text
+        """
         try:
             self.validator.validate_audio_file(file_path)
 
             if not self._stt:
                 self.initialize()
             
+            # Set up parameters for recognition
+            params = {
+                'audio': None,  # Will be set in the with block
+                'content_type': 'audio/wav'
+            }
+            
+            # Add model if specified
+            if model:
+                params['model'] = model
+            
             with open(file_path, 'rb') as audio_file:
-                response = self._stt.recognize(
-                    audio=audio_file,
-                    content_type='audio/wav'
-                ).get_result()
+                params['audio'] = audio_file
+                response = self._stt.recognize(**params).get_result()
 
             return self._extract_transcription(response)
 

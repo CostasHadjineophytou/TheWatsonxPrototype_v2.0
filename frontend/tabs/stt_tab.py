@@ -3,6 +3,7 @@ from tkinter import ttk
 from ..components.stt_components.file_selection_frame import FileSelectionFrame
 from ..components.stt_components.transcription_control_frame import TranscriptionControlFrame
 from ..components.stt_components.transcription_result_frame import TranscriptionResultFrame
+from ..components.stt_components.model_selection_frame import ModelSelectionFrame
 
 class STTTab(ttk.Frame):
     """Tab for Speech-to-Text functionality"""
@@ -21,6 +22,10 @@ class STTTab(ttk.Frame):
         self.file_selection_frame = FileSelectionFrame(left_panel)
         self.file_selection_frame.pack(fill='x', pady=5)
         
+        # Model selection
+        self.model_selection_frame = ModelSelectionFrame(left_panel, self.stt_manager)
+        self.model_selection_frame.pack(fill='x', pady=5)
+        
         # Transcription controls
         self.control_frame = TranscriptionControlFrame(self, self.stt_manager)
         self.control_frame.pack(fill='x', pady=5)
@@ -32,6 +37,10 @@ class STTTab(ttk.Frame):
     def get_file_path(self):
         """Get the selected file path"""
         return self.file_selection_frame.get_file_path()
+    
+    def get_selected_model(self):
+        """Get the selected model"""
+        return self.model_selection_frame.get_selected_model()
     
     def set_transcription_result(self, text):
         """Set the transcription result text"""
