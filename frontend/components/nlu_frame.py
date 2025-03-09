@@ -2,8 +2,6 @@ import tkinter as tk
 from tkinter import ttk, messagebox
 from backend.config.nlu_config import NLUConfig
 from .tooltip import ToolTip
-from logic.models.requests import NLURequest
-from logic.models.responses import NLUResponse
 
 class NLUFrame(ttk.Frame):
     """UI frame for NLU analysis"""
@@ -108,7 +106,7 @@ class NLUFrame(ttk.Frame):
                 self.selected_features.remove(feature)
 
     def _analyze_text(self):
-        """Handle analysis request using data classes"""
+        """Handle analysis request"""
         text = self.text_input.get("1.0", tk.END).strip()
         
         if not text:
@@ -123,19 +121,13 @@ class NLUFrame(ttk.Frame):
             self._start_analysis()
             self.status_var.set("Analyzing text...")
             
-            # Create request object
-            request = NLURequest(
-                text=text,
-                features=self.selected_features
-            )
+            # Use the manager's public API
+            result = self.nlu_manager.analyze_text(text, self.selected_features)
             
-            # Use analyze_request method
-            response = self.nlu_manager.analyze_request(request)
-            
-            if response.error:
-                raise Exception(response.error)
+            if isinstance(result, dict) and "error" in result:
+                raise Exception(result["error"])
                 
-            self._format_and_display_results_from_response(response)
+            self._format_and_display_results(result)
             self.status_var.set("Analysis complete")
             
         except Exception as e:
@@ -157,95 +149,8 @@ class NLUFrame(ttk.Frame):
         self.analyze_btn.config(text="Analyze Text")
         self.progress.stop()
 
-    def _format_and_display_results_from_response(self, response: NLUResponse):
-        """Format results from NLUResponse for display"""
-        output = []
-        
-        # Format sentiment
-        if response.sentiment:
-            sentiment = response.sentiment
-            output.append(f"Sentiment: {sentiment['label']} ({sentiment['score']:.2f})")
-            
-        # Format emotion
-        if response.emotion:
-            emotion_text = ", ".join(f"{k}: {v:.2f}" for k, v in response.emotion.items())
-            output.append(f"Emotions:\n{emotion_text}")
-            
-        # Format entities
-        if response.entities:
-            if response.entities:
-                entity_text = "\n• ".join(
-                    f"{e['text']} ({e['type']}) - {e['confidence']:.2f}"
-                    for e in response.entities
-                )
-                output.append(f"Entities:\n• {entity_text}")
-            else:
-                output.append("Entities: None found")
-            
-        # Format keywords
-        if response.keywords:
-            if response.keywords:
-                keyword_text = "\n• ".join(
-                    f"{k['text']} (relevance: {k['relevance']:.2f})"
-                    for k in response.keywords
-                )
-                output.append(f"Keywords:\n• {keyword_text}")
-            else:
-                output.append("Keywords: None found")
-            
-        # Format categories
-        if response.categories:
-            if response.categories:
-                category_text = "\n• ".join(
-                    f"{c['label']} (score: {c['score']:.2f})"
-                    for c in response.categories
-                )
-                output.append(f"Categories:\n• {category_text}")
-            else:
-                output.append("Categories: None found")
-            
-        # Format concepts
-        if response.concepts:
-            if response.concepts:
-                concept_text = "\n• ".join(
-                    f"{c['text']} (relevance: {c['relevance']:.2f})"
-                    for c in response.concepts
-                )
-                output.append(f"Concepts:\n• {concept_text}")
-            else:
-                output.append("Concepts: None found")
-
-        # Format relations
-        if response.relations:
-            if response.relations:
-                relation_text = "\n• ".join(
-                    f"{r['type']}: {r['sentence']}"
-                    for r in response.relations
-                )
-                output.append(f"Relations:\n• {relation_text}")
-            else:
-                output.append("Relations: None found")
-
-        # Format semantic roles
-        if response.semantic_roles:
-            if response.semantic_roles:
-                role_text = "\n• ".join(
-                    f"{r['subject']} {r['action']} {r['object']}"
-                    for r in response.semantic_roles
-                )
-                output.append(f"Semantic Roles:\n• {role_text}")
-            else:
-                output.append("Semantic Roles: None found")
-
-        # If no results were processed
-        if not output:
-            output.append("No analysis results available")
-
-        self._show_result("\n\n".join(output))
-        
-    # Keep the old method for backward compatibility
     def _format_and_display_results(self, results: dict):
-        """Format results for display (legacy method)"""
+        """Format results for display"""
         if not results:
             self._show_result("No analysis results available")
             return
