@@ -34,19 +34,6 @@ class LLMTab(ttk.Frame):
         self.parameter_frame = ParameterFrame(left_frame)
         self.parameter_frame.pack(fill='x', pady=5)
         
-        # Status frame
-        status_frame = ttk.LabelFrame(left_frame, text="Status")
-        status_frame.pack(fill='x', pady=5)
-        
-        self.local_status_var = tk.StringVar()
-        self.status_bar = ttk.Label(
-            status_frame, 
-            textvariable=self.local_status_var,
-            foreground=Colors.ACCENT,
-            padding=5
-        )
-        self.status_bar.pack(fill='x')
-        
         # Right side - Text input/output
         self.text_frame = TextFrame(
             self, 
@@ -72,10 +59,11 @@ class LLMTab(ttk.Frame):
         try:
             self.project_frame.load_projects()
             self.model_frame.load_models()
-            self.local_status_var.set("Refreshed successfully")
+            # Update status in the text frame
+            self.text_frame.status_label.config(text="Refreshed successfully", foreground=Colors.SUCCESS)
         except Exception as e:
             messagebox.showerror("Refresh Error", str(e))
-            self.local_status_var.set("Refresh failed")
+            self.text_frame.status_label.config(text="Refresh failed", foreground=Colors.ERROR)
         
     def on_model_changed(self, event):
         """Update parameters when model changes"""
