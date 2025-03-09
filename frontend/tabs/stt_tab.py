@@ -14,21 +14,21 @@ class STTTab(ttk.Frame):
         self._init_ui()
     
     def _init_ui(self):
-        # Left panel - File selection and controls
+        # Left panel - File selection, model selection, and controls
         left_panel = ttk.Frame(self)
         left_panel.pack(side=tk.LEFT, fill='y', padx=5, pady=5)
         
-        # File selection
+        # File selection at the top
         self.file_selection_frame = FileSelectionFrame(left_panel)
         self.file_selection_frame.pack(fill='x', pady=5)
         
-        # Model selection
-        self.model_selection_frame = ModelSelectionFrame(left_panel, self.stt_manager)
-        self.model_selection_frame.pack(fill='x', pady=5)
-        
-        # Transcription controls
+        # Transcription controls below file selection
         self.control_frame = TranscriptionControlFrame(self, self.stt_manager)
         self.control_frame.pack(fill='x', pady=5)
+        
+        # Model selection takes remaining space
+        self.model_selection_frame = ModelSelectionFrame(left_panel, self.stt_manager)
+        self.model_selection_frame.pack(fill='both', expand=True, pady=5)
         
         # Right panel - Transcription results
         self.result_frame = TranscriptionResultFrame(self)
