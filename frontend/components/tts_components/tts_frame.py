@@ -1,6 +1,6 @@
 import tkinter as tk
 from tkinter import ttk, messagebox
-from ..styles.colors import Colors
+from ...styles.colors import Colors
 
 class TTSFrame(ttk.Frame):
     """UI frame for Text-to-Speech"""

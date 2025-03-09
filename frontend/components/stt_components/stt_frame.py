@@ -1,6 +1,6 @@
 import tkinter as tk
 from tkinter import ttk, filedialog, messagebox
-from ..styles.colors import Colors
+from ...styles.colors import Colors
 
 class STTFrame(ttk.Frame):
     """UI frame for Speech-to-Text"""

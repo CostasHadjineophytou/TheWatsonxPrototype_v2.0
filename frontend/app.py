@@ -2,7 +2,8 @@ import tkinter as tk
 from tkinter import ttk
 from frontend.tabs.llm_tab import LLMTab
 from frontend.tabs.nlu_tab import NLUTab
-from frontend.tabs.speech_tabs import TTSTab, STTTab
+from frontend.tabs.tts_tab import TTSTab
+from frontend.tabs.stt_tab import STTTab
 from logic.manager_factory import ManagerFactory
 
 class WatsonApp(tk.Tk):

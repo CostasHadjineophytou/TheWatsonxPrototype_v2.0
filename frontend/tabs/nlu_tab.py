@@ -1,6 +1,6 @@
 import tkinter as tk
 from tkinter import ttk
-from ..components.nlu_frame import NLUFrame
+from ..components.nlu_components.nlu_frame import NLUFrame
 
 class NLUTab(ttk.Frame):
     """Tab for NLU analysis"""

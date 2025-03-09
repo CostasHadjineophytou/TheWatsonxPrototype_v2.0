@@ -1,7 +1,7 @@
 import tkinter as tk
 from tkinter import ttk, messagebox
 from backend.config.nlu_config import NLUConfig
-from .tooltip import ToolTip
+from ..tooltip import ToolTip
 
 class NLUFrame(ttk.Frame):
     """UI frame for NLU analysis"""

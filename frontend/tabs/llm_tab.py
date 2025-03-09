@@ -1,9 +1,9 @@
 import tkinter as tk
 from tkinter import ttk, messagebox
-from frontend.components.model_frame import ModelFrame
-from frontend.components.parameter_frame import ParameterFrame
-from frontend.components.project_frame import ProjectFrame
-from frontend.components.text_frame import TextFrame
+from frontend.components.llm_components.model_frame import ModelFrame
+from frontend.components.llm_components.parameter_frame import ParameterFrame
+from frontend.components.llm_components.project_frame import ProjectFrame
+from frontend.components.llm_components.text_frame import TextFrame
 from frontend.styles.colors import Colors
 
 class LLMTab(ttk.Frame):
