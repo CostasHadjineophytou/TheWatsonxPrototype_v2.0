@@ -1,5 +1,6 @@
 import tkinter as tk
 from tkinter import ttk, messagebox
+from frontend.styles.colors import Colors
 
 class TextFrame(ttk.Frame):
     def __init__(self, parent, text_manager, model_frame, project_frame, parameter_frame):
@@ -18,7 +19,7 @@ class TextFrame(ttk.Frame):
         self.input_text = tk.Text(input_frame, height=10, wrap='word')
         self.input_text.pack(fill='both', expand=True, padx=5, pady=5)
         
-        # Control frame for button and progress
+        # Control frame for button and status
         control_frame = ttk.Frame(self)
         control_frame.pack(fill='x', pady=5)
         
@@ -30,13 +31,13 @@ class TextFrame(ttk.Frame):
         )
         self.generate_btn.pack(side='left', padx=5)
         
-        # Progress bar
-        self.progress = ttk.Progressbar(
+        # Status label
+        self.status_label = ttk.Label(
             control_frame,
-            mode='indeterminate',
-            length=200
+            text="Ready",
+            foreground=Colors.ACCENT
         )
-        self.progress.pack(side='left', fill='x', expand=True, padx=5)
+        self.status_label.pack(side='left', padx=10)
         
         # Output area
         output_frame = ttk.LabelFrame(self, text="Output")
@@ -49,16 +50,18 @@ class TextFrame(ttk.Frame):
         """Show generation in progress"""
         self.generate_btn.config(state='disabled')
         self.generate_btn.config(text="Generating...")
-        self.progress.start(10)  # Start progress animation
-        self.master.status_var.set("Generating text...")
+        self.status_label.config(text="Generating text...", foreground="blue")
         self.update()
         
     def end_generation(self, success=True):
         """End generation state"""
         self.generate_btn.config(state='normal')
         self.generate_btn.config(text="Generate")
-        self.progress.stop()  # Stop progress animation
-        self.master.status_var.set("Generation complete" if success else "Generation failed")
+        
+        status_text = "Generation complete" if success else "Generation failed"
+        status_color = Colors.SUCCESS if success else Colors.ERROR
+        
+        self.status_label.config(text=status_text, foreground=status_color)
         
     def on_generate(self):
         try:
