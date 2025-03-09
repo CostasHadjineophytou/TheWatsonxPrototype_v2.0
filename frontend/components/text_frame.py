@@ -1,6 +1,5 @@
 import tkinter as tk
 from tkinter import ttk, messagebox
-from logic.models.requests import TextRequest
 
 class TextFrame(ttk.Frame):
     def __init__(self, parent, text_manager, model_frame, project_frame, parameter_frame):
@@ -70,19 +69,17 @@ class TextFrame(ttk.Frame):
             
             self.start_generation()
             
-            request = TextRequest(
+            result = self.text_manager.generate_text(
                 text=text,
                 model_id=model_id,
                 project_id=project_id,
                 **params
             )
             
-            result = self.text_manager.process_text(request)
-            
-            if hasattr(result, 'error') and result.error:
-                raise Exception(result.error)
+            if result.get('error'):
+                raise Exception(result['error'])
                 
-            self.update_output(result.text)
+            self.update_output(result['text'])
             self.end_generation(success=True)
             
         except Exception as e:

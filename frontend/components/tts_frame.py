@@ -1,7 +1,6 @@
 import tkinter as tk
 from tkinter import ttk, messagebox
 from ..styles.colors import Colors
-from logic.models.requests import TTSRequest
 
 class TTSFrame(ttk.Frame):
     """UI frame for Text-to-Speech"""
@@ -176,20 +175,26 @@ class TTSFrame(ttk.Frame):
     def _synthesize_text(self):
         """Handle UI synthesis request"""
         try:
-            request = TTSRequest(
-                text=self.text_input.get("1.0", tk.END).strip(),
-                voice=self.voice_var.get(),
-                pitch=int(self.pitch_var.get()),
-                speed=int(self.speed_var.get()),
-                accept=self.format_var.get()
+            text = self.text_input.get("1.0", tk.END).strip()
+            voice = self.voice_var.get()
+            pitch = int(self.pitch_var.get())
+            speed = int(self.speed_var.get())
+            accept = self.format_var.get()
+            
+            response = self.tts_manager.synthesize_text(
+                text=text,
+                voice=voice,
+                pitch=pitch,
+                speed=speed,
+                accept=accept
             )
-            response = self.tts_manager.synthesize_speech(request)
-            if response.error:
-                raise Exception(response.error)
+            
+            if response.get('error'):
+                raise Exception(response['error'])
             
             self.audio_manager.play_audio(
-                response.audio_path,
-                metadata={'text': request.text}
+                response['audio_path'],
+                metadata={'text': text}
             )
         except Exception as e:
             messagebox.showerror("Synthesis Error", str(e))

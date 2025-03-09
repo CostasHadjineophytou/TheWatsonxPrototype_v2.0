@@ -1,7 +1,6 @@
 import tkinter as tk
 from tkinter import ttk, filedialog, messagebox
 from ..styles.colors import Colors
-from logic.models.requests import STTRequest
 
 class STTFrame(ttk.Frame):
     """UI frame for Speech-to-Text"""
@@ -50,30 +49,31 @@ class STTFrame(ttk.Frame):
         )
         self.progress.pack(pady=5)
         
-        # Status label
-        self.status_var = tk.StringVar()
-        self.status_label = ttk.Label(
-            self,
-            textvariable=self.status_var,
-            foreground=Colors.ACCENT
-        )
-        self.status_label.pack(pady=5)
-        
-        # Transcription result
-        result_label = ttk.Label(self, text="Transcription:")
-        result_label.pack(anchor='w', padx=10, pady=(10,0))
+        # Results area
+        result_frame = ttk.LabelFrame(self, text="Transcription")
+        result_frame.pack(fill='both', expand=True, padx=10, pady=10)
         
         self.result_text = tk.Text(
-            self,
-            height=10,
-            width=50,
+            result_frame,
             wrap=tk.WORD,
+            height=10,
             state=tk.DISABLED
         )
-        self.result_text.pack(fill='both', expand=True, padx=10, pady=5)
-
+        self.result_text.pack(fill='both', expand=True, padx=5, pady=5)
+        
+        # Status bar
+        self.status_var = tk.StringVar()
+        self.status_var.set("Ready")
+        status_bar = ttk.Label(
+            self,
+            textvariable=self.status_var,
+            anchor=tk.W,
+            padding=(5, 2)
+        )
+        status_bar.pack(fill='x', side=tk.BOTTOM)
+        
     def _browse_file(self):
-        """Open file dialog for audio selection"""
+        """Open file dialog to select audio file"""
         file_path = filedialog.askopenfilename(
             title="Select Audio File",
             filetypes=[
@@ -94,24 +94,23 @@ class STTFrame(ttk.Frame):
         try:
             self._start_transcription()
             
-            request = STTRequest(audio_path=file_path)
-            response = self.stt_manager.transcribe_speech(request)
+            response = self.stt_manager.transcribe_audio(file_path)
             
-            if not response.success:
-                raise Exception(response.error or "Transcription failed")
+            if not response.get('success'):
+                raise Exception(response.get('error') or "Transcription failed")
                 
             # Display result
             self.result_text.config(state=tk.NORMAL)
             self.result_text.delete(1.0, tk.END)
-            self.result_text.insert(tk.END, response.text)
+            self.result_text.insert(tk.END, response['text'])
             self.result_text.config(state=tk.DISABLED)
             
             # Show statistics if available
             stats = []
-            if response.duration:
-                stats.append(f"Duration: {response.duration:.1f}s")
-            if response.word_count:
-                stats.append(f"Words: {response.word_count}")
+            if response.get('duration'):
+                stats.append(f"Duration: {response['duration']:.1f}s")
+            if response.get('word_count'):
+                stats.append(f"Words: {response['word_count']}")
                 
             status = "Transcription complete"
             if stats:
@@ -130,6 +129,7 @@ class STTFrame(ttk.Frame):
         self.transcribe_btn.config(text="Transcribing...")
         self.progress.start(10)
         self.status_var.set("Transcribing audio...")
+        self.update()
         
     def _end_transcription(self):
         """End transcription state"""

@@ -109,11 +109,24 @@ class NLUFrame(ttk.Frame):
         """Handle analysis request"""
         text = self.text_input.get("1.0", tk.END).strip()
         
+        if not text:
+            messagebox.showwarning("Warning", "Please enter some text to analyze.")
+            return
+            
+        if not self.selected_features:
+            messagebox.showwarning("Warning", "Please select at least one feature to analyze.")
+            return
+        
         try:
             self._start_analysis()
             self.status_var.set("Analyzing text...")
             
+            # Use the manager's public API
             result = self.nlu_manager.analyze_text(text, self.selected_features)
+            
+            if isinstance(result, dict) and "error" in result:
+                raise Exception(result["error"])
+                
             self._format_and_display_results(result)
             self.status_var.set("Analysis complete")
             
