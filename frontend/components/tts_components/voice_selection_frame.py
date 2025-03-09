@@ -10,13 +10,17 @@ class VoiceSelectionFrame(ttk.Frame):
         self._init_ui()
         
     def _init_ui(self):
+        # Create a labeled frame for voice settings
+        voice_frame = ttk.LabelFrame(self, text="Voice Settings")
+        voice_frame.pack(fill='x', padx=5, pady=5)
+        
         # Voice selection
-        voice_label = ttk.Label(self, text="Voice:")
+        voice_label = ttk.Label(voice_frame, text="Voice:")
         voice_label.pack(anchor='w', padx=10, pady=(10,0))
         
         self.voice_var = tk.StringVar()
         self.voice_dropdown = ttk.Combobox(
-            self, 
+            voice_frame, 
             textvariable=self.voice_var,
             state="readonly",
             width=47
@@ -24,12 +28,12 @@ class VoiceSelectionFrame(ttk.Frame):
         self.voice_dropdown.pack(fill='x', padx=10, pady=5)
         
         # Pitch control
-        pitch_label = ttk.Label(self, text="Pitch adjustment (%):")
+        pitch_label = ttk.Label(voice_frame, text="Pitch adjustment (%):")
         pitch_label.pack(anchor='w', padx=10, pady=(10,0))
         
         self.pitch_var = tk.IntVar(value=0)
         self.pitch_scale = ttk.Scale(
-            self,
+            voice_frame,
             from_=-100,
             to=100,
             variable=self.pitch_var,
@@ -38,12 +42,12 @@ class VoiceSelectionFrame(ttk.Frame):
         self.pitch_scale.pack(fill='x', padx=10, pady=5)
         
         # Speed control
-        speed_label = ttk.Label(self, text="Speed adjustment (%):")
+        speed_label = ttk.Label(voice_frame, text="Speed adjustment (%):")
         speed_label.pack(anchor='w', padx=10, pady=(10,0))
         
         self.speed_var = tk.IntVar(value=0)
         self.speed_scale = ttk.Scale(
-            self,
+            voice_frame,
             from_=-100,
             to=100,
             variable=self.speed_var,

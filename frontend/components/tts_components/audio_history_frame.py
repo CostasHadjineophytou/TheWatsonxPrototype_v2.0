@@ -10,17 +10,13 @@ class AudioHistoryFrame(ttk.Frame):
         self._init_ui()
         
     def _init_ui(self):
-        # Header
-        header = ttk.Label(
-            self,
-            text="Recent Synthesized Audio",
-            font=('Helvetica', 10, 'bold')
-        )
-        header.pack(anchor='w', pady=(0, 5))
+        # Create a labeled frame for better visual separation
+        self.history_container = ttk.LabelFrame(self, text="Recent Synthesized Audio")
+        self.history_container.pack(fill='both', expand=True, padx=5, pady=5)
         
         # History list container
-        self.history_frame = ttk.Frame(self)
-        self.history_frame.pack(fill='both', expand=True)
+        self.history_frame = ttk.Frame(self.history_container)
+        self.history_frame.pack(fill='both', expand=True, padx=5, pady=5)
         
         # Start periodic updates
         self._update_history()

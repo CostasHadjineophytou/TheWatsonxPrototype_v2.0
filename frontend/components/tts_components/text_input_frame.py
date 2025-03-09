@@ -42,7 +42,7 @@ class TextInputFrame(ttk.Frame):
         )
         self.status_label.pack(side=tk.LEFT, fill='x', expand=True, pady=5)
         
-        # Progress bar
+        # Progress bar - using default style
         self.progress = ttk.Progressbar(
             self,
             mode='indeterminate',

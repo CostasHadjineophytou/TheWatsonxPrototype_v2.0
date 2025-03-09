@@ -9,14 +9,15 @@ class AudioFormatFrame(ttk.Frame):
         self._init_ui()
         
     def _init_ui(self):
+        # Create a labeled frame for format settings
+        format_container = ttk.LabelFrame(self, text="Audio Format")
+        format_container.pack(fill='x', padx=5, pady=5)
+        
         # Format selection
-        format_label = ttk.Label(self, text="Audio format:")
-        format_label.pack(anchor='w', padx=10, pady=(10,0))
+        format_frame = ttk.Frame(format_container)
+        format_frame.pack(fill='x', padx=10, pady=10)
         
         self.format_var = tk.StringVar(value="audio/wav")
-        
-        format_frame = ttk.Frame(self)
-        format_frame.pack(fill='x', padx=10, pady=5)
         
         # Radio buttons for format selection
         formats = [
