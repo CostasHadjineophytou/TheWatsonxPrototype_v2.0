@@ -29,6 +29,7 @@ class ServiceCheckerService(BaseClient):
             }
             
             # Get resource instances
+            # Use BaseClient's _make_request
             response = self._make_request('GET', self.resource_url, headers=headers)
             
             # Extract resources

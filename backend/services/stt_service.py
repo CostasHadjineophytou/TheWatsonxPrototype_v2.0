@@ -62,7 +62,7 @@ class STTService(BaseService):
             
             # Set up parameters for recognition
             params = {
-                'audio': None,  # Will be set in the with block
+                'audio': None,
                 'content_type': 'audio/wav'
             }
             

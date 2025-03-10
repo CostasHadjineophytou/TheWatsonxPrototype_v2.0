@@ -103,10 +103,10 @@ class ModelManager(BaseManager):
     def _format_models(self, models: list) -> dict:
         """Format model list for advanced use cases"""
         formatted = {
-            'by_provider': {},  # Group models by provider
-            'by_size': {},      # Group by parameter size
-            'by_task': {},      # Group by task type
-            'stats': {          # Basic statistics
+            'by_provider': {},
+            'by_size': {},
+            'by_task': {},
+            'stats': {
                 'total_count': len(models),
                 'providers': set(),
                 'tasks': set()

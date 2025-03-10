@@ -13,7 +13,7 @@ class AudioManager:
     def play_audio(self, audio_path: str, metadata: dict = None):
         """Play audio and optionally add to history"""
         self.player.play(audio_path)
-        if metadata:  # Only add new syntheses to history
+        if metadata:
             self._add_to_history(audio_path, metadata)
             
     def _add_to_history(self, audio_path: str, metadata: dict):
