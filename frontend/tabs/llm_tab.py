@@ -4,6 +4,7 @@ from frontend.components.llm_components.model_frame import ModelFrame
 from frontend.components.llm_components.parameter_frame import ParameterFrame
 from frontend.components.llm_components.project_frame import ProjectFrame
 from frontend.components.llm_components.text_frame import TextFrame
+from frontend.components.llm_components.system_prompt_frame import SystemPromptFrame
 from frontend.styles.colors import Colors
 
 class LLMTab(ttk.Frame):
@@ -30,6 +31,10 @@ class LLMTab(ttk.Frame):
         self.model_frame = ModelFrame(left_frame, self.model_manager)
         self.model_frame.pack(fill='x', pady=5)
         
+        # System prompt editor
+        self.system_prompt_frame = SystemPromptFrame(left_frame)
+        self.system_prompt_frame.pack(fill='x', pady=5)
+        
         # Parameter controls
         self.parameter_frame = ParameterFrame(left_frame)
         self.parameter_frame.pack(fill='x', pady=5)
@@ -40,7 +45,8 @@ class LLMTab(ttk.Frame):
             self.text_manager,
             self.model_frame,
             self.project_frame,
-            self.parameter_frame
+            self.parameter_frame,
+            self.system_prompt_frame
         )
         self.text_frame.pack(side='right', fill='both', expand=True, padx=5, pady=5)
         

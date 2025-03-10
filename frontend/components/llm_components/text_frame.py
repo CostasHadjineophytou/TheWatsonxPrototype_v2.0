@@ -3,12 +3,13 @@ from tkinter import ttk, messagebox
 from frontend.styles.colors import Colors
 
 class TextFrame(ttk.Frame):
-    def __init__(self, parent, text_manager, model_frame, project_frame, parameter_frame):
+    def __init__(self, parent, text_manager, model_frame, project_frame, parameter_frame, system_prompt_frame):
         super().__init__(parent)
         self.text_manager = text_manager
         self.model_frame = model_frame
         self.project_frame = project_frame
         self.parameter_frame = parameter_frame
+        self.system_prompt_frame = system_prompt_frame
         self._init_ui()
         
     def _init_ui(self):
@@ -69,6 +70,7 @@ class TextFrame(ttk.Frame):
             model_id = self.model_frame.get_selected_model()
             project_id = self.project_frame.get_selected_project()
             params = self.parameter_frame.get_parameters()
+            system_prompt = self.system_prompt_frame.get_system_prompt()
             
             self.start_generation()
             
@@ -76,6 +78,7 @@ class TextFrame(ttk.Frame):
                 text=text,
                 model_id=model_id,
                 project_id=project_id,
+                system_prompt=system_prompt,
                 **params
             )
             
