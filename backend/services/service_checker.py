@@ -1,18 +1,16 @@
-import requests
-import logging
 from typing import Dict, List, Any
-from .base_service import BaseService
+from .base_client import BaseClient
 from .iam_token import IAMTokenService
 from ..utils.errors import ServiceError, ValidationError
 from ..config.config import Config
 
-class ServiceCheckerService(BaseService):
+class ServiceCheckerService(BaseClient):
     """Service for checking IBM Cloud service availability"""
     
     def __init__(self, iam_service: IAMTokenService = None):
         super().__init__()
         self.iam_service = iam_service or IAMTokenService()
-        self.resource_controller_url = Config.IBM_CLOUD_RESOURCE_CONTROLLER_URL
+        self.resource_url = Config.IBM_CLOUD_RESOURCE_URL
         
     def list_services(self) -> List[Dict[str, Any]]:
         """
@@ -31,8 +29,7 @@ class ServiceCheckerService(BaseService):
             }
             
             # Get resource instances
-            endpoint = f"{self.resource_controller_url}/v2/resource_instances"
-            response = self._make_request('GET', endpoint, headers=headers)
+            response = self._make_request('GET', self.resource_url, headers=headers)
             
             # Extract resources
             resources = response.get('resources', [])
@@ -65,8 +62,8 @@ class ServiceCheckerService(BaseService):
             }
             
             # Get resource instance details
-            endpoint = f"{self.resource_controller_url}/v2/resource_instances/{service_id}"
-            response = self._make_request('GET', endpoint, headers=headers)
+            service_url = f"{self.resource_url}/{service_id}"
+            response = self._make_request('GET', service_url, headers=headers)
             
             return response
             
@@ -94,12 +91,15 @@ class ServiceCheckerService(BaseService):
                 "Content-Type": "application/json"
             }
             
-            # Build endpoint with optional filter
-            endpoint = f"{self.resource_controller_url}/v2/resource_keys"
+            # Get base URL for resource keys
+            base_url = self.resource_url.replace('/resource_instances', '/resource_keys')
+            
+            # Add service ID filter if provided
+            params = {}
             if service_id:
-                endpoint += f"?resource_instance_id={service_id}"
+                params = {"resource_instance_id": service_id}
                 
-            response = self._make_request('GET', endpoint, headers=headers)
+            response = self._make_request('GET', base_url, headers=headers, params=params)
             
             # Extract resources
             keys = response.get('resources', [])
@@ -109,44 +109,4 @@ class ServiceCheckerService(BaseService):
         except ValidationError as e:
             raise e
         except Exception as e:
-            raise self.handle_error(e, "Failed to list resource keys")
-    
-    def _make_request(self, method: str, url: str, headers: Dict = None, data: Dict = None) -> Dict:
-        """Make HTTP request with error handling"""
-        try:
-            response = requests.request(
-                method=method,
-                url=url,
-                headers=headers,
-                json=data
-            )
-            
-            # Check for HTTP errors
-            response.raise_for_status()
-            
-            # Return JSON response
-            return response.json()
-            
-        except requests.exceptions.HTTPError as e:
-            status_code = e.response.status_code
-            error_msg = f"HTTP Error: {status_code}"
-            
-            try:
-                error_data = e.response.json()
-                if 'errors' in error_data and error_data['errors']:
-                    error_msg = error_data['errors'][0].get('message', error_msg)
-            except:
-                pass
-                
-            raise ServiceError(
-                message=error_msg,
-                code=f"HTTP_{status_code}",
-                details={"url": url}
-            )
-            
-        except requests.exceptions.RequestException as e:
-            raise ServiceError(
-                message=f"Request failed: {str(e)}",
-                code="REQUEST_FAILED",
-                details={"url": url}
-            ) 
+            raise self.handle_error(e, "Failed to list resource keys") 
