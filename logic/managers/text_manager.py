@@ -105,9 +105,22 @@ class TextManager(BaseManager):
         """Build the complete prompt with system prompt"""
         prompt_parts = []
         if request.system_prompt:
-            prompt_parts.append(request.system_prompt)
+            # Format the system prompt to remove excessive indentation
+            system_prompt = self._format_system_prompt(request.system_prompt)
+            prompt_parts.append(system_prompt)
         prompt_parts.append(f"Human: {request.text}\n\nAI:")
         return "\n\n".join(prompt_parts)
+        
+    def _format_system_prompt(self, prompt: str) -> str:
+        """Format the system prompt to remove excessive indentation"""
+        # Split into lines and remove leading/trailing whitespace
+        lines = prompt.strip().split('\n')
+        
+        # Remove leading spaces from each line
+        cleaned_lines = [line.lstrip() for line in lines]
+        
+        # Join back with newlines
+        return '\n'.join(cleaned_lines)
 
     def _prepare_params(self, request: TextRequest) -> Dict:
         """Prepare model parameters"""
