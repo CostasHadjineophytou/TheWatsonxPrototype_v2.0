@@ -1,30 +1,11 @@
 from typing import Dict, Any, Tuple
 from ..utils.errors import ValidationError
 from ..config.text_config import TextConfig
+from .base_validator import BaseValidator
 import os
 
-class TextValidator:
-    """Validates raw service inputs before API calls"""
-
-    @staticmethod
-    def validate_project_id(project_id: str) -> None:
-        """Validate project ID format"""
-        if not project_id or not isinstance(project_id, str):
-            raise ValidationError(
-                message="Invalid project ID format",
-                code="INVALID_PROJECT_ID",
-                details={"project_id": project_id}
-            )
-
-    @staticmethod
-    def validate_model_id(model_id: str) -> None:
-        """Validate model ID format"""
-        if not model_id or not isinstance(model_id, str):
-            raise ValidationError(
-                message="Invalid model ID format",
-                code="INVALID_MODEL_ID",
-                details={"model_id": model_id}
-            )
+class TextValidator(BaseValidator):
+    """Validates Text Generation service inputs before API calls"""
 
     @staticmethod
     def validate_text_params(params: Dict[str, Any]) -> None:
@@ -42,7 +23,6 @@ class TextValidator:
                     "invalid_params": invalid
                 }
             )
-
 
     @staticmethod
     def validate_watson_text_params(params: Dict[str, Any]) -> None:

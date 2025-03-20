@@ -1,9 +1,10 @@
 from typing import Dict, Any, Tuple
 from ..utils.errors import ValidationError
 from ..config.nlu_config import NLUConfig
+from .base_validator import BaseValidator
 import os
 
-class NLUValidator:
+class NLUValidator(BaseValidator):
     """Validates raw service inputs before API calls"""
 
     @staticmethod

@@ -32,7 +32,7 @@ class ModelService(BaseService):
     def get_model_specs(self, model_id: str):
         """Get detailed specs for a specific model"""
         try:
-            self.validator.validate_model_id(model_id)
+            #self.validator.validate_model_id(model_id)
             self.validator.validate_credentials(self.watson_client.credentials)
             
             models = self.list_models()

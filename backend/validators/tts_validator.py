@@ -1,9 +1,10 @@
 from typing import Dict, Any, Tuple
 from ..utils.errors import ValidationError
 from ..config.speech_config import SpeechConfig
+from .base_validator import BaseValidator
 import os
 
-class TTSValidator:
+class TTSSValidator(BaseValidator):
     """Validates raw service inputs before API calls"""
 
     def validate_tts_request(self, text: str, voice: str, params: dict) -> None:

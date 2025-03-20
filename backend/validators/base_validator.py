@@ -1,7 +1,7 @@
 from ..utils.errors import AuthenticationError
 
 class BaseValidator:
-    """Validates raw service inputs before API calls"""
+    """Base validator with common validation methods used across services"""
     
     @staticmethod
     def validate_credentials(credentials: dict) -> None:

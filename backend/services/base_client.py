@@ -1,9 +1,9 @@
 import requests
 from backend.config.config import Config
 from backend.utils.errors import ConfigurationError
-from ..utils.base_handler import BaseHandler
+from ..base_component import BaseComponent
 
-class BaseClient(BaseHandler):
+class BaseClient(BaseComponent):
     """Base client for making HTTP requests to IBM Cloud services"""
     
     def __init__(self):

@@ -3,14 +3,20 @@ from ibm_cloud_sdk_core.authenticators import IAMAuthenticator
 from .base_service import BaseService
 from ..utils.errors import AuthenticationError, ValidationError
 from ..utils.file_manager import FileManager
+from ..validators.stt_validator import STTValidator
 
 class STTService(BaseService):
     """Handles Speech-to-Text API interactions"""
     
-    def __init__(self, credentials_manager):
+    def __init__(self, credentials_manager, validator=None):
+        # Initialize BaseService (which sets self.validator = BaseValidator())
         super().__init__()
         self.credentials_manager = credentials_manager
         self._stt = None
+        
+        # Override the base validator with the STT-specific validator
+        # This gives us both common validation methods and STT-specific ones
+        self.validator = STTValidator()
 
     def initialize(self):
         """Initialize STT client"""
@@ -55,6 +61,7 @@ class STTService(BaseService):
             Transcription text
         """
         try:
+            # Use the STT-specific validator
             self.validator.validate_audio_file(file_path)
 
             if not self._stt:

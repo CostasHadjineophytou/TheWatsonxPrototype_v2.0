@@ -3,6 +3,7 @@ from ibm_cloud_sdk_core.authenticators import IAMAuthenticator
 from .base_service import BaseService
 from ..utils.errors import AuthenticationError, ValidationError
 from .credentials_manager import CredentialsManager
+from ..validators.nlu_validator import NLUValidator
 
 class NLUService(BaseService):
     """Handles raw NLU API interactions"""
@@ -11,6 +12,8 @@ class NLUService(BaseService):
         super().__init__()
         self.credentials_manager = credentials_manager
         self._nlu = None
+
+        self.validator = NLUValidator()
 
     def initialize(self):
         """Initialize NLU client"""

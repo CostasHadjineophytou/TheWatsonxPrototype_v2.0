@@ -1,12 +1,14 @@
 from typing import Dict, Any, Tuple
 from ..utils.errors import ValidationError, AuthenticationError
 from ..config.speech_config import SpeechConfig
+from .base_validator import BaseValidator
 import os
 
-class STTValidator:
-    """Validates raw service inputs before API calls"""
+class STTValidator(BaseValidator):
+    """Validates Speech-to-Text service inputs before API calls"""
 
-    def validate_audio_file(self, file_path: str) -> None:
+    @staticmethod
+    def validate_audio_file(file_path: str) -> None:
         """Service-level validation"""
         # Technical validation
         if not os.path.exists(file_path):
