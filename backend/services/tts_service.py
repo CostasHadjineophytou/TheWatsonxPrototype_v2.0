@@ -4,7 +4,7 @@ from .base_service import BaseService
 from ..utils.errors import AuthenticationError, ValidationError
 from ..utils.file_manager import FileManager
 from ..utils.ssml_builder import SSMLBuilder
-from ..validators.tts_validator import TTSSValidator
+from ..validators.tts_validator import TTSValidator
 
 class TTSService(BaseService):
     """Handles Text-to-Speech API interactions"""
@@ -13,7 +13,7 @@ class TTSService(BaseService):
         super().__init__()
         self.credentials_manager = credentials_manager
         self._tts = None
-        self.validator = TTSSValidator()
+        self.validator = validator or TTSValidator()
         FileManager.ensure_audio_directory()
 
     def initialize(self):

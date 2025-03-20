@@ -10,7 +10,7 @@ from ..validators.project_validator import ProjectValidator
 class ProjectService(BaseClient):
     """Handles IBM Cloud project-related API calls"""
     
-    def __init__(self, watson_client: WatsonClient = None, iam_service: IAMTokenService = None):
+    def __init__(self, watson_client: WatsonClient = None, iam_service: IAMTokenService = None, validator=None):
         super().__init__()
         self.watson_client = watson_client
         self.iam_service = iam_service or IAMTokenService()
@@ -18,7 +18,7 @@ class ProjectService(BaseClient):
         self.file_manager = FileManager()
         
         # Override the base validator with the project-specific validator
-        self.validator = ProjectValidator()
+        self.validator = validator or ProjectValidator()
 
     def list_projects(self):
         """Get list of all projects from IBM Cloud"""

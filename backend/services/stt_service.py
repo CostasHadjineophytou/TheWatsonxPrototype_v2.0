@@ -16,7 +16,7 @@ class STTService(BaseService):
         
         # Override the base validator with the STT-specific validator
         # This gives us both common validation methods and STT-specific ones
-        self.validator = STTValidator()
+        self.validator = validator or STTValidator()
 
     def initialize(self):
         """Initialize STT client"""

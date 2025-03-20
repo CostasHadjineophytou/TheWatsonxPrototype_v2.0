@@ -4,7 +4,7 @@ from ..config.speech_config import SpeechConfig
 from .base_validator import BaseValidator
 import os
 
-class TTSSValidator(BaseValidator):
+class TTSValidator(BaseValidator):
     """Validates raw service inputs before API calls"""
 
     def validate_tts_request(self, text: str, voice: str, params: dict) -> None:

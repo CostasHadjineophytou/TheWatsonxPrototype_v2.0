@@ -12,7 +12,10 @@ from .validators.config_validator import ConfigValidator
 from .validators.base_validator import BaseValidator
 from .validators.stt_validator import STTValidator
 from .validators.text_validator import TextValidator
-# Import other validators as needed
+from .validators.project_validator import ProjectValidator
+from .validators.model_validator import ModelValidator
+from .validators.nlu_validator import NLUValidator
+from .validators.tts_validator import TTSValidator
 
 class ServiceFactory:
     """Factory for creating service instances with appropriate validators
@@ -31,25 +34,26 @@ class ServiceFactory:
         # Validate configuration
         ConfigValidator.validate_config()
         
-        # Create core services
+        # Core authentication services
         self.watson_client = WatsonClient()
         self.iam_service = IAMTokenService()
         self.credentials_manager = self.create_credentials_manager()
         
-        # Create validators
-        # Generic services will use BaseValidator (already provided by BaseComponent)
-        # Specific services will use their dedicated validators
+        # Specific services use their dedicated validators, otherwise use the base validator
         self.stt_validator = STTValidator()
         self.text_validator = TextValidator()
-        # Initialize other validators as needed
+        self.project_validator = ProjectValidator()
+        self.model_validator = ModelValidator()
+        self.nlu_validator = NLUValidator()
+        self.tts_validator = TTSValidator()
         
     def create_model_service(self) -> ModelService:
         # Uses BaseValidator from BaseComponent
-        return ModelService(self.watson_client)
+        return ModelService(self.watson_client, self.model_validator)
         
     def create_project_service(self) -> ProjectService:
-        # Uses BaseValidator from BaseComponent
-        return ProjectService(self.watson_client, self.iam_service)
+        # Inject the project-specific validator
+        return ProjectService(self.watson_client, self.iam_service, self.project_validator)
         
     def create_text_service(self) -> TextService:
         # Inject the text-specific validator
@@ -60,12 +64,12 @@ class ServiceFactory:
         return CredentialsManager()
 
     def create_nlu_service(self) -> NLUService:
-        # TODO: Create and inject NLUValidator
-        return NLUService(self.credentials_manager)
+        # Inject the NLU-specific validator
+        return NLUService(self.credentials_manager, self.nlu_validator)
 
     def create_tts_service(self) -> TTSService:
-        # TODO: Create and inject TTSValidator
-        return TTSService(self.credentials_manager)
+        # Inject the TTS-specific validator
+        return TTSService(self.credentials_manager, self.tts_validator)
 
     def create_stt_service(self) -> STTService:
         # Inject the STT-specific validator

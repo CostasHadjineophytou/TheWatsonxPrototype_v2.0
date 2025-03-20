@@ -8,12 +8,12 @@ from ..validators.nlu_validator import NLUValidator
 class NLUService(BaseService):
     """Handles raw NLU API interactions"""
     
-    def __init__(self, credentials_manager: CredentialsManager):
+    def __init__(self, credentials_manager: CredentialsManager, validator=None):
         super().__init__()
         self.credentials_manager = credentials_manager
         self._nlu = None
 
-        self.validator = NLUValidator()
+        self.validator = validator or NLUValidator()
 
     def initialize(self):
         """Initialize NLU client"""

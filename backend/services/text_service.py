@@ -10,7 +10,7 @@ class TextService(BaseService):
     def __init__(self, watson_client: WatsonClient, validator=None):
         super().__init__()
         self.watson_client = watson_client
-        self.validator = TextValidator()
+        self.validator = validator or TextValidator()
 
     def process_prompt(self, model_id: str, project_id: str, prompt: str, params: dict):
         """Process a prompt using a specific model"""
