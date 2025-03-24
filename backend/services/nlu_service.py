@@ -29,19 +29,19 @@ class NLUService(BaseService):
                     api_key=credentials['apikey'],
                     show_all_resources=False  # Only enable temporarily for debugging
                 )
-                logging.info("NLU service resources validated successfully")
+                logging.debug("NLU service resources validated successfully")
             except ValidationError as val_err:
                 # Log detailed error information about missing resources
                 if hasattr(val_err, 'details') and 'missing_resources' in val_err.details:
                     missing = val_err.details['missing_resources']
-                    logging.warning(f"NLU validation failed - Missing resources: {', '.join(missing)}")
-                    logging.warning(f"Please create these resources in your IBM Cloud account: {', '.join(missing)}")
+                    logging.debug(f"NLU validation - Resources not found in API: {', '.join(missing)}. This may be normal with certain IBM Cloud configurations.")
+                    logging.debug(f"Service will attempt to initialize anyway. If it fails, check that these resources exist: {', '.join(missing)}")
                 else:
-                    logging.warning(f"NLU validation error: {str(val_err)}")
+                    logging.debug(f"NLU validation note: {str(val_err)}")
                 # Continue with initialization anyway
             except Exception as ex:
                 # For other exceptions, just log the error message
-                logging.warning(f"NLU validation encountered an unexpected error: {str(ex)}")
+                logging.debug(f"NLU validation encountered an issue: {str(ex)}. Attempting to initialize anyway.")
             
             # Initialize the client even if validation had warnings
             authenticator = IAMAuthenticator(credentials['apikey'])
