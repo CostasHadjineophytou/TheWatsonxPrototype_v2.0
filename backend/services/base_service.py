@@ -12,4 +12,4 @@ class BaseService(BaseComponent):
     """
     
     def __init__(self):
-        super().__init__()  # This sets self.validator = BaseValidator()
+        super().__init__()
