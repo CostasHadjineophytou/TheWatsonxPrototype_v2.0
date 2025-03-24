@@ -2,6 +2,7 @@ import logging
 from backend.config.config import Config
 from backend.services.base_client import BaseClient
 from backend.utils.errors import AuthenticationError, ValidationError
+from backend.utils.token_utils import get_iam_token
 
 class IAMTokenService(BaseClient):
     """Handles IBM Cloud IAM token operations."""
@@ -11,40 +12,24 @@ class IAMTokenService(BaseClient):
         super().__init__()
         self.token_url = Config.IAM_TOKEN_URL
 
+    def get_api_key(self):
+        """
+        Get the API key used by this service
+        
+        Returns:
+            The API key string
+        """
+        return self.api_key
+
     def get_iam_token(self):
         """Retrieve IAM token using the configured API key."""
         try:
-            
+            # Validate credentials
             self.validator.validate_credentials({"api_key": self.api_key})
-
-            headers = {
-                'Content-Type': 'application/x-www-form-urlencoded',
-                'Accept': 'application/json',
-            }
-
-            # Form data for IBM Cloud's IAM token endpoint
-            data = {
-                'grant_type': 'urn:ibm:params:oauth:grant-type:apikey',
-                'apikey': self.api_key,
-            }
-
-            # Use BaseClient's _make_request
-            response_json = self._make_request(
-                method='POST',
-                url=self.token_url,
-                headers=headers,
-                data=data,
-                is_form_data=True
-            )
-
-            token = response_json.get('access_token')
-            if not token:
-                raise AuthenticationError(
-                    message="No access token in response",
-                    code="NO_TOKEN",
-                    details={"response": response_json}
-                )
-
+            
+            # Use the centralized token utility function
+            token = get_iam_token(self.api_key)
+            
             logging.info("Successfully retrieved IAM token")
             return token
 

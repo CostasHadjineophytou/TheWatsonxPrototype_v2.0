@@ -5,6 +5,7 @@ from ..utils.errors import AuthenticationError, ValidationError
 from ..utils.file_manager import FileManager
 from ..utils.ssml_builder import SSMLBuilder
 from ..validators.tts_validator import TTSValidator
+import logging
 
 class TTSService(BaseService):
     """Handles Text-to-Speech API interactions"""
@@ -20,9 +21,35 @@ class TTSService(BaseService):
         """Initialize TTS client"""
         try:
             credentials = self.credentials_manager.get_service_credentials("Text to Speech")
+            
+            # Try API key validation first - this is the most important thing
+            try:
+                # Validate that the required resource exists - but catch errors
+                self.validator.validate_resource(
+                    required_resources=["text-to-speech"],
+                    api_key=credentials['apikey'],
+                    show_all_resources=False
+                )
+                logging.info("TTS service resources validated successfully")
+            except ValidationError as val_err:
+                # Log detailed error information about missing resources
+                if hasattr(val_err, 'details') and 'missing_resources' in val_err.details:
+                    missing = val_err.details['missing_resources']
+                    logging.warning(f"TTS validation failed - Missing resources: {', '.join(missing)}")
+                    logging.warning(f"Please create these resources in your IBM Cloud account: {', '.join(missing)}")
+                else:
+                    logging.warning(f"TTS validation error: {str(val_err)}")
+                # Continue with initialization anyway
+            except Exception as ex:
+                # For other exceptions, just log the error message
+                logging.warning(f"TTS validation encountered an unexpected error: {str(ex)}")
+            
+            # Initialize the client even if validation had warnings
             authenticator = IAMAuthenticator(credentials['apikey'])
             self._tts = TextToSpeechV1(authenticator=authenticator)
             self._tts.set_service_url(credentials['url'])
+            logging.info("TTS service initialized successfully")
+            
         except Exception as e:
             raise AuthenticationError(
                 message="Failed to initialize TTS service",

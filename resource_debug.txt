@@ -1,0 +1,64 @@
+Resources CRN check (direct from API):
+Resource name: watsonx assistant-15
+Resource CRN: crn:v1:bluemix:public:conversation:eu-gb:a/f4f84bd123294a89a3a54551d31678a6:53750e2f-9616-43f0-8d33-bed5a7c0437a::
+  Has 'natural-language-understanding': False
+  Has 'speech-to-text': False
+  Has 'text-to-speech': False
+  Has 'pm-20': False
+  Has 'data-science-experience': False
+  Has 'cloud-object-storage': False
+
+Resource name: watson studio-ku
+Resource CRN: crn:v1:bluemix:public:data-science-experience:eu-gb:a/f4f84bd123294a89a3a54551d31678a6:b9fe086d-edd9-465f-9d09-632716e1cf06::
+  Has 'natural-language-understanding': False
+  Has 'speech-to-text': False
+  Has 'text-to-speech': False
+  Has 'pm-20': False
+  Has 'data-science-experience': True
+  Has 'cloud-object-storage': False
+
+Resource name: watson machine learning-bj
+Resource CRN: crn:v1:bluemix:public:pm-20:eu-gb:a/f4f84bd123294a89a3a54551d31678a6:a7e1a03a-240e-40fd-a9b0-9451e2fc2087::
+  Has 'natural-language-understanding': False
+  Has 'speech-to-text': False
+  Has 'text-to-speech': False
+  Has 'pm-20': True
+  Has 'data-science-experience': False
+  Has 'cloud-object-storage': False
+
+Resource name: cloud object storage-zy
+Resource CRN: crn:v1:bluemix:public:cloud-object-storage:global:a/f4f84bd123294a89a3a54551d31678a6:1b0e9b7a-850b-4a16-a145-146f9201cc8d::
+  Has 'natural-language-understanding': False
+  Has 'speech-to-text': False
+  Has 'text-to-speech': False
+  Has 'pm-20': False
+  Has 'data-science-experience': False
+  Has 'cloud-object-storage': True
+
+Resource name: natural language understanding-og
+Resource CRN: crn:v1:bluemix:public:natural-language-understanding:eu-gb:a/f4f84bd123294a89a3a54551d31678a6:6a720d1c-709c-44ad-82fe-5541bf30d56c::
+  Has 'natural-language-understanding': True
+  Has 'speech-to-text': False
+  Has 'text-to-speech': False
+  Has 'pm-20': False
+  Has 'data-science-experience': False
+  Has 'cloud-object-storage': False
+
+Resource name: speech to text-5j
+Resource CRN: crn:v1:bluemix:public:speech-to-text:eu-gb:a/f4f84bd123294a89a3a54551d31678a6:af903afc-9952-4ce6-8c7a-657ad23cfdd9::
+  Has 'natural-language-understanding': False
+  Has 'speech-to-text': True
+  Has 'text-to-speech': False
+  Has 'pm-20': False
+  Has 'data-science-experience': False
+  Has 'cloud-object-storage': False
+
+Resource name: text to speech-mf
+Resource CRN: crn:v1:bluemix:public:text-to-speech:eu-gb:a/f4f84bd123294a89a3a54551d31678a6:181ed915-7241-422c-9e24-ddf292d08dd5::
+  Has 'natural-language-understanding': False
+  Has 'speech-to-text': False
+  Has 'text-to-speech': True
+  Has 'pm-20': False
+  Has 'data-science-experience': False
+  Has 'cloud-object-storage': False
+

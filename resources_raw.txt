@@ -1,0 +1,63 @@
+Raw resources from IBM Cloud:
+
+Resource #1:
+Name: watsonx Assistant-15
+CRN: crn:v1:bluemix:public:conversation:eu-gb:a/f4f84bd123294a89a3a54551d31678a6:53750e2f-9616-43f0-8d33-bed5a7c0437a::
+GUID: 53750e2f-9616-43f0-8d33-bed5a7c0437a
+Resource ID: 7045626d-55e3-4418-be11-683a26dbc1e5
+Resource Plan ID: bd16e3c8-3da0-11e6-bce3-54ee7514918e
+Key 'name': watsonx Assistant-15
+
+Resource #2:
+Name: Watson Studio-ku
+CRN: crn:v1:bluemix:public:data-science-experience:eu-gb:a/f4f84bd123294a89a3a54551d31678a6:b9fe086d-edd9-465f-9d09-632716e1cf06::
+GUID: b9fe086d-edd9-465f-9d09-632716e1cf06
+Resource ID: 39ba9d4c-b1c5-4cc3-a163-38b580121e01
+Resource Plan ID: 9536fed9-cf90-4acb-aebf-521f5b2d19fe
+Key 'name': Watson Studio-ku
+
+Resource #3:
+Name: Watson Machine Learning-bj
+CRN: crn:v1:bluemix:public:pm-20:eu-gb:a/f4f84bd123294a89a3a54551d31678a6:a7e1a03a-240e-40fd-a9b0-9451e2fc2087::
+GUID: a7e1a03a-240e-40fd-a9b0-9451e2fc2087
+Resource ID: 51c53b72-918f-4869-b834-2d99eb28422a
+Resource Plan ID: 3f6acf43-ede8-413a-ac69-f8af3bb0cbfe
+Key 'name': Watson Machine Learning-bj
+
+Resource #4:
+Name: Cloud Object Storage-zy
+CRN: crn:v1:bluemix:public:cloud-object-storage:global:a/f4f84bd123294a89a3a54551d31678a6:1b0e9b7a-850b-4a16-a145-146f9201cc8d::
+GUID: 1b0e9b7a-850b-4a16-a145-146f9201cc8d
+Resource ID: dff97f5c-bc5e-4455-b470-411c3edbe49c
+Resource Plan ID: 2fdf0c08-2d32-4f46-84b5-32e0c92fffd8
+
+Resource #5:
+Name: Natural Language Understanding-og
+CRN: crn:v1:bluemix:public:natural-language-understanding:eu-gb:a/f4f84bd123294a89a3a54551d31678a6:6a720d1c-709c-44ad-82fe-5541bf30d56c::
+GUID: 6a720d1c-709c-44ad-82fe-5541bf30d56c
+Resource ID: bb6393bc-7d81-446b-9728-61b704f6eca5
+Resource Plan ID: e45ae97c-4140-4a9b-8db9-c419169e9be5
+Key 'id': crn:v1:bluemix:public:natural-language-understanding:eu-gb:a/f4f84bd123294a89a3a54551d31678a6:6a720d1c-709c-44ad-82fe-5541bf30d56c::
+Key 'name': Natural Language Understanding-og
+Key 'crn': crn:v1:bluemix:public:natural-language-understanding:eu-gb:a/f4f84bd123294a89a3a54551d31678a6:6a720d1c-709c-44ad-82fe-5541bf30d56c::
+
+Resource #6:
+Name: Speech to Text-5j
+CRN: crn:v1:bluemix:public:speech-to-text:eu-gb:a/f4f84bd123294a89a3a54551d31678a6:af903afc-9952-4ce6-8c7a-657ad23cfdd9::
+GUID: af903afc-9952-4ce6-8c7a-657ad23cfdd9
+Resource ID: bc35fb8c-bc5b-431b-859e-3861771d5843
+Resource Plan ID: 61a9c4f2-48ec-400c-9881-1ffde3bfc5be
+Key 'id': crn:v1:bluemix:public:speech-to-text:eu-gb:a/f4f84bd123294a89a3a54551d31678a6:af903afc-9952-4ce6-8c7a-657ad23cfdd9::
+Key 'name': Speech to Text-5j
+Key 'crn': crn:v1:bluemix:public:speech-to-text:eu-gb:a/f4f84bd123294a89a3a54551d31678a6:af903afc-9952-4ce6-8c7a-657ad23cfdd9::
+
+Resource #7:
+Name: Text to Speech-mf
+CRN: crn:v1:bluemix:public:text-to-speech:eu-gb:a/f4f84bd123294a89a3a54551d31678a6:181ed915-7241-422c-9e24-ddf292d08dd5::
+GUID: 181ed915-7241-422c-9e24-ddf292d08dd5
+Resource ID: 282c1d79-9176-4597-9cff-941a8d6cfd4c
+Resource Plan ID: 2580b607-db64-4883-9793-445b694ed57b
+Key 'id': crn:v1:bluemix:public:text-to-speech:eu-gb:a/f4f84bd123294a89a3a54551d31678a6:181ed915-7241-422c-9e24-ddf292d08dd5::
+Key 'name': Text to Speech-mf
+Key 'crn': crn:v1:bluemix:public:text-to-speech:eu-gb:a/f4f84bd123294a89a3a54551d31678a6:181ed915-7241-422c-9e24-ddf292d08dd5::
+
