@@ -10,6 +10,7 @@ class ServiceCheckerService(BaseClient):
     """Service for checking IBM Cloud service availability"""
     
     def __init__(self, iam_service: IAMTokenService = None):
+        # BaseClient checks for API key and may raise ConfigurationError if missing
         super().__init__()
         self.iam_service = iam_service or IAMTokenService()
         self.resource_url = Config.IBM_CLOUD_RESOURCE_URL

@@ -11,6 +11,7 @@ class ProjectService(BaseClient):
     """Handles IBM Cloud project-related API calls"""
     
     def __init__(self, watson_client: WatsonClient = None, iam_service: IAMTokenService = None, validator=None):
+        # BaseClient checks for API key and may raise ConfigurationError if missing
         super().__init__()
         self.watson_client = watson_client
         self.iam_service = iam_service or IAMTokenService()

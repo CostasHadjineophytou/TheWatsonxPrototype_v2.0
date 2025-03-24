@@ -57,7 +57,7 @@ class BaseValidator:
             AuthenticationError: If the API key is invalid
         """
         if not required_resources:
-            return  # Nothing to validate
+            return
             
         if not api_key:
             raise ValidationError(
@@ -66,8 +66,7 @@ class BaseValidator:
             )
             
         try:
-            # First verify we can get a token with the API key
-            # This ensures the API key is valid
+            # First verify we can get a token with the API key ensuring it is valid
             get_iam_token(api_key)
             
             # From here on is the resource validation

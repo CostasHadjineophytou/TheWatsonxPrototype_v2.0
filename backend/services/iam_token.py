@@ -27,7 +27,7 @@ class IAMTokenService(BaseClient):
             # Validate credentials
             self.validator.validate_credentials({"api_key": self.api_key})
             
-            # Use the centralized token utility function
+            # Use the centralised token utility function
             token = get_iam_token(self.api_key)
             
             logging.info("Successfully retrieved IAM token")
