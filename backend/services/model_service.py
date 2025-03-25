@@ -14,7 +14,7 @@ class ModelService(BaseService):
         self.validator = validator or ModelValidator()
 
     def list_models(self):
-        """Get list of all available models"""
+        """Get list of all available foundation models"""
         try:
 
             self.validator.validate_credentials(self.watson_client.credentials)
