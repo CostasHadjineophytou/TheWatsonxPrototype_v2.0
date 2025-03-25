@@ -10,7 +10,7 @@ class WatsonxSettingsPopup(tk.Toplevel):
         super().__init__(parent)
         
         self.title("Watsonx Settings")
-        self.geometry("400x300")
+        self.geometry("500x150")
         
         # Make window modal
         self.transient(parent)
@@ -32,13 +32,13 @@ class WatsonxSettingsPopup(tk.Toplevel):
         main_frame.grid(row=0, column=0, sticky=(tk.W, tk.E, tk.N, tk.S))
         
         # API Key section
-        ttk.Label(main_frame, text="IBM Cloud API Key:").grid(row=0, column=0, sticky=tk.W, pady=5)
+        ttk.Label(main_frame, text="IBM Cloud API Key:").grid(row=0, column=0, sticky=tk.W, pady=5, padx=5)
         self.api_key_var = tk.StringVar(value=self.env_manager.get_current_api_key() or "")
-        api_key_entry = ttk.Entry(main_frame, textvariable=self.api_key_var, width=40)
+        api_key_entry = ttk.Entry(main_frame, textvariable=self.api_key_var, width=60)
         api_key_entry.grid(row=0, column=1, columnspan=2, sticky=(tk.W, tk.E), pady=5)
         
         # Region section
-        ttk.Label(main_frame, text="Region:").grid(row=1, column=0, sticky=tk.W, pady=5)
+        ttk.Label(main_frame, text="Region:").grid(row=1, column=0, sticky=tk.W, pady=5, padx=5)
         self.region_var = tk.StringVar(value=self.env_manager.get_current_region() or "eu-gb")
         region_combo = ttk.Combobox(main_frame, textvariable=self.region_var, width=20, state="readonly")
         region_combo['values'] = ('eu-gb', 'eu-de', 'jp-tok', 'us-south')

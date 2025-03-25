@@ -10,7 +10,7 @@ class WatsonApp(tk.Tk):
     def __init__(self):
         super().__init__()
         
-        self.title("Watson Services")
+        self.title("Watsonx Prototype v2.0")
         
         # Set initial window size to full screen
         self.state('zoomed')
