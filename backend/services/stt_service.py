@@ -24,28 +24,14 @@ class STTService(BaseService):
         try:
             credentials = self.credentials_manager.get_service_credentials("Speech to Text")
             
-            try:
-                # Validate that the required resource exists - but catch errors
-                self.validator.validate_resource(
-                    required_resources=["speech-to-text"],
-                    api_key=credentials['apikey'],
-                    show_all_resources=False  # Only enable temporarily for debugging
-                )
-                logging.debug("STT service resources validated successfully")
-            except ValidationError as val_err:
-                # Log at debug level instead of warning since we know initialization works
-                if hasattr(val_err, 'details') and 'missing_resources' in val_err.details:
-                    missing = val_err.details['missing_resources']
-                    logging.debug(f"STT validation - Resources not detected in API: {', '.join(missing)}")
-                    logging.debug("This is expected in some IBM Cloud configurations")
-                else:
-                    logging.debug(f"STT resource validation completed with note: {str(val_err)}")
-                # Continue with initialization anyway
-            except Exception as ex:
-                # For other exceptions, just log at debug level
-                logging.debug(f"STT validation note: {str(ex)}")
+            # Validate that the required resource exists
+            self.validator.validate_resource(
+                required_resources=["speech-to-text"],
+                api_key=credentials['apikey'],
+                show_all_resources=False
+            )
             
-            # Initialize the client even if validation had notes
+            # Only initialise if validation passes
             authenticator = IAMAuthenticator(credentials['apikey'])
             self._stt = SpeechToTextV1(
                 authenticator=authenticator
@@ -53,6 +39,15 @@ class STTService(BaseService):
             self._stt.set_service_url(credentials['url'])
             logging.info("STT service initialized successfully")
             
+        except ValidationError as val_err:
+            if hasattr(val_err, 'details') and 'missing_resources' in val_err.details:
+                missing = val_err.details['missing_resources']
+                raise ValidationError(
+                    message=f"Speech to Text service not available. Missing resources: {', '.join(missing)}",
+                    code="MISSING_STT_RESOURCES",
+                    details={"missing_resources": missing}
+                )
+            raise val_err
         except Exception as e:
             raise AuthenticationError(
                 message="Failed to initialize STT service",

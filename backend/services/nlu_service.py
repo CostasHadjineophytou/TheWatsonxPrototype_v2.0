@@ -14,6 +14,8 @@ class NLUService(BaseService):
         self.credentials_manager = credentials_manager
         self._nlu = None
 
+        # Override the base validator with the NLU-specific validator
+        # This gives us both common validation methods and NLU-specific ones
         self.validator = validator or NLUValidator()
 
     def initialize(self):
@@ -21,28 +23,14 @@ class NLUService(BaseService):
         try:
             credentials = self.credentials_manager.get_service_credentials("Natural Language Understanding")
             
-            try:
-                # Validate that the required resource exists - but catch errors
-                self.validator.validate_resource(
-                    required_resources=["natural-language-understanding"],
-                    api_key=credentials['apikey'],
-                    show_all_resources=False  # Only enable temporarily for debugging
-                )
-                logging.debug("NLU service resources validated successfully")
-            except ValidationError as val_err:
-                # Log detailed error information about missing resources
-                if hasattr(val_err, 'details') and 'missing_resources' in val_err.details:
-                    missing = val_err.details['missing_resources']
-                    logging.debug(f"NLU validation - Resources not found in API: {', '.join(missing)}. This may be normal with certain IBM Cloud configurations.")
-                    logging.debug(f"Service will attempt to initialize anyway. If it fails, check that these resources exist: {', '.join(missing)}")
-                else:
-                    logging.debug(f"NLU validation note: {str(val_err)}")
-                # Continue with initialization anyway
-            except Exception as ex:
-                # For other exceptions, just log the error message
-                logging.debug(f"NLU validation encountered an issue: {str(ex)}. Attempting to initialize anyway.")
+            # Validate that the required resource exists
+            self.validator.validate_resource(
+                required_resources=["natural-language-understanding"],
+                api_key=credentials['apikey'],
+                show_all_resources=False
+            )
             
-            # Initialize the client even if validation had warnings
+            # Only initialise if validation passes
             authenticator = IAMAuthenticator(credentials['apikey'])
             self._nlu = NaturalLanguageUnderstandingV1(
                 version='2021-08-01',
@@ -51,6 +39,15 @@ class NLUService(BaseService):
             self._nlu.set_service_url(credentials['url'])
             logging.info("NLU service initialized successfully")
             
+        except ValidationError as val_err:
+            if hasattr(val_err, 'details') and 'missing_resources' in val_err.details:
+                missing = val_err.details['missing_resources']
+                raise ValidationError(
+                    message=f"Natural Language Understanding service not available. Missing resources: {', '.join(missing)}",
+                    code="MISSING_NLU_RESOURCES",
+                    details={"missing_resources": missing}
+                )
+            raise val_err
         except Exception as e:
             raise AuthenticationError(
                 message="Failed to initialize NLU service",

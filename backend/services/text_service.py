@@ -11,48 +11,46 @@ class TextService(BaseService):
     def __init__(self, watson_client: WatsonClient, validator=None):
         super().__init__()
         self.watson_client = watson_client
+
+        # Override the base validator with the Text-specific validator
+        # This gives us both common validation methods and Text-specific ones
         self.validator = validator or TextValidator()
         
     def initialize(self):
         """Validate required resources for text generation"""
         try:
-            # Try to validate resources but continue even if validation fails
-            try:
-                self.validator.validate_resource(
-                    required_resources=[
-                        "watson-machine-learning",
-                        "watson-studio", 
-                        "cloud-object-storage"
-                    ],
-                    api_key=self.watson_client.credentials.get('apikey'),
-                    show_all_resources=False  # Only enable temporarily for debugging
-                )
-                logging.info("Text service resources validated successfully")
-            except ValidationError as val_err:
-                # Log detailed error information about missing resources
-                if hasattr(val_err, 'details') and 'missing_resources' in val_err.details:
-                    missing = val_err.details['missing_resources']
-                    logging.warning(f"Text service validation failed - Missing resources: {', '.join(missing)}")
-                    logging.warning(f"Please create these resources in your IBM Cloud account: {', '.join(missing)}")
-                    
-                    # Provide information about why each resource is needed
-                    if "watson-machine-learning" in missing:
-                        logging.info("Watson Machine Learning is required for running AI models")
-                    if "watson-studio" in missing:
-                        logging.info("Watson Studio is required for project organisation")
-                    if "cloud-object-storage" in missing:
-                        logging.info("Cloud Object Storage is required for data storage")
-                else:
-                    logging.warning(f"Text service validation error: {str(val_err)}")
-                # Continue with initialization anyway
-            except Exception as ex:
-                # For other exceptions, just log the error message
-                logging.warning(f"Text service validation encountered an unexpected error: {str(ex)}")
+            # Validate required resources
+            self.validator.validate_resource(
+                required_resources=[
+                    "watson-machine-learning",
+                    "watson-studio", 
+                    "cloud-object-storage"
+                ],
+                api_key=self.watson_client.credentials.get('apikey'),
+                show_all_resources=False
+            )
+            logging.info("Text service resources validated successfully")
                 
+        except ValidationError as val_err:
+            if hasattr(val_err, 'details') and 'missing_resources' in val_err.details:
+                missing = val_err.details['missing_resources']
+                raise ValidationError(
+                    message=f"Text generation service not available. Missing resources: {', '.join(missing)}",
+                    code="MISSING_TEXT_RESOURCES",
+                    details={
+                        "missing_resources": missing,
+                        "resource_requirements": {
+                            "watson-machine-learning": "Required for running AI models",
+                            "watson-studio": "Required for project organization",
+                            "cloud-object-storage": "Required for data storage"
+                        }
+                    }
+                )
+            raise val_err
         except Exception as e:
             raise ValidationError(
-                message="Missing required resources for text generation",
-                code="MISSING_TEXT_RESOURCES",
+                message="Failed to validate text generation resources",
+                code="TEXT_RESOURCE_VALIDATION_ERROR",
                 details={"error": str(e)}
             )
 
