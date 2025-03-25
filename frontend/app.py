@@ -1,5 +1,6 @@
 import tkinter as tk
 from tkinter import ttk, messagebox
+from frontend.tabs.home_tab import HomeTab
 from frontend.tabs.llm_tab import LLMTab
 from frontend.tabs.nlu_tab import NLUTab
 from frontend.tabs.tts_tab import TTSTab
@@ -124,32 +125,32 @@ class WatsonApp(tk.Tk):
         self.notebook = ttk.Notebook(self)
         self.notebook.pack(fill='both', expand=True, padx=10, pady=10)
         
-        # Create tabs
+        # Create home tab
+        self.home_tab = HomeTab(self.notebook, self.notebook)
+        
+        # Create service tabs
         self.llm_tab = LLMTab(
             self.notebook, 
             text_manager=self.text_manager,
             model_manager=self.model_manager,
             project_manager=self.project_manager,
-            
         )
         self.nlu_tab = NLUTab(
             self.notebook,
             nlu_manager=self.nlu_manager,
-            
         )
         self.tts_tab = TTSTab(
             self.notebook,
             tts_manager=self.tts_manager,
             audio_manager=self.audio_manager,
-            
         )
         self.stt_tab = STTTab(
             self.notebook,
             stt_manager=self.stt_manager,
-            
         )
         
         # Add tabs to notebook
+        self.notebook.add(self.home_tab, text="Home")
         self.notebook.add(self.llm_tab, text="Text Generation")
         self.notebook.add(self.nlu_tab, text="Natural Language Understanding")
         self.notebook.add(self.tts_tab, text="Text to Speech")
