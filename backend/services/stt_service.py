@@ -24,13 +24,12 @@ class STTService(BaseService):
         try:
             credentials = self.credentials_manager.get_service_credentials("Speech to Text")
             
-            # Try API key validation first - this is the most important thing
             try:
                 # Validate that the required resource exists - but catch errors
                 self.validator.validate_resource(
                     required_resources=["speech-to-text"],
                     api_key=credentials['apikey'],
-                    show_all_resources=False
+                    show_all_resources=False  # Only enable temporarily for debugging
                 )
                 logging.debug("STT service resources validated successfully")
             except ValidationError as val_err:

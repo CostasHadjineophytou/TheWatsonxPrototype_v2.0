@@ -21,7 +21,6 @@ class NLUService(BaseService):
         try:
             credentials = self.credentials_manager.get_service_credentials("Natural Language Understanding")
             
-            # Try API key validation first - this is the most important thing
             try:
                 # Validate that the required resource exists - but catch errors
                 self.validator.validate_resource(

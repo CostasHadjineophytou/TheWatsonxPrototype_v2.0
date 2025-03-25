@@ -22,13 +22,12 @@ class TTSService(BaseService):
         try:
             credentials = self.credentials_manager.get_service_credentials("Text to Speech")
             
-            # Try API key validation first - this is the most important thing
             try:
                 # Validate that the required resource exists - but catch errors
                 self.validator.validate_resource(
                     required_resources=["text-to-speech"],
                     api_key=credentials['apikey'],
-                    show_all_resources=False
+                    show_all_resources=False  # Only enable temporarily for debugging
                 )
                 logging.debug("TTS service resources validated successfully")
                 print("TTS service resources validated successfully")

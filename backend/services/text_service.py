@@ -39,7 +39,7 @@ class TextService(BaseService):
                     if "watson-machine-learning" in missing:
                         logging.info("Watson Machine Learning is required for running AI models")
                     if "watson-studio" in missing:
-                        logging.info("Watson Studio is required for project organization")
+                        logging.info("Watson Studio is required for project organisation")
                     if "cloud-object-storage" in missing:
                         logging.info("Cloud Object Storage is required for data storage")
                 else:
@@ -64,7 +64,6 @@ class TextService(BaseService):
             self.validator.validate_watson_text_params(params)
             self.validator.validate_credentials(self.watson_client.credentials)
             
-            # Validate required resources
             self.initialize()
 
             model = ModelInference(
