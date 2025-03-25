@@ -46,10 +46,13 @@ class WatsonApp(tk.Tk):
         
         # Settings menu (empty for now)
         settings_menu = tk.Menu(self.menu_bar, tearoff=0)
+        settings_menu.add_command(label="watsonx", command=self._show_watsonx_settings_popup)
         self.menu_bar.add_cascade(label="Settings", menu=settings_menu)
         
         # Help menu (empty for now)
         help_menu = tk.Menu(self.menu_bar, tearoff=0)
+        help_menu.add_command(label="About", command=self._show_about_popup)
+        help_menu.add_command(label="Help", command=self._show_help_popup)
         self.menu_bar.add_cascade(label="Help", menu=help_menu)
         
         # Set the menu bar
@@ -72,6 +75,30 @@ class WatsonApp(tk.Tk):
             ServicesPopup(self, self.manager_factory.create_service_checker())
         except Exception as e:
             messagebox.showerror("Error", f"Could not open Services window: {str(e)}")
+    
+    def _show_watsonx_settings_popup(self):
+        """Show the settings popup window"""
+        try:
+            from frontend.pop_ups.watsonx_settings_popup import WatsonxSettingsPopup
+            WatsonxSettingsPopup(self)
+        except Exception as e:
+            messagebox.showerror("Error", f"Could not open Settings window: {str(e)}")
+    
+    def _show_about_popup(self):
+        """Show the about popup window"""
+        try:
+            from frontend.pop_ups.about_popup import AboutPopup
+            AboutPopup(self)
+        except Exception as e:
+            messagebox.showerror("Error", f"Could not open About window: {str(e)}")
+    
+    def _show_help_popup(self):
+        """Show the help popup window"""
+        try:
+            from frontend.pop_ups.help_popup import HelpPopup
+            HelpPopup(self)
+        except Exception as e:
+            messagebox.showerror("Error", f"Could not open Help window: {str(e)}")
 
     def _init_ui(self):
         # Create notebook for tabs
