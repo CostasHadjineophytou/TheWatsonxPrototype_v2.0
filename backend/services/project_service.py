@@ -22,7 +22,7 @@ class ProjectService(BaseClient):
         self.validator = validator or ProjectValidator()
 
     def list_projects(self):
-        """Get list of all projects from IBM Cloud"""
+        """Get list of all watson studioprojects from IBM Cloud"""
         try:
             
             token = self.iam_service.get_iam_token()

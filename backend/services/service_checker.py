@@ -23,13 +23,10 @@ class ServiceCheckerService(BaseClient):
             List of service instances with their details
         """
         try:
-            # Minimal validation - don't use the full resource validation
-            # which could cause failures
-            
             # Get API key from IAM service
             api_key = self.iam_service.get_api_key()
             
-            # Use the centralized utility function
+            # Use the centralised utility function from utils
             try:
                 resources = get_available_resources(api_key)
             except Exception as e:
@@ -58,8 +55,6 @@ class ServiceCheckerService(BaseClient):
             Dictionary containing service details
         """
         try:
-            # Don't use the full resource validation which could cause failures
-            
             # Get token from IAM service
             token = self.iam_service.get_iam_token()
             
@@ -91,9 +86,7 @@ class ServiceCheckerService(BaseClient):
         Returns:
             List of resource keys
         """
-        try:
-            # Don't use the full resource validation which could cause failures
-            
+        try:            
             # Get token via IAM service
             token = self.iam_service.get_iam_token()
             

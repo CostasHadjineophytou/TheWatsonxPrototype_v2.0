@@ -5,7 +5,7 @@ from ..utils.errors import ValidationError
 from ..validators.model_validator import ModelValidator
 
 class ModelService(BaseService):
-    """Handles model-related API calls"""
+    """Handles model-related information API calls"""
     
     def __init__(self, watson_client: WatsonClient, validator=None):
         super().__init__()
@@ -29,8 +29,11 @@ class ModelService(BaseService):
             raise self.handle_error(e, "Failed to list models")
 
     def get_model_specs(self, model_id: str):
-        """Get detailed specs for a specific model"""
+        """Get detailed specs for a specific foundation model"""
         try:
+            # Validate model ID format before making API call
+            self.validator.validate_model_id(model_id)
+            
             models = self.list_models()
             for model in models.get('resources', []):
                 if model.get('model_id') == model_id:
