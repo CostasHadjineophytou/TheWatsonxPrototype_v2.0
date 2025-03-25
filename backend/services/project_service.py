@@ -24,8 +24,6 @@ class ProjectService(BaseClient):
     def list_projects(self):
         """Get list of all projects from IBM Cloud"""
         try:
-
-            #self.validator.validate_resource()
             
             token = self.iam_service.get_iam_token()
             headers = {
@@ -62,7 +60,6 @@ class ProjectService(BaseClient):
         """
         try:
             
-            #self.validator.validate_resource()
             self.validator.validate_project_id(project_id)
             
             token = self.iam_service.get_iam_token()
