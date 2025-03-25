@@ -11,7 +11,12 @@ class WatsonApp(tk.Tk):
         super().__init__()
         
         self.title("Watson Services")
-        self.geometry("1200x800")
+        
+        # Set initial window size to full screen
+        self.state('zoomed')
+        
+        # Track full screen state
+        self.is_fullscreen = True
         
         # Centralized manager creation
         self.manager_factory = ManagerFactory()
@@ -44,12 +49,17 @@ class WatsonApp(tk.Tk):
         account_menu.add_command(label="Services", command=self._show_services_popup)
         self.menu_bar.add_cascade(label="Account", menu=account_menu)
         
-        # Settings menu (empty for now)
+        # Settings menu
         settings_menu = tk.Menu(self.menu_bar, tearoff=0)
         settings_menu.add_command(label="watsonx", command=self._show_watsonx_settings_popup)
         self.menu_bar.add_cascade(label="Settings", menu=settings_menu)
         
-        # Help menu (empty for now)
+        # View menu
+        view_menu = tk.Menu(self.menu_bar, tearoff=0)
+        view_menu.add_command(label="Toggle Full Screen", command=self._toggle_fullscreen)
+        self.menu_bar.add_cascade(label="View", menu=view_menu)
+        
+        # Help menu
         help_menu = tk.Menu(self.menu_bar, tearoff=0)
         help_menu.add_command(label="About", command=self._show_about_popup)
         help_menu.add_command(label="Help", command=self._show_help_popup)
@@ -57,6 +67,15 @@ class WatsonApp(tk.Tk):
         
         # Set the menu bar
         self.config(menu=self.menu_bar)
+        
+    def _toggle_fullscreen(self):
+        """Toggle between full screen and windowed mode"""
+        self.is_fullscreen = not self.is_fullscreen
+        if self.is_fullscreen:
+            self.state('zoomed')
+        else:
+            self.state('normal')
+            self.geometry("1000x600")
         
     def _show_projects_popup(self):
         """Show the projects popup window"""
