@@ -24,10 +24,10 @@ class IAMTokenService(BaseClient):
     def get_iam_token(self):
         """Retrieve IAM token using the configured API key."""
         try:
-            # Validate credentials
+            # Validate credentials before using the centralised token utility function
             self.validator.validate_credentials({"api_key": self.api_key})
             
-            # Use the centralised token utility function
+            # Use the centralised token utility function from utils
             token = get_iam_token(self.api_key)
             
             logging.info("Successfully retrieved IAM token")

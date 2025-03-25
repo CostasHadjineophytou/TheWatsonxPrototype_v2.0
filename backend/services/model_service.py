@@ -16,9 +16,6 @@ class ModelService(BaseService):
     def list_models(self):
         """Get list of all available foundation models"""
         try:
-
-            self.validator.validate_credentials(self.watson_client.credentials)
-            
             response = self.watson_client.client.foundation_models.get_model_specs()
             models = response.get('resources', [])
             

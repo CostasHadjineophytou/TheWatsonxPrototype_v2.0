@@ -16,9 +16,6 @@ class CredentialsManager(BaseClient):
     def get_service_credentials(self, service_name: str):
         """Get credentials for a specific service by name."""
         try:
-            
-            self.validator.validate_credentials({"api_key": self.api_key})
-            
             token = self.iam_service.get_iam_token()
             headers = {
                 'Authorization': f'Bearer {token}',
