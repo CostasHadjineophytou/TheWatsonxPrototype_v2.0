@@ -1,5 +1,7 @@
 import tkinter as tk
 from tkinter import ttk, messagebox
+from PIL import Image, ImageTk
+import os
 from frontend.tabs.home_tab import HomeTab
 from frontend.tabs.llm_tab import LLMTab
 from frontend.tabs.nlu_tab import NLUTab
@@ -12,6 +14,17 @@ class WatsonApp(tk.Tk):
         super().__init__()
         
         self.title("Watsonx Prototype v2.0")
+        
+        # Set window icon
+        try:
+            icon_path = os.path.join("frontend", "assets", "images", "watsonx_icon.png")
+            icon_image = Image.open(icon_path)
+            icon_photo = ImageTk.PhotoImage(icon_image)
+            self.iconphoto(True, icon_photo)
+            # Keep a reference to prevent garbage collection
+            self._icon_image = icon_photo
+        except Exception as e:
+            print(f"Could not load window icon: {str(e)}")
         
         # Set initial window size to full screen
         self.state('zoomed')
