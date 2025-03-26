@@ -32,11 +32,11 @@ class ModelSelectionFrame(ttk.Frame):
         # Create listbox
         self.model_listbox = tk.Listbox(
             list_frame,
-            height=8,  # Show more items at once
+            height=8,
             width=30,
             yscrollcommand=scrollbar.set,
             selectmode=tk.SINGLE,
-            exportselection=0  # Keep selection when focus changes
+            exportselection=0
         )
         self.model_listbox.pack(side=tk.LEFT, fill='both', expand=True)
         

@@ -5,22 +5,25 @@ from backend.config.config import Config
 from ..utils.errors import ServiceError, ValidationError
 from backend.services.base_client import BaseClient
 from ..utils.file_manager import FileManager
+from ..validators.project_validator import ProjectValidator
 
 class ProjectService(BaseClient):
     """Handles IBM Cloud project-related API calls"""
     
-    def __init__(self, watson_client: WatsonClient = None, iam_service: IAMTokenService = None):
+    def __init__(self, watson_client: WatsonClient = None, iam_service: IAMTokenService = None, validator=None):
+        # BaseClient checks for API key and may raise ConfigurationError if missing
         super().__init__()
         self.watson_client = watson_client
         self.iam_service = iam_service or IAMTokenService()
         self.projects_url = Config.IBM_CLOUD_PROJECTS_URL
         self.file_manager = FileManager()
+        
+        # Override the base validator with the project-specific validator
+        self.validator = validator or ProjectValidator()
 
     def list_projects(self):
-        """Get list of all projects from IBM Cloud"""
+        """Get list of all watson studioprojects from IBM Cloud"""
         try:
-
-            self.validator.validate_resource()
             
             token = self.iam_service.get_iam_token()
             headers = {
@@ -57,7 +60,6 @@ class ProjectService(BaseClient):
         """
         try:
             
-            self.validator.validate_resource()
             self.validator.validate_project_id(project_id)
             
             token = self.iam_service.get_iam_token()

@@ -32,18 +32,18 @@ class ModelFrame(ttk.LabelFrame):
         )
         self.details_btn.pack(side='left', padx=5)
         
-        # Model info display - make it fill width
+
         info_frame = ttk.Frame(self)
         info_frame.pack(fill='x', padx=5, pady=5)
-        info_frame.grid_columnconfigure(0, weight=1)  # Make column expandable
+        info_frame.grid_columnconfigure(0, weight=1)
         
         self.info_label = ttk.Label(
             info_frame,
-            wraplength=400,  # Allow text to wrap
-            justify='left',  # Left-align text
-            anchor='w'       # Align to west/left
+            wraplength=400,
+            justify='left',
+            anchor='w'
         )
-        self.info_label.grid(row=0, column=0, sticky='ew')  # Expand east-west
+        self.info_label.grid(row=0, column=0, sticky='ew')
         
         self.load_models()
         self.models_combo.bind('<<ComboboxSelected>>', self.on_model_selected)
@@ -90,7 +90,7 @@ class ModelFrame(ttk.LabelFrame):
         main_frame.pack(fill='both', expand=True, padx=20, pady=10)
         
         # Create canvas for scrolling with explicit background color
-        canvas = tk.Canvas(main_frame, bg="white")  # Use bg for standard tkinter widgets
+        canvas = tk.Canvas(main_frame, bg="white")
         scrollbar = ttk.Scrollbar(main_frame, orient="vertical", command=canvas.yview)
         
         # Use a standard tkinter Frame for the scrollable content (it accepts bg parameter)

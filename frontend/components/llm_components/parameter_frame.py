@@ -118,8 +118,8 @@ class ParameterFrame(ttk.LabelFrame):
         frame.pack(fill='x', padx=5, pady=2)
         
         # Create grid layout
-        frame.grid_columnconfigure(1, weight=1)  # Control column expands
-        frame.grid_columnconfigure(2, minsize=40)  # Fixed minimum width for help column
+        frame.grid_columnconfigure(1, weight=1)
+        frame.grid_columnconfigure(2, minsize=40)
         
         # Label
         ttk.Label(frame, text=label).grid(row=0, column=0, sticky='w', padx=(0,10))
@@ -133,7 +133,7 @@ class ParameterFrame(ttk.LabelFrame):
             
             # Scale with native look
             style = ttk.Style()
-            style.configure('Param.Horizontal.TScale', sliderlength=15)  # Smaller slider
+            style.configure('Param.Horizontal.TScale', sliderlength=15)
             
             control = ttk.Scale(
                 control_frame,

@@ -8,6 +8,7 @@ class CredentialsManager(BaseClient):
     """Manages service credentials for IBM Cloud services."""
     
     def __init__(self):
+        # BaseClient checks for API key and may raise ConfigurationError if missing
         super().__init__()
         self.iam_service = IAMTokenService()
         self.resource_url = Config.IBM_CLOUD_RESOURCE_URL
@@ -15,10 +16,6 @@ class CredentialsManager(BaseClient):
     def get_service_credentials(self, service_name: str):
         """Get credentials for a specific service by name."""
         try:
-            
-            self.validator.validate_credentials({"api_key": self.api_key})
-            
-            # Acquire an IAM token for further calls
             token = self.iam_service.get_iam_token()
             headers = {
                 'Authorization': f'Bearer {token}',

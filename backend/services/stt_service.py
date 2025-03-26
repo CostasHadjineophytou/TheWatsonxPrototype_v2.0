@@ -3,24 +3,51 @@ from ibm_cloud_sdk_core.authenticators import IAMAuthenticator
 from .base_service import BaseService
 from ..utils.errors import AuthenticationError, ValidationError
 from ..utils.file_manager import FileManager
+from ..validators.stt_validator import STTValidator
+import logging
 
 class STTService(BaseService):
     """Handles Speech-to-Text API interactions"""
     
-    def __init__(self, credentials_manager):
+    def __init__(self, credentials_manager, validator=None):
+        # Initialize BaseService (which sets self.validator = BaseValidator())
         super().__init__()
         self.credentials_manager = credentials_manager
         self._stt = None
+        
+        # Override the base validator with the STT-specific validator
+        # This gives us both common validation methods and STT-specific ones
+        self.validator = validator or STTValidator()
 
     def initialize(self):
         """Initialize STT client"""
         try:
             credentials = self.credentials_manager.get_service_credentials("Speech to Text")
+            
+            # Validate that the required resource exists
+            self.validator.validate_resource(
+                required_resources=["speech-to-text"],
+                api_key=credentials['apikey'],
+                show_all_resources=False
+            )
+            
+            # Only initialise if validation passes
             authenticator = IAMAuthenticator(credentials['apikey'])
             self._stt = SpeechToTextV1(
                 authenticator=authenticator
             )
             self._stt.set_service_url(credentials['url'])
+            logging.info("STT service initialized successfully")
+            
+        except ValidationError as val_err:
+            if hasattr(val_err, 'details') and 'missing_resources' in val_err.details:
+                missing = val_err.details['missing_resources']
+                raise ValidationError(
+                    message=f"Speech to Text service not available. Missing resources: {', '.join(missing)}",
+                    code="MISSING_STT_RESOURCES",
+                    details={"missing_resources": missing}
+                )
+            raise val_err
         except Exception as e:
             raise AuthenticationError(
                 message="Failed to initialize STT service",
@@ -55,6 +82,7 @@ class STTService(BaseService):
             Transcription text
         """
         try:
+            # Use the STT-specific validator
             self.validator.validate_audio_file(file_path)
 
             if not self._stt:

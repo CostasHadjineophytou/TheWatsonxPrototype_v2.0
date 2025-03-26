@@ -1,10 +1,15 @@
 import requests
 from backend.config.config import Config
 from backend.utils.errors import ConfigurationError
-from ..utils.base_handler import BaseHandler
+from ..base_component import BaseComponent
 
-class BaseClient(BaseHandler):
-    """Base client for making HTTP requests to IBM Cloud services"""
+class BaseClient(BaseComponent):
+    """Base client for making HTTP requests to IBM Cloud services
+
+    All services needing an HTTP request inherit from this class, which provides:
+    1. Error handling through BaseErrorHandler (via BaseComponent)
+    2. Basic validation through BaseValidator (via BaseComponent)
+    """
     
     def __init__(self):
         super().__init__()

@@ -1,12 +1,14 @@
 from ..utils.errors import ConfigurationError
 from ..config.config import Config
 
+"""Seperate from the base validator class as it only validates configuration variables"""
+
 class ConfigValidator:
     """Validates only environment-related configuration"""
     
     @staticmethod
     def validate_config() -> None:
-        """Validate base configuration/environment variables"""
+        """Validate environment variables by simply checking they exist"""
         required_vars = [
             'IBM_CLOUD_API_KEY',
             'IBM_CLOUD_MODELS_URL',

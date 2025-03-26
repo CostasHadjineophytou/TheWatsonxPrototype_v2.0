@@ -3,25 +3,51 @@ from ibm_cloud_sdk_core.authenticators import IAMAuthenticator
 from .base_service import BaseService
 from ..utils.errors import AuthenticationError, ValidationError
 from .credentials_manager import CredentialsManager
+from ..validators.nlu_validator import NLUValidator
+import logging
 
 class NLUService(BaseService):
     """Handles raw NLU API interactions"""
     
-    def __init__(self, credentials_manager: CredentialsManager):
+    def __init__(self, credentials_manager: CredentialsManager, validator=None):
         super().__init__()
         self.credentials_manager = credentials_manager
         self._nlu = None
+
+        # Override the base validator with the NLU-specific validator
+        # This gives us both common validation methods and NLU-specific ones
+        self.validator = validator or NLUValidator()
 
     def initialize(self):
         """Initialize NLU client"""
         try:
             credentials = self.credentials_manager.get_service_credentials("Natural Language Understanding")
+            
+            # Validate that the required resource exists
+            self.validator.validate_resource(
+                required_resources=["natural-language-understanding"],
+                api_key=credentials['apikey'],
+                show_all_resources=False
+            )
+            
+            # Only initialise if validation passes
             authenticator = IAMAuthenticator(credentials['apikey'])
             self._nlu = NaturalLanguageUnderstandingV1(
                 version='2021-08-01',
                 authenticator=authenticator
             )
             self._nlu.set_service_url(credentials['url'])
+            logging.info("NLU service initialized successfully")
+            
+        except ValidationError as val_err:
+            if hasattr(val_err, 'details') and 'missing_resources' in val_err.details:
+                missing = val_err.details['missing_resources']
+                raise ValidationError(
+                    message=f"Natural Language Understanding service not available. Missing resources: {', '.join(missing)}",
+                    code="MISSING_NLU_RESOURCES",
+                    details={"missing_resources": missing}
+                )
+            raise val_err
         except Exception as e:
             raise AuthenticationError(
                 message="Failed to initialize NLU service",

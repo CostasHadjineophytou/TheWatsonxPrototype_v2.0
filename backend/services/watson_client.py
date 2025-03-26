@@ -9,6 +9,7 @@ class WatsonClient(BaseService):
     def __init__(self):
         """Initialize Watson client with validation and error handling"""
         try:
+            # BaseClient checks for API key and may raise ConfigurationError if missing
             super().__init__()
             
             credentials = {
