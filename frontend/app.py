@@ -2,6 +2,7 @@ import tkinter as tk
 from tkinter import ttk, messagebox
 from PIL import Image, ImageTk
 import os
+from dotenv import load_dotenv
 from frontend.tabs.home_tab import HomeTab
 from frontend.tabs.llm_tab import LLMTab
 from frontend.tabs.nlu_tab import NLUTab
@@ -15,6 +16,12 @@ class WatsonApp(tk.Tk):
         
         self.title("Watsonx Prototype v2.0")
         
+        # Set initial window size to full screen
+        self.state('zoomed')
+        
+        # Track full screen state
+        self.is_fullscreen = True
+        
         # Set window icon
         try:
             icon_path = os.path.join("frontend", "assets", "images", "watsonx_icon.png")
@@ -26,14 +33,26 @@ class WatsonApp(tk.Tk):
         except Exception as e:
             print(f"Could not load window icon: {str(e)}")
         
-        # Set initial window size to full screen
-        self.state('zoomed')
-        
-        # Track full screen state
-        self.is_fullscreen = True
-        
         # Centralized manager creation
         self.manager_factory = ManagerFactory()
+        
+        # Initialize managers first
+        self._init_managers()
+        
+        # Create menu bar
+        self._create_menu_bar()
+        
+        # Initialize UI last (since it needs the managers)
+        self._init_ui()
+        
+        # Schedule API key check after window is shown
+        self.after(100, self._check_api_key)
+        
+        # Force an update to ensure window is shown
+        self.update()
+        
+    def _init_managers(self):
+        """Initialize all service managers"""
         self.text_manager = self.manager_factory.create_text_manager()
         self.model_manager = self.manager_factory.create_model_manager()
         self.project_manager = self.manager_factory.create_project_manager()
@@ -42,11 +61,26 @@ class WatsonApp(tk.Tk):
         self.stt_manager = self.manager_factory.create_stt_manager()
         self.audio_manager = self.manager_factory.create_audio_manager()
         
-        # Create menu bar
-        self._create_menu_bar()
+    def _check_api_key(self):
+        """Check if API key needs to be set and show welcome message if needed"""
+        # Load environment variables
+        load_dotenv()
         
-        # Initialize UI
-        self._init_ui()
+        # Get API key
+        api_key = os.getenv('IBM_CLOUD_API_KEY', '')
+        
+        # Check if API key is empty or default
+        if not api_key or api_key == 'your-api-key':
+            messagebox.showinfo(
+                "Welcome to Watsonx Prototype",
+                "Welcome! To get started, you'll need to set up your IBM Cloud API Key:\n\n"
+                "1. Go to Settings → watsonx\n"
+                "2. Enter your IBM Cloud API Key\n"
+                "3. Select your region\n"
+                "4. Click Save\n\n"
+                "Don't have an API key? Visit IBM Cloud to create one:\n"
+                "https://cloud.ibm.com/iam/apikeys"
+            )
         
     def _create_menu_bar(self):
         """Create the application menu bar"""

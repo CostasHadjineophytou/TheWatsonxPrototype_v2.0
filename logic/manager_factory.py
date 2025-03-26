@@ -38,7 +38,7 @@ class ManagerFactory:
             cls._instance.speech_validator = SpeechValidator()
             cls._instance.nlu_validator = NLUValidator()
         return cls._instance
-
+    
     def create_model_manager(self) -> ModelManager:
         try:
             if self.service_factory:
