@@ -1,12 +1,15 @@
-ibm_watsonx_ai
-requests
-pandas
-faiss-cpu
-numpy
-sentence-transformers
-ibm_watson
-ibm_cloud_sdk_core
-python-dotenv
-pydub
-pydub-1.1.0
-pygame
+# Core IBM packages
+ibm-watsonx-ai>=1.3.3
+ibm-watson>=7.0.0
+ibm-cloud-sdk-core>=3.18.0
+
+# Utility packages
+requests>=2.31.0
+python-dotenv>=1.0.0
+
+# Audio packages
+pygame>=2.5.0
+pydub>=0.25.1
+
+# Development dependencies
+gitpython  # For installer
