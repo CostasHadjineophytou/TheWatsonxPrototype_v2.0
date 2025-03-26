@@ -5,7 +5,7 @@ from tkinter import messagebox
 class ProjectFrame(ttk.LabelFrame):
     def __init__(self, parent, project_manager):
         super().__init__(parent, text="Project Selection")
-        self.project_manager = project_manager  # Injected from app.py
+        self.project_manager = project_manager
         self._init_ui()
         
     def _init_ui(self):
